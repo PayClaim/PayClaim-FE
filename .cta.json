@@ -1,0 +1,25 @@
+{
+  "bundler": "vite",
+  "projectName": "capstone-fe",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "npm",
+  "includeExamples": true,
+  "tailwind": true,
+  "projectPreset": "default",
+  "routerOnly": false,
+  "addOnOptions": {},
+  "git": true,
+  "install": true,
+  "intent": true,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "eslint",
+    "nitro",
+    "tanstack-query",
+    "shadcn",
+    "store",
+    "form"
+  ]
+}
