@@ -1,41 +1,29 @@
 import { Link } from '@tanstack/react-router'
 import Footer from './Footer'
 
-export function Sidebar({ className }: { className: string }) {
-  const links = [
-    {
-      to: '/',
-      label: 'Home',
-    },
-    {
-      to: '/about',
-      label: 'About',
-    },
-    {
-      to: '/dashboard',
-      label: 'Dashboard',
-    },
-    {
-      to: '/claims',
-      label: 'Claims',
-    },
-    {
-      to: '/trip-proposals',
-      label: 'Trip Proposals',
-    },
-    {
-      to: '/benefits',
-      label: 'Benefits',
-    },
-  ]
+interface TLink {
+  to: string
+  label: string
+  admin?: boolean
+}
+
+export function Sidebar({
+  className,
+  links,
+}: {
+  className: string
+  links: TLink[]
+}) {
+  const isAdmin = true // contoh
   return (
     <div
-      className={`bg-sidebar p-2 min-h-screen w-[300px] flex flex-col gap-8 justify-between ${className}`}
+      className={`bg-card border-r border-border p-2 min-h-screen w-[300px] flex flex-col gap-8 justify-between ${className}`}
     >
       <div className="min-h-20 bg-accent">Logo</div>
       <div className="grow">
         {links.map((l) => {
-          return (
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          return !l.admin || isAdmin ? (
             <Link
               key={l.to}
               to={l.to}
@@ -44,22 +32,22 @@ export function Sidebar({ className }: { className: string }) {
             >
               {l.label}
             </Link>
-          )
+          ) : null
         })}
         <details className="relative w-full sm:w-auto">
           <summary className="block hover:bg-(--hover-shadow) rounded-2xl w-full p-4">
             Demos
           </summary>
-          <div className="mt-2 min-w-56 rounded-xl border border-[var(--line)] bg-[var(--header-bg)] p-2 shadow-lg sm:absolute sm:right-0">
+          <div className="mt-2 min-w-56 rounded-xl border border-(--line) bg-(--header-bg) p-2 shadow-lg sm:absolute sm:right-0">
             <a
               href="/demo/tanstack-query"
-              className="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+              className="block rounded-lg px-3 py-2 text-sm text-(--sea-ink-soft) no-underline transition hover:bg-(--link-bg-hover) hover:text-[var(--sea-ink)]"
             >
               TanStack Query
             </a>
             <a
               href="/demo/store"
-              className="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+              className="block rounded-lg px-3 py-2 text-sm text-(--sea-ink-soft) no-underline transition hover:bg-(--link-bg-hover) hover:text-[var(--sea-ink)]"
             >
               Store
             </a>

@@ -4,7 +4,7 @@ import { Button } from '#/components/ui/button'
 import { useState } from 'react'
 import { createClaimForm } from '#/features/claims/forms/forms'
 
-export const Route = createFileRoute('/claims/create')({
+export const Route = createFileRoute('/_app/claims/create')({
   component: RouteComponent,
 })
 
@@ -36,10 +36,8 @@ function RouteComponent() {
   }
 
   return (
-    <main>
-      <div className="mb-8 flex justify-between">
-        <h1 className="text-3xl font-bold">New Claim</h1>
-      </div>
+    <main className="bg-card max-w-[800px] rounded-2xl p-4 mx-auto">
+      <h1 className="text-3xl font-bold text-center mb-8">New Claim</h1>
 
       <div className="flex justify-center mb-4">
         <ButtonGroup>
@@ -62,29 +60,36 @@ function RouteComponent() {
             form.handleSubmit()
           }}
         >
+          <div className="grid grid-cols-3 gap-4">
+            <form.AppField name="transactionDate">
+              {(field) => <field.DatePicker label="Transaction Date" />}
+            </form.AppField>
+
+            <form.AppField name="amount">
+              {(field) => <field.NumberField label="Amount" />}
+            </form.AppField>
+
+            {currentClaimType === 'trip_enum' ? (
+              <form.AppField name="tripProposalId">
+                {(field) => (
+                  <field.FormSelect values={tripSelect} label="Trip" />
+                )}
+              </form.AppField>
+            ) : (
+              <form.AppField name="employeeBenefitId">
+                {(field) => (
+                  <field.FormSelect
+                    placeholder="Pick benefit"
+                    values={benefitSelect}
+                    label="Benefit"
+                  />
+                )}
+              </form.AppField>
+            )}
+          </div>
           <form.AppField name="description">
-            {(field) => <field.TextArea label="Description" />}
+            {(field) => <field.TextArea label="Description" rows={10} />}
           </form.AppField>
-
-          <form.AppField name="transactionDate">
-            {(field) => <field.DatePicker label="Transaction Date" />}
-          </form.AppField>
-
-          <form.AppField name="amount">
-            {(field) => <field.NumberField label="Amount" />}
-          </form.AppField>
-
-          {currentClaimType === 'trip_enum' ? (
-            <form.AppField name="tripProposalId">
-              {(field) => <field.FormSelect values={tripSelect} label="Trip" />}
-            </form.AppField>
-          ) : (
-            <form.AppField name="employeeBenefitId">
-              {(field) => (
-                <field.FormSelect values={benefitSelect} label="Benefit" />
-              )}
-            </form.AppField>
-          )}
 
           <form.AppForm>
             <form.FormButton label="Submit" />

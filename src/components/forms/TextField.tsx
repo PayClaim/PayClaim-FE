@@ -27,7 +27,6 @@ export function TextField({ label, placeholder }: TextFieldProps) {
         placeholder={placeholder}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
-        aria-invalid={errors.length > 0}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
@@ -52,7 +51,30 @@ export function NumberField({ label, placeholder }: TextFieldProps) {
         placeholder={placeholder}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.valueAsNumber)}
-        aria-invalid={errors.length > 0}
+      />
+      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+    </div>
+  )
+}
+
+export function FileInput({ label, placeholder }: TextFieldProps) {
+  const field = useFieldContext<string>()
+  const errors = useSelector(field.store, (state) => state.meta.errors)
+  return (
+    <div className="my-4">
+      <Label
+        htmlFor={label}
+        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+      >
+        {label}
+      </Label>
+      <Input
+        className="bg-input"
+        type="file"
+        value={field.state.value}
+        placeholder={placeholder}
+        onBlur={field.handleBlur}
+        onChange={(e) => field.handleChange(e.target.value)}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>

@@ -13,6 +13,7 @@ export const createClaimForm = () => {
       amount: 0,
       employeeBenefitId: null as string | null,
       tripProposalId: null as string | null,
+      // filePath: ""
     },
     validators: {
       onBlur: createClaimSchema,

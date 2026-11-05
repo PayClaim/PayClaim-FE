@@ -29,7 +29,7 @@ export function FormSelect({
         value={field.state.value}
         onValueChange={(value) => field.handleChange(value)}
       >
-        <ShadcnSelect.SelectTrigger className="w-full">
+        <ShadcnSelect.SelectTrigger className="w-full bg-input">
           <ShadcnSelect.SelectValue placeholder={placeholder} />
         </ShadcnSelect.SelectTrigger>
         <ShadcnSelect.SelectContent className="bg-background text-foreground">

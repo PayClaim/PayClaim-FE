@@ -10,19 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ClaimsIndexRouteImport } from './routes/claims/index'
-import { Route as ClaimsClaimIdRouteImport } from './routes/claims/$claimId'
-import { Route as ClaimsCreateRouteImport } from './routes/claims/create'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppHelloRouteImport } from './routes/_app/hello'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
+import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
+import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
+import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
+import { Route as AppClaimsCreateRouteImport } from './routes/_app/claims/create'
+import { Route as AppTripProposalsIndexRouteImport } from './routes/_app/trip-proposals/index'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
+import { Route as AppAdminBenefitCategoriesIndexRouteImport } from './routes/_app/admin/benefit-categories/index'
+import { Route as AppAdminBenefitCategoriesCreateRouteImport } from './routes/_app/admin/benefit-categories/create'
+import { Route as AppAdminBenefitsIndexRouteImport } from './routes/_app/admin/benefits/index'
+import { Route as AppAdminBenefitsCreateRouteImport } from './routes/_app/admin/benefits/create'
+import { Route as AppAdminBenefitCategoriesCategoryIdEditRouteImport } from './routes/_app/admin/benefit-categories/$categoryId.edit'
+import { Route as AppAdminBenefitsBenefitIdEditRouteImport } from './routes/_app/admin/benefits/$benefitId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -30,25 +46,20 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const ClaimsIndexRoute = ClaimsIndexRouteImport.update({
-  id: '/claims/',
-  path: '/claims/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClaimsClaimIdRoute = ClaimsClaimIdRouteImport.update({
-  id: '/claims/$claimId',
-  path: '/claims/$claimId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClaimsCreateRoute = ClaimsCreateRouteImport.update({
-  id: '/claims/create',
-  path: '/claims/create',
-  getParentRoute: () => rootRouteImport,
+const AppHelloRoute = AppHelloRouteImport.update({
+  id: '/hello',
+  path: '/hello',
+  getParentRoute: () => AppRoute,
 } as any)
 const DemoStoreRoute = DemoStoreRouteImport.update({
   id: '/demo/store',
@@ -60,6 +71,36 @@ const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   path: '/demo/tanstack-query',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBenefitsIndexRoute = AppBenefitsIndexRouteImport.update({
+  id: '/benefits/',
+  path: '/benefits/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClaimsIndexRoute = AppClaimsIndexRouteImport.update({
+  id: '/claims/',
+  path: '/claims/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClaimsClaimIdRoute = AppClaimsClaimIdRouteImport.update({
+  id: '/claims/$claimId',
+  path: '/claims/$claimId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClaimsCreateRoute = AppClaimsCreateRouteImport.update({
+  id: '/claims/create',
+  path: '/claims/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripProposalsIndexRoute = AppTripProposalsIndexRouteImport.update({
+  id: '/trip-proposals/',
+  path: '/trip-proposals/',
+  getParentRoute: () => AppRoute,
+} as any)
 const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
   id: '/demo/form/address',
   path: '/demo/form/address',
@@ -70,92 +111,192 @@ const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   path: '/demo/form/simple',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAdminBenefitCategoriesIndexRoute =
+  AppAdminBenefitCategoriesIndexRouteImport.update({
+    id: '/admin/benefit-categories/',
+    path: '/admin/benefit-categories/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdminBenefitCategoriesCreateRoute =
+  AppAdminBenefitCategoriesCreateRouteImport.update({
+    id: '/admin/benefit-categories/create',
+    path: '/admin/benefit-categories/create',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdminBenefitsIndexRoute = AppAdminBenefitsIndexRouteImport.update({
+  id: '/admin/benefits/',
+  path: '/admin/benefits/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminBenefitsCreateRoute = AppAdminBenefitsCreateRouteImport.update({
+  id: '/admin/benefits/create',
+  path: '/admin/benefits/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminBenefitCategoriesCategoryIdEditRoute =
+  AppAdminBenefitCategoriesCategoryIdEditRouteImport.update({
+    id: '/admin/benefit-categories/$categoryId/edit',
+    path: '/admin/benefit-categories/$categoryId/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdminBenefitsBenefitIdEditRoute =
+  AppAdminBenefitsBenefitIdEditRouteImport.update({
+    id: '/admin/benefits/$benefitId/edit',
+    path: '/admin/benefits/$benefitId/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/claims/$claimId': typeof ClaimsClaimIdRoute
-  '/claims/create': typeof ClaimsCreateRoute
+  '/login': typeof LoginRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/hello': typeof AppHelloRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/claims/': typeof ClaimsIndexRoute
+  '/claims/$claimId': typeof AppClaimsClaimIdRoute
+  '/claims/create': typeof AppClaimsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/admin/': typeof AppAdminIndexRoute
+  '/benefits/': typeof AppBenefitsIndexRoute
+  '/claims/': typeof AppClaimsIndexRoute
+  '/trip-proposals/': typeof AppTripProposalsIndexRoute
+  '/admin/benefit-categories/create': typeof AppAdminBenefitCategoriesCreateRoute
+  '/admin/benefits/create': typeof AppAdminBenefitsCreateRoute
+  '/admin/benefit-categories/': typeof AppAdminBenefitCategoriesIndexRoute
+  '/admin/benefits/': typeof AppAdminBenefitsIndexRoute
+  '/admin/benefit-categories/$categoryId/edit': typeof AppAdminBenefitCategoriesCategoryIdEditRoute
+  '/admin/benefits/$benefitId/edit': typeof AppAdminBenefitsBenefitIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/claims/$claimId': typeof ClaimsClaimIdRoute
-  '/claims/create': typeof ClaimsCreateRoute
+  '/login': typeof LoginRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/hello': typeof AppHelloRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/claims': typeof ClaimsIndexRoute
+  '/claims/$claimId': typeof AppClaimsClaimIdRoute
+  '/claims/create': typeof AppClaimsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/admin': typeof AppAdminIndexRoute
+  '/benefits': typeof AppBenefitsIndexRoute
+  '/claims': typeof AppClaimsIndexRoute
+  '/trip-proposals': typeof AppTripProposalsIndexRoute
+  '/admin/benefit-categories/create': typeof AppAdminBenefitCategoriesCreateRoute
+  '/admin/benefits/create': typeof AppAdminBenefitsCreateRoute
+  '/admin/benefit-categories': typeof AppAdminBenefitCategoriesIndexRoute
+  '/admin/benefits': typeof AppAdminBenefitsIndexRoute
+  '/admin/benefit-categories/$categoryId/edit': typeof AppAdminBenefitCategoriesCategoryIdEditRoute
+  '/admin/benefits/$benefitId/edit': typeof AppAdminBenefitsBenefitIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/claims/$claimId': typeof ClaimsClaimIdRoute
-  '/claims/create': typeof ClaimsCreateRoute
+  '/login': typeof LoginRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/hello': typeof AppHelloRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/claims/': typeof ClaimsIndexRoute
+  '/_app/claims/$claimId': typeof AppClaimsClaimIdRoute
+  '/_app/claims/create': typeof AppClaimsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/benefits/': typeof AppBenefitsIndexRoute
+  '/_app/claims/': typeof AppClaimsIndexRoute
+  '/_app/trip-proposals/': typeof AppTripProposalsIndexRoute
+  '/_app/admin/benefit-categories/create': typeof AppAdminBenefitCategoriesCreateRoute
+  '/_app/admin/benefits/create': typeof AppAdminBenefitsCreateRoute
+  '/_app/admin/benefit-categories/': typeof AppAdminBenefitCategoriesIndexRoute
+  '/_app/admin/benefits/': typeof AppAdminBenefitsIndexRoute
+  '/_app/admin/benefit-categories/$categoryId/edit': typeof AppAdminBenefitCategoriesCategoryIdEditRoute
+  '/_app/admin/benefits/$benefitId/edit': typeof AppAdminBenefitsBenefitIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/login'
     | '/dashboard'
-    | '/claims/$claimId'
-    | '/claims/create'
+    | '/hello'
     | '/demo/store'
     | '/demo/tanstack-query'
-    | '/claims/'
+    | '/claims/$claimId'
+    | '/claims/create'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/admin/'
+    | '/benefits/'
+    | '/claims/'
+    | '/trip-proposals/'
+    | '/admin/benefit-categories/create'
+    | '/admin/benefits/create'
+    | '/admin/benefit-categories/'
+    | '/admin/benefits/'
+    | '/admin/benefit-categories/$categoryId/edit'
+    | '/admin/benefits/$benefitId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/login'
     | '/dashboard'
-    | '/claims/$claimId'
-    | '/claims/create'
+    | '/hello'
     | '/demo/store'
     | '/demo/tanstack-query'
-    | '/claims'
+    | '/claims/$claimId'
+    | '/claims/create'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/admin'
+    | '/benefits'
+    | '/claims'
+    | '/trip-proposals'
+    | '/admin/benefit-categories/create'
+    | '/admin/benefits/create'
+    | '/admin/benefit-categories'
+    | '/admin/benefits'
+    | '/admin/benefit-categories/$categoryId/edit'
+    | '/admin/benefits/$benefitId/edit'
   id:
     | '__root__'
     | '/'
+    | '/_app'
     | '/about'
-    | '/dashboard'
-    | '/claims/$claimId'
-    | '/claims/create'
+    | '/login'
+    | '/_app/dashboard'
+    | '/_app/hello'
     | '/demo/store'
     | '/demo/tanstack-query'
-    | '/claims/'
+    | '/_app/claims/$claimId'
+    | '/_app/claims/create'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/_app/admin/'
+    | '/_app/benefits/'
+    | '/_app/claims/'
+    | '/_app/trip-proposals/'
+    | '/_app/admin/benefit-categories/create'
+    | '/_app/admin/benefits/create'
+    | '/_app/admin/benefit-categories/'
+    | '/_app/admin/benefits/'
+    | '/_app/admin/benefit-categories/$categoryId/edit'
+    | '/_app/admin/benefits/$benefitId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   AboutRoute: typeof AboutRoute
-  DashboardRoute: typeof DashboardRoute
-  ClaimsClaimIdRoute: typeof ClaimsClaimIdRoute
-  ClaimsCreateRoute: typeof ClaimsCreateRoute
+  LoginRoute: typeof LoginRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
-  ClaimsIndexRoute: typeof ClaimsIndexRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
 }
@@ -169,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -176,33 +324,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/claims/': {
-      id: '/claims/'
-      path: '/claims'
-      fullPath: '/claims/'
-      preLoaderRoute: typeof ClaimsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/claims/$claimId': {
-      id: '/claims/$claimId'
-      path: '/claims/$claimId'
-      fullPath: '/claims/$claimId'
-      preLoaderRoute: typeof ClaimsClaimIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/claims/create': {
-      id: '/claims/create'
-      path: '/claims/create'
-      fullPath: '/claims/create'
-      preLoaderRoute: typeof ClaimsCreateRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/hello': {
+      id: '/_app/hello'
+      path: '/hello'
+      fullPath: '/hello'
+      preLoaderRoute: typeof AppHelloRouteImport
+      parentRoute: typeof AppRoute
     }
     '/demo/store': {
       id: '/demo/store'
@@ -218,6 +359,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoTanstackQueryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/benefits/': {
+      id: '/_app/benefits/'
+      path: '/benefits'
+      fullPath: '/benefits/'
+      preLoaderRoute: typeof AppBenefitsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/claims/': {
+      id: '/_app/claims/'
+      path: '/claims'
+      fullPath: '/claims/'
+      preLoaderRoute: typeof AppClaimsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/claims/$claimId': {
+      id: '/_app/claims/$claimId'
+      path: '/claims/$claimId'
+      fullPath: '/claims/$claimId'
+      preLoaderRoute: typeof AppClaimsClaimIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/claims/create': {
+      id: '/_app/claims/create'
+      path: '/claims/create'
+      fullPath: '/claims/create'
+      preLoaderRoute: typeof AppClaimsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trip-proposals/': {
+      id: '/_app/trip-proposals/'
+      path: '/trip-proposals'
+      fullPath: '/trip-proposals/'
+      preLoaderRoute: typeof AppTripProposalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/demo/form/address': {
       id: '/demo/form/address'
       path: '/demo/form/address'
@@ -232,18 +415,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoFormSimpleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/admin/benefit-categories/': {
+      id: '/_app/admin/benefit-categories/'
+      path: '/admin/benefit-categories'
+      fullPath: '/admin/benefit-categories/'
+      preLoaderRoute: typeof AppAdminBenefitCategoriesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/benefit-categories/create': {
+      id: '/_app/admin/benefit-categories/create'
+      path: '/admin/benefit-categories/create'
+      fullPath: '/admin/benefit-categories/create'
+      preLoaderRoute: typeof AppAdminBenefitCategoriesCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/benefits/': {
+      id: '/_app/admin/benefits/'
+      path: '/admin/benefits'
+      fullPath: '/admin/benefits/'
+      preLoaderRoute: typeof AppAdminBenefitsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/benefits/create': {
+      id: '/_app/admin/benefits/create'
+      path: '/admin/benefits/create'
+      fullPath: '/admin/benefits/create'
+      preLoaderRoute: typeof AppAdminBenefitsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/benefit-categories/$categoryId/edit': {
+      id: '/_app/admin/benefit-categories/$categoryId/edit'
+      path: '/admin/benefit-categories/$categoryId/edit'
+      fullPath: '/admin/benefit-categories/$categoryId/edit'
+      preLoaderRoute: typeof AppAdminBenefitCategoriesCategoryIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/benefits/$benefitId/edit': {
+      id: '/_app/admin/benefits/$benefitId/edit'
+      path: '/admin/benefits/$benefitId/edit'
+      fullPath: '/admin/benefits/$benefitId/edit'
+      preLoaderRoute: typeof AppAdminBenefitsBenefitIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppHelloRoute: typeof AppHelloRoute
+  AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRoute
+  AppClaimsCreateRoute: typeof AppClaimsCreateRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+  AppBenefitsIndexRoute: typeof AppBenefitsIndexRoute
+  AppClaimsIndexRoute: typeof AppClaimsIndexRoute
+  AppTripProposalsIndexRoute: typeof AppTripProposalsIndexRoute
+  AppAdminBenefitCategoriesCreateRoute: typeof AppAdminBenefitCategoriesCreateRoute
+  AppAdminBenefitsCreateRoute: typeof AppAdminBenefitsCreateRoute
+  AppAdminBenefitCategoriesIndexRoute: typeof AppAdminBenefitCategoriesIndexRoute
+  AppAdminBenefitsIndexRoute: typeof AppAdminBenefitsIndexRoute
+  AppAdminBenefitCategoriesCategoryIdEditRoute: typeof AppAdminBenefitCategoriesCategoryIdEditRoute
+  AppAdminBenefitsBenefitIdEditRoute: typeof AppAdminBenefitsBenefitIdEditRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+  AppHelloRoute: AppHelloRoute,
+  AppClaimsClaimIdRoute: AppClaimsClaimIdRoute,
+  AppClaimsCreateRoute: AppClaimsCreateRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+  AppBenefitsIndexRoute: AppBenefitsIndexRoute,
+  AppClaimsIndexRoute: AppClaimsIndexRoute,
+  AppTripProposalsIndexRoute: AppTripProposalsIndexRoute,
+  AppAdminBenefitCategoriesCreateRoute: AppAdminBenefitCategoriesCreateRoute,
+  AppAdminBenefitsCreateRoute: AppAdminBenefitsCreateRoute,
+  AppAdminBenefitCategoriesIndexRoute: AppAdminBenefitCategoriesIndexRoute,
+  AppAdminBenefitsIndexRoute: AppAdminBenefitsIndexRoute,
+  AppAdminBenefitCategoriesCategoryIdEditRoute:
+    AppAdminBenefitCategoriesCategoryIdEditRoute,
+  AppAdminBenefitsBenefitIdEditRoute: AppAdminBenefitsBenefitIdEditRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   AboutRoute: AboutRoute,
-  DashboardRoute: DashboardRoute,
-  ClaimsClaimIdRoute: ClaimsClaimIdRoute,
-  ClaimsCreateRoute: ClaimsCreateRoute,
+  LoginRoute: LoginRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
-  ClaimsIndexRoute: ClaimsIndexRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
 }

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daftar Klaim Karyawan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500&display=swap">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1A2433; --muted:#5E6B7C; --line:#D9DFE6;
+  --accent:#2F4B8F; --accent-ink:#FFFFFF; --row:#F6F8FA;
+  --ok-bg:#DDF3E6; --ok:#17663A; --wait-bg:#FFF0CC; --wait:#7A5200; --no-bg:#FBE1E0; --no:#9A1F1B; --paid-bg:#E0E7F7; --paid:#2F4B8F;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --serif:"IBM Plex Serif",Georgia,serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F151E; --surface:#18202C; --ink:#E7ECF2; --muted:#93A0B1; --line:#2A3544; --accent:#8FA8E8; --accent-ink:#0F151E; --row:#1D2634;
+  --ok-bg:#16382A; --ok:#7FD6A1; --wait-bg:#44360F; --wait:#F2CC74; --no-bg:#4A1F1E; --no:#F2A09C; --paid-bg:#22305A; --paid:#A9BDF3;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F151E; --surface:#18202C; --ink:#E7ECF2; --muted:#93A0B1; --line:#2A3544; --accent:#8FA8E8; --accent-ink:#0F151E; --row:#1D2634;
+  --ok-bg:#16382A; --ok:#7FD6A1; --wait-bg:#44360F; --wait:#F2CC74; --no-bg:#4A1F1E; --no:#F2A09C; --paid-bg:#22305A; --paid:#A9BDF3; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--sans)}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 60px}
+h1{font:500 26px/1.2 var(--serif);margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.stat b{display:block;font:600 20px/1.3 var(--sans);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.bar input,.bar select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:40px}
+.bar input{flex:1 1 220px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-left:auto}
+.seg button{font:inherit;color:var(--muted);background:var(--surface);border:0;padding:8px 14px;min-height:40px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-weight:600;font-size:13px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover,tbody tr:focus-visible{background:var(--row)}
+tbody tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.who b{display:block;font-weight:500}
+.who small,.muted{color:var(--muted);font-size:13px}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:500;white-space:nowrap}
+.s-pending{background:var(--wait-bg);color:var(--wait)}
+.s-approved{background:var(--ok-bg);color:var(--ok)}
+.s-rejected{background:var(--no-bg);color:var(--no)}
+.s-paid{background:var(--paid-bg);color:var(--paid)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:8px;text-align:left;font:inherit;color:inherit;width:100%}
+.card:hover{border-color:var(--accent)}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card .amt{font:600 20px/1.2 var(--sans);font-variant-numeric:tabular-nums}
+.card p{margin:0;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:0;width:min(560px,calc(100% - 24px));max-height:calc(100% - 40px)}
+dialog::backdrop{background:rgba(10,15,22,.55)}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+.dh h2{font:500 20px/1.3 var(--serif);margin:0 0 6px}
+.x{font:inherit;background:none;border:1px solid var(--line);color:var(--ink);border-radius:6px;min-height:36px;padding:4px 12px;cursor:pointer}
+.db{padding:6px 22px 20px}
+.big{font:600 30px/1.2 var(--sans);font-variant-numeric:tabular-nums;padding:14px 0 6px}
+dl{margin:0}
+.r{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.r:last-child{border-bottom:0}
+dt{color:var(--muted)} dd{margin:0;word-break:break-word}
+.file{display:inline-block;margin-top:2px;color:var(--accent)}
+@media (max-width:480px){.r{grid-template-columns:1fr;gap:2px}.seg{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Daftar klaim karyawan</h1>
+  <p class="sub">Pilih satu klaim untuk melihat detail lengkapnya.</p>
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Cari nama, jenis, atau deskripsi" aria-label="Cari klaim">
+    <select id="fs" aria-label="Filter status"><option value="">Semua status</option></select>
+    <select id="ft" aria-label="Filter jenis klaim"><option value="">Semua jenis</option></select>
+    <div class="seg" role="group" aria-label="Tampilan">
+      <button id="vt" aria-pressed="true">Tabel</button>
+      <button id="vc" aria-pressed="false">Kartu</button>
+    </div>
+  </div>
+  <div id="out"></div>
+</div>
+<dialog id="dlg" aria-labelledby="dt"></dialog>
+
+<script>
+/* Bentuk data mengikuti ClaimResponse. Ganti array ini dengan data dari API Anda. */
+const claims = [
+  {id:"CLM-2026-0142",claimType:"Perjalanan dinas",description:"Tiket pesawat Jakarta–Surabaya untuk kunjungan klien PT Maju Bersama",transactionDate:"2026-10-21",amount:1850000,submittedAt:"2026-10-23T09:14:00",status:"Pending",employeeId:"EMP-1021",employeeName:"Rina Kusuma",tripProposalDescription:"Kunjungan klien Q4 – Surabaya",filePath:"/uploads/clm-0142-tiket.pdf"},
+  {id:"CLM-2026-0141",claimType:"Kesehatan",description:"Rawat jalan dan obat resep dokter umum",transactionDate:"2026-10-19",amount:675000,submittedAt:"2026-10-20T14:02:00",status:"Approved",employeeId:"EMP-0874",employeeName:"Budi Santoso",benefitName:"Tunjangan Rawat Jalan",filePath:"/uploads/clm-0141-kwitansi.jpg"},
+  {id:"CLM-2026-0139",claimType:"Transportasi",description:"Taksi daring ke lokasi pelatihan",transactionDate:"2026-10-15",amount:248000,submittedAt:"2026-10-16T08:40:00",status:"Paid",employeeId:"EMP-1190",employeeName:"Dewi Anggraini"},
+  {id:"CLM-2026-0137",claimType:"Perjalanan dinas",description:"Hotel dua malam selama konferensi regional",transactionDate:"2026-10-09",amount:3400000,submittedAt:"2026-10-12T16:25:00",status:"Rejected",employeeId:"EMP-0553",employeeName:"Agus Pratama",tripProposalDescription:"Konferensi Teknologi Regional – Bandung",filePath:"/uploads/clm-0137-invoice.pdf"},
+  {id:"CLM-2026-0135",claimType:"Kacamata",description:"Penggantian lensa dan frame kacamata",transactionDate:"2026-10-05",amount:1250000,submittedAt:"2026-10-07T10:11:00",status:"Approved",employeeId:"EMP-0874",employeeName:"Budi Santoso",benefitName:"Tunjangan Kacamata",filePath:"/uploads/clm-0135-nota.jpg"},
+  {id:"CLM-2026-0131",claimType:"Makan dinas",description:"Makan siang bersama tim vendor",transactionDate:"2026-09-30",amount:520000,submittedAt:"2026-10-01T11:30:00",status:"Paid",employeeId:"EMP-1021",employeeName:"Rina Kusuma"},
+  {id:"CLM-2026-0128",claimType:"Kesehatan",description:"Pemeriksaan laboratorium tahunan",transactionDate:"2026-09-26",amount:890000,submittedAt:"2026-09-28T13:45:00",status:"Pending",employeeId:"EMP-1301",benefitName:"Tunjangan Medical Check-up"}
+];
+
+const rp = n => new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(n);
+const d1 = v => new Intl.DateTimeFormat("id-ID",{day:"numeric",month:"short",year:"numeric"}).format(new Date(v));
+const d2 = v => new Intl.DateTimeFormat("id-ID",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(v));
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const label = {pending:"Menunggu",approved:"Disetujui",rejected:"Ditolak",paid:"Dibayar"};
+const sk = s => String(s).toLowerCase();
+const badge = s => `<span class="badge s-${sk(s)}">${esc(label[sk(s)]||s)}</span>`;
+const name = c => c.employeeName || "Tanpa nama";
+
+let view = "table";
+const $ = id => document.getElementById(id);
+const fill = (el, vals) => vals.forEach(v => el.insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(label[sk(v)]||v)}</option>`));
+fill($("fs"), [...new Set(claims.map(c=>c.status))]);
+fill($("ft"), [...new Set(claims.map(c=>c.claimType))]);
+
+function filtered(){
+  const q = $("q").value.trim().toLowerCase(), s = $("fs").value, t = $("ft").value;
+  return claims.filter(c =>
+    (!s || c.status===s) && (!t || c.claimType===t) &&
+    (!q || [name(c),c.claimType,c.description,c.id,c.benefitName].join(" ").toLowerCase().includes(q)));
+}
+
+function renderStats(list){
+  const sum = f => list.filter(f).reduce((a,c)=>a+c.amount,0);
+  const cnt = k => list.filter(c=>sk(c.status)===k).length;
+  $("stats").innerHTML = [
+    [list.length+" klaim","Ditampilkan"],
+    [rp(sum(()=>true)),"Total nilai"],
+    [cnt("pending")+" klaim","Menunggu keputusan"],
+    [rp(sum(c=>sk(c.status)==="approved")),"Disetujui, belum dibayar"]
+  ].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+}
+
+function render(){
+  const list = filtered();
+  renderStats(list);
+  const out = $("out");
+  if(!list.length){ out.innerHTML = `<div class="scroll"><div class="empty">Tidak ada klaim yang cocok. Ubah kata kunci atau reset filter.</div></div>`; return; }
+  if(view==="table"){
+    out.innerHTML = `<div class="scroll"><table>
+      <thead><tr><th>Karyawan</th><th>Jenis klaim</th><th>Tanggal transaksi</th><th>Diajukan</th><th class="num">Jumlah</th><th>Status</th></tr></thead>
+      <tbody>${list.map(c=>`<tr tabindex="0" data-id="${esc(c.id)}">
+        <td class="who"><b>${esc(name(c))}</b><small>${esc(c.employeeId)}</small></td>
+        <td>${esc(c.claimType)}<br><span class="muted">${esc(c.id)}</span></td>
+        <td>${d1(c.transactionDate)}</td><td>${d1(c.submittedAt)}</td>
+        <td class="num">${rp(c.amount)}</td><td>${badge(c.status)}</td></tr>`).join("")}</tbody></table></div>`;
+  } else {
+    out.innerHTML = `<div class="grid">${list.map(c=>`<button class="card" data-id="${esc(c.id)}">
+      <div class="top"><div><b>${esc(c.claimType)}</b><div class="muted">${esc(name(c))}</div></div>${badge(c.status)}</div>
+      <div class="amt">${rp(c.amount)}</div>
+      <p>${esc(c.description)}</p>
+      <div class="muted">Transaksi ${d1(c.transactionDate)}</div></button>`).join("")}</div>`;
+  }
+}
+
+function row(k,v){ return v ? `<div class="r"><dt>${k}</dt><dd>${v}</dd></div>` : ""; }
+function open(id){
+  const c = claims.find(x=>x.id===id); if(!c) return;
+  const file = c.filePath ? `<a class="file" href="${esc(c.filePath)}" target="_blank" rel="noopener">${esc(c.filePath.split("/").pop())}</a>` : "";
+  $("dlg").innerHTML = `
+    <div class="dh"><div><h2 id="dt">${esc(c.claimType)}</h2>${badge(c.status)} <span class="muted">${esc(c.id)}</span></div>
+      <button class="x" id="cx">Tutup</button></div>
+    <div class="db"><div class="big">${rp(c.amount)}</div><dl>
+      ${row("Deskripsi",esc(c.description))}
+      ${row("Karyawan",esc(name(c))+` <span class="muted">(${esc(c.employeeId)})</span>`)}
+      ${row("Tanggal transaksi",d1(c.transactionDate))}
+      ${row("Diajukan pada",d2(c.submittedAt))}
+      ${row("Nama benefit",esc(c.benefitName))}
+      ${row("Proposal perjalanan",esc(c.tripProposalDescription))}
+      ${row("Lampiran",file)}
+    </dl></div>`;
+  $("cx").onclick = () => $("dlg").close();
+  $("dlg").showModal();
+}
+
+$("out").addEventListener("click", e => { const t = e.target.closest("[data-id]"); if(t) open(t.dataset.id); });
+$("out").addEventListener("keydown", e => { if(e.key==="Enter"){ const t = e.target.closest("tr[data-id]"); if(t) open(t.dataset.id); } });
+$("dlg").addEventListener("click", e => { if(e.target===$("dlg")) $("dlg").close(); });
+["q","fs","ft"].forEach(i => $(i).addEventListener("input", render));
+function setView(v){ view=v; $("vt").setAttribute("aria-pressed",v==="table"); $("vc").setAttribute("aria-pressed",v==="card"); render(); }
+$("vt").onclick = () => setView("table");
+$("vc").onclick = () => setView("card");
+render();
+</script>
+</body>
+</html>
