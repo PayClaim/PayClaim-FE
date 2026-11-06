@@ -1,3 +1,4 @@
+import { useGetAllCategoriesQuery } from '#/features/benefit-categories/queries/queries'
 import { createBenefitForm } from '#/features/benefits/forms/forms'
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -6,19 +7,22 @@ export const Route = createFileRoute('/_app/admin/benefits/create')({
 })
 
 function RouteComponent() {
+  const { data: categories } = useGetAllCategoriesQuery()
+
   const form = createBenefitForm()
+
   const periodTypeOption = [
     { label: 'Monthly', value: 'Monthly' },
-    { label: 'Annual', value: 'Annual' },
+    { label: 'Yearly', value: 'Yearly' },
     { label: 'One Time', value: 'OneTime' },
   ]
-  const categoryOption = [
-    { label: 'Category 1', value: 'id 1' },
-    { label: 'Category 2', value: 'id 2' },
-    { label: 'Category 3', value: 'id 3' },
-  ]
+
+  const categoryOptions = categories.map((c) => {
+    return { label: c.name, value: c.id }
+  })
+
   return (
-    <main className="bg-card max-w-[800px] rounded-2xl p-4 mx-auto">
+    <main className="bg-card max-w-200 rounded-2xl p-4 mx-auto">
       <h1 className="text-3xl font-bold text-center mb-8">New Benefit</h1>
 
       <div>
@@ -44,7 +48,10 @@ function RouteComponent() {
             </form.AppField>
             <form.AppField name="categoryId">
               {(field) => (
-                <field.FormSelect values={categoryOption} label="Period Type" />
+                <field.FormSelectNumber
+                  values={categoryOptions}
+                  label="Category"
+                />
               )}
             </form.AppField>
           </div>

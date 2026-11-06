@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { data } from './dummy'
 
-export const useGetAllBenefitsQuery = () =>
+export const useGetAllDepartmentsQuery = () =>
   useQuery({
-    queryKey: ['claims'],
+    queryKey: ['departments'],
     queryFn: async () => {
       await setTimeout(() => {}, 1000)
       return Promise.resolve(data)
@@ -11,9 +11,9 @@ export const useGetAllBenefitsQuery = () =>
     initialData: [],
   })
 
-export const useGetBenefitQuery = (id: string) =>
+export const useGetDepartmentQuery = (id: string) =>
   useQuery({
-    queryKey: ['claims', id],
+    queryKey: ['departments', id],
     queryFn: async () => {
       await setTimeout(() => {}, 1000)
       return Promise.resolve(data.find((d) => d.id === id))

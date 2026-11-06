@@ -15,7 +15,7 @@ export interface BenefitResponse {
   name: string
   description: string
   periodType: string // enum
-  categoryId: string
+  categoryId: number
   categoryName: string
 }
 
@@ -23,7 +23,14 @@ export interface UpdateBenefitRequest {
   name: string
   description: string
   periodType: string
-  categoryId: string
+  categoryId: number
+}
+
+export interface CreateBenefitRequest {
+  name: string
+  description: string
+  periodType: string
+  categoryId: number
 }
 /*
     public Guid EmployeeBenefitId { get; set; }

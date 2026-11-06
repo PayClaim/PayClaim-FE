@@ -2,23 +2,23 @@ import type { BenefitCategoryResponse } from '#/types/benefitCategories'
 
 export const data: BenefitCategoryResponse[] = [
   {
-    id: 'ben-001',
+    id: 0,
     name: 'Kesehatan',
   },
   {
-    id: 'ben-002',
+    id: 1,
     name: 'Operasional',
   },
   {
-    id: 'ben-003',
+    id: 2,
     name: 'Operasional',
   },
   {
-    id: 'ben-004',
+    id: 3,
     name: 'Kompensasi',
   },
   {
-    id: 'ben-005',
+    id: 4,
     name: 'Pengembangan Diri',
   },
 ]

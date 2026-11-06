@@ -1,5 +1,4 @@
 import { Button } from '#/components/ui/button'
-import { useGetAllBenefitsQuery } from '#/features/benefits/queries/getAllClaims'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
@@ -19,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import type { BenefitResponse } from '#/types/benefits.type'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { Pencil, Trash } from 'lucide-react'
 import {

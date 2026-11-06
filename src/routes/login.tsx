@@ -8,13 +8,13 @@ export const Route = createFileRoute('/login')({
 
 function RouteComponent() {
   const navigate = useNavigate()
-  // const q = Route.useSearch()
+  const q = Route.useSearch()
   const { logout, login, user } = useAuth()
 
   const clickLogin = () => {
     login()
     navigate({
-      to: '/dashboard',
+      to: q.redirect ?? '/dashboard',
     })
   }
 

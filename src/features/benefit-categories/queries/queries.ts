@@ -1,17 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { data } from './dummy'
+import { api } from '#/lib/api-client'
+import type { BenefitCategoryResponse } from '#/types/benefitCategories'
 
 export const useGetAllCategoriesQuery = () =>
   useQuery({
     queryKey: ['benefit-categories'],
-    queryFn: async () => {
-      await setTimeout(() => {}, 1000)
-      return Promise.resolve(data)
+    queryFn: () => {
+      return api.get<BenefitCategoryResponse[]>('/benefitCategories')
     },
     initialData: [],
   })
 
-export const useGetCategoryQuery = (id: string) =>
+export const useGetCategoryQuery = (id: number) =>
   useQuery({
     queryKey: ['benefit-categories', id],
     queryFn: async () => {
