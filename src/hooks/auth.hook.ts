@@ -1,5 +1,5 @@
 import type { User } from '#/types/user.type'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
 
 const u: User = {
@@ -14,6 +14,11 @@ export const getAuthUser = () => {
   if (typeof window === 'undefined') return null
   const raw = localStorage.getItem('user_session')
   return raw ? (JSON.parse(raw) as User) : null
+}
+
+export const getToken = () => {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('token')
 }
 
 export const authQueryOption = {

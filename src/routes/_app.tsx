@@ -1,18 +1,24 @@
 import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
+import { getCurrentUser } from '#/features/auth/queries/queries'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app')({
+  ssr: false,
   component: RouteComponent,
-  beforeLoad: ({ context, location }) => {
-    if (!context.auth)
+  beforeLoad: async ({ context, location }) => {
+    try {
+      const user = await context.queryClient.query(getCurrentUser())
+      return {
+        user,
+      }
+    } catch (err) {
       throw redirect({
         to: '/login',
-        search: { redirect: location.href },
+        search: {
+          redirect: location.href,
+        },
       })
-
-    return {
-      user: context.auth,
     }
   },
 })

@@ -4,13 +4,19 @@ export interface LoginBody {
 }
 
 export interface LoginResponse {
-  token: string
-  tokenType: string
-  expiresAt: Date
-  user: UserProfile
+  success: boolean
+  statusCode: number
+  message: string
+  data: {
+    token: string
+    tokenType: string
+    expiresAt: string
+    user: UserProfile
+  }
+  errors: null
 }
 
-interface UserProfile {
+export interface UserProfile {
   accountId: string
   employeeId: string
   employeeNumber: string

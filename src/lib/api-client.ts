@@ -1,3 +1,5 @@
+import { storage } from './storage'
+
 // lib/api-client.ts
 export class ApiError extends Error {
   constructor(
@@ -24,9 +26,15 @@ export async function api<T>(
     ? '?' + new URLSearchParams(params as Record<string, string>)
     : ''
 
+  const token = storage.get('token')
   const res = await fetch(`${BASE_URL}${path}${qs}`, {
     // credentials: 'include', // kirim cookie sesi HttpOnly
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
     body: body === undefined ? undefined : JSON.stringify(body),
     ...init,
   })

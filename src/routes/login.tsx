@@ -1,7 +1,5 @@
-import { Button } from '#/components/ui/button'
-import { useAuth, useAuthAction } from '#/hooks/auth.hook'
-import { login, logout } from '#/lib/auth'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { loginForm } from '#/features/auth/forms/forms'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -13,27 +11,34 @@ export const Route = createFileRoute('/login')({
 })
 
 function RouteComponent() {
-  const navigate = useNavigate()
-  const q = Route.useSearch()
-  const { logout, login } = useAuthAction()
-
-  const clickLogin = () => {
-    login()
-    navigate({
-      to: q.redirect ? q.redirect : '/dashboard',
-    })
-  }
-
-  const clickHandle3 = () => {
-    console.log('C')
-    logout()
-  }
+  const form = loginForm()
 
   return (
     <div>
       Wellcome to login
-      <Button onClick={clickLogin}>Login</Button>
-      <Button onClick={clickHandle3}>logout</Button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          form.handleSubmit()
+        }}
+      >
+        <form.AppField name="username">
+          {(field) => (
+            <field.TextField placeholder="Username" label="Username" />
+          )}
+        </form.AppField>
+
+        <form.AppField name="password">
+          {(field) => (
+            <field.TextField placeholder="Password" label="Password" />
+          )}
+        </form.AppField>
+
+        <form.AppForm>
+          <form.FormButton label="submit" />
+        </form.AppForm>
+      </form>
     </div>
   )
 }

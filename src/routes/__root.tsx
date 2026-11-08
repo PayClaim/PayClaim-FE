@@ -13,7 +13,7 @@ import StoreDevtools from '../lib/demo-store-devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
-import { getAuthUser } from '#/hooks/auth.hook'
+import { Toaster } from '#/components/ui/sonner'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -43,13 +43,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
-  beforeLoad: () => {
-    const auth = getAuthUser()
-
-    return {
-      auth,
-    }
-  },
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -61,6 +54,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
         {children}
+        <Toaster />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
