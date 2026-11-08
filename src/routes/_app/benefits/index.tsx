@@ -8,6 +8,9 @@ export const Route = createFileRoute('/_app/benefits/')({
 function RouteComponent() {
   return (
     <main className="bg-card p-4 rounded-2xl">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold">Benefit</h1>
+      </div>
       <div className="mb-8 flex justify-between">
         <h1 className="text-3xl font-bold">My Benefit</h1>
         <Link to="/claims/create">

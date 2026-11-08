@@ -4,12 +4,12 @@ export const createBenefitSchema = z.object({
   name: z.string().min(5),
   description: z.string().min(5),
   periodType: z.string().min(1, 'Period type is required'),
-  categoryId: z.number(),
+  categoryId: z.number().min(1, 'Category is required'),
 })
 
 export const updateBenefitSchema = z.object({
   name: z.string().min(5),
   description: z.string().min(5),
   periodType: z.string().min(1, 'Period type is required'),
-  categoryId: z.number(),
+  categoryId: z.number().min(1, 'Category is required'),
 })

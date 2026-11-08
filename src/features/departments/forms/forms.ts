@@ -1,37 +1,83 @@
 import { useAppForm } from '#/hooks/demo.form'
-import type { UpdateBenefitCategory } from '#/types/benefitCategories'
 import type { UpdateDepartmentRequest } from '#/types/department.type'
+import { useNavigate } from '@tanstack/react-router'
+import {
+  useCreateDepartmentMutation,
+  useDeleteDepartmentMutation,
+  useUpdateDepartmentMutation,
+} from '../queries/queries'
 import { createDepartmentSchema, updateDepartmentSchema } from './schemas'
 
-export const createCategoryForm = () => {
-  const today = new Date()
-  today.setHours(0)
-
+export const createDepartmentForm = () => {
+  const mutation = useCreateDepartmentMutation()
+  const navigate = useNavigate()
   return useAppForm({
     defaultValues: {
       id: '',
       name: '',
-      parent: '',
+      parentDeptId: null as string | null,
     },
     validators: {
       onBlur: createDepartmentSchema,
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
-      console.log(value)
+      // const parentId = value.parentDeptId === '' ? null : value.parentDeptId
+      // const submitted = {
+      //   id: value.id,
+      //   name: value.name,
+      //   parenDeptId: parentId,
+      // }
+      // // Do something with form data
+      try {
+        mutation.mutate(value)
+        await navigate({
+          to: '/admin/departments',
+        })
+      } catch (err) {
+        console.error(err)
+      }
     },
   })
 }
 
-export const editCategoryForm = (initialValue: UpdateDepartmentRequest) => {
+export const editDepartmentForm = (
+  id: string,
+  initialValue: UpdateDepartmentRequest,
+) => {
+  const mutation = useUpdateDepartmentMutation(id)
+  const navigate = useNavigate()
   return useAppForm({
     defaultValues: initialValue,
     validators: {
       onBlur: updateDepartmentSchema,
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
-      console.log(value)
+      try {
+        mutation.mutate(value)
+        await navigate({
+          to: '/admin/departments',
+        })
+      } catch (err) {
+        console.error(err)
+      }
+    },
+  })
+}
+
+export const deleteDepartmentForm = (id: string) => {
+  const mutation = useDeleteDepartmentMutation()
+  const navigate = useNavigate()
+  return useAppForm({
+    defaultValues: { id: id },
+    onSubmit: async ({ value }) => {
+      try {
+        mutation.mutate(value.id)
+        await navigate({
+          to: '/admin/departments',
+        })
+      } catch (err) {
+        console.error(err)
+      }
     },
   })
 }

@@ -27,8 +27,8 @@ export function Sidebar({
             <Link
               key={l.to}
               to={l.to}
-              className="block hover:bg-(--hover-shadow) rounded-2xl w-full p-4"
-              activeProps={{ className: 'bg-(--hover-shadow)' }}
+              className="block my-1 font-bold text-sm hover:bg-(--hover-shadow) rounded-md w-full p-4"
+              activeProps={{ className: 'bg-(--hover-shadow) text-primary' }}
             >
               {l.label}
             </Link>

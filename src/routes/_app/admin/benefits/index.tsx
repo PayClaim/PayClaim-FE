@@ -62,15 +62,15 @@ function RouteComponent() {
   if (isFetching) return <div>Loading...</div>
 
   return (
-    <main className="bg-card p-8 rounded-2xl">
-      <div className="mb-8 flex justify-between">
-        <h1 className="text-3xl font-bold">Benefits</h1>
+    <main>
+      <div className="mb-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Benefit List</h1>
         <Link to="/admin/benefits/create">
           <Button className="bg-primary">New Benefit</Button>
         </Link>
       </div>
-      <div className=" border-t border-border">
-        <div className="flex justify-start items-center gap-8 ">
+      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
+        <div className="flex justify-start items-center gap-8 border-b border-border">
           <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
           <FilterSelect
             val={periodFilter}
@@ -131,7 +131,9 @@ function BenefitTable({ benefits }: { benefits: BenefitResponse[] }) {
             <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
               {b.name}
             </TableCell>
-            <TableCell className="px-6 py-4">{b.description}</TableCell>
+            <TableCell className="px-6 py-4 whitespace-normal wrap-break-word">
+              {b.description}
+            </TableCell>
             <TableCell className="px-6 py-4">{b.periodType}</TableCell>
             <TableCell className="px-6 py-4">{b.categoryName}</TableCell>
             <TableCell className="px-6 py-4 flex gap-2">

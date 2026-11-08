@@ -28,8 +28,7 @@ export function TextArea({
         onBlur={field.handleBlur}
         rows={rows}
         onChange={(e) => field.handleChange(e.target.value)}
-        className="bg-input"
-        aria-invalid={errors.length > 0}
+        className="bg-input border-border border"
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>

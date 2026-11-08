@@ -1,5 +1,6 @@
 import type { User } from '#/types/user.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouteContext } from '@tanstack/react-router'
 
 const u: User = {
   id: 'a',
@@ -8,6 +9,7 @@ const u: User = {
   role: 'Employee',
 }
 
+// api call user profile (/auth/me) => return User
 export const getAuthUser = () => {
   if (typeof window === 'undefined') return null
   const raw = localStorage.getItem('user_session')
@@ -22,7 +24,11 @@ export const authQueryOption = {
 }
 
 const loginApi = async () => {
-  await new Promise((r) => setTimeout(r, 1000))
+  // try {
+  //   api.post<LoginResponse>("/api/auth/login")
+  // } catch (err) {
+  //   console.error(err)
+  // }
   localStorage.setItem('user_session', JSON.stringify(u))
   return getAuthUser()
 }
@@ -33,35 +39,35 @@ const logoutApi = async () => {
 }
 
 export function useAuth() {
+  const { user } = useRouteContext({ from: '/_app' })
+
+  return {
+    user,
+  }
+}
+
+export function useAuthAction() {
   const queryClient = useQueryClient()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['authUser'],
-    queryFn: getAuthUser,
-    staleTime: Infinity,
-    retry: false,
-  })
-
   const loginMutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: (data) => {
-      queryClient.setQueryData(['authUser'], data)
+    onSuccess: (d) => {
+      queryClient.setQueryData(['authUser'], d)
     },
   })
 
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.setQueryData(['authUser'], null)
       //   queryClient.clear()
     },
   })
 
   return {
-    user: data,
-    isLoading: isLoading,
     isLoggingIn: loginMutation.isPending,
     login: loginMutation.mutate,
     logout: logoutMutation.mutate,
   }
 }
+
+export type AuthContext = ReturnType<typeof useAuth>

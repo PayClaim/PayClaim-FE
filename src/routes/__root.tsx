@@ -13,6 +13,7 @@ import StoreDevtools from '../lib/demo-store-devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
+import { getAuthUser } from '#/hooks/auth.hook'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -42,6 +43,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
+  beforeLoad: () => {
+    const auth = getAuthUser()
+
+    return {
+      auth,
+    }
+  },
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {

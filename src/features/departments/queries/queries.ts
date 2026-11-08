@@ -1,26 +1,57 @@
-import { useQuery } from '@tanstack/react-query'
-import { data } from './dummy'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '#/lib/api-client'
+import type {
+  CreateDepartmentRequest,
+  DepartmentResponse,
+  UpdateDepartmentRequest,
+} from '#/types/department.type'
 
 export const useGetAllDepartmentsQuery = () =>
   useQuery({
     queryKey: ['departments'],
-    queryFn: async () => {
-      await setTimeout(() => {}, 1000)
-      return Promise.resolve(data)
-    },
+    queryFn: async () => api.get<DepartmentResponse[]>('/departments'),
     initialData: [],
   })
 
 export const useGetDepartmentQuery = (id: string) =>
   useQuery({
     queryKey: ['departments', id],
-    queryFn: async () => {
-      await setTimeout(() => {}, 1000)
-      return Promise.resolve(data.find((d) => d.id === id))
-    },
+    queryFn: async () => api.get<DepartmentResponse>(`/departments/${id}`),
     initialData: null,
   })
 
+export const useCreateDepartmentMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateDepartmentRequest) => {
+      return api.post('/departments', body)
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['departments'] }),
+  })
+}
+
+export const useUpdateDepartmentMutation = (id: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: UpdateDepartmentRequest) => {
+      return api.put(`/departments/${id}`, body)
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['departments'] }),
+  })
+}
+
+export const useDeleteDepartmentMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => {
+      return api.delete(`/departments/${id}`)
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['departments'] }),
+  })
+}
 /**
     public Guid Id
     public ClaimType ClaimType

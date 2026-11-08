@@ -3,22 +3,14 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
-import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { ButtonGroup } from '#/components/ui/button-group'
 import { Pencil, Trash } from 'lucide-react'
 import {
   Dialog,
@@ -32,6 +24,8 @@ import {
 } from '#/components/ui/dialog'
 import { useGetAllCategoriesQuery } from '#/features/benefit-categories/queries/queries'
 import type { BenefitCategoryResponse } from '#/types/benefitCategories'
+import { SearchFilter } from '#/components/SearchFilter'
+import { deleteCategoryForm } from '#/features/benefit-categories/forms/forms'
 
 export const Route = createFileRoute('/_app/admin/benefit-categories/')({
   component: RouteComponent,
@@ -39,37 +33,31 @@ export const Route = createFileRoute('/_app/admin/benefit-categories/')({
 
 function RouteComponent() {
   const { data: categories, isError, isFetching } = useGetAllCategoriesQuery()
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [monthFilter, setMonthFilter] = useState<string>('')
   const [searchFilter, setSearchFilter] = useState<string>('')
+
+  const displayData = categories.filter((c) => {
+    return !searchFilter || c.name.toLowerCase().includes(searchFilter)
+  })
 
   if (isError) return <div>Terjadi Error</div>
   if (isFetching) return <div>Loading...</div>
 
   return (
-    <main className="bg-card p-8 rounded-2xl">
-      <div className="mb-8 flex justify-between">
-        <h1 className="text-3xl font-bold">Benefits Categories</h1>
+    <main>
+      <div className="mb-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Benefit Categories</h1>
         <Link to="/admin/benefit-categories/create">
           <Button className="bg-primary">New Category</Button>
         </Link>
       </div>
-      <div className=" border-t border-border">
-        <FilterSection
-          status={statusFilter}
-          search={searchFilter}
-          month={monthFilter}
-          setMonth={setMonthFilter}
-          setSearch={setSearchFilter}
-          setStatus={setStatusFilter}
-        />
+
+      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
+        <div className="flex justify-start items-center gap-8 ">
+          <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
+        </div>
 
         {/* Table */}
-        {categories.length != 0 ? (
-          <BenefitTable categories={categories} />
-        ) : (
-          <p>You have 0 Claims</p>
-        )}
+        <BenefitTable categories={displayData} />
       </div>
     </main>
   )
@@ -116,14 +104,15 @@ function BenefitTable({
                 onClick={() =>
                   navigate({
                     to: '/admin/benefit-categories/$categoryId/edit',
-                    params: { categoryId: c.id },
+                    params: { categoryId: String(c.id) },
+                    search: { name: c.name },
                   })
                 }
               >
                 <Pencil />
               </Button>
 
-              <DeleteDialog>
+              <DeleteDialog id={c.id} name={c.name}>
                 <Button variant={'destructive'}>
                   <Trash />
                 </Button>
@@ -132,117 +121,27 @@ function BenefitTable({
           </TableRow>
         ))}
       </TableBody>
+      {categories.length <= 0 && (
+        <TableFooter>
+          <TableCell colSpan={5}>
+            <p className="text-center">Benefit not found</p>
+          </TableCell>
+        </TableFooter>
+      )}
     </Table>
   )
 }
 
-function FilterSection({
-  search,
-  status,
-  month,
-  setSearch,
-  setMonth,
-  setStatus,
+function DeleteDialog({
+  children,
+  id,
+  name,
 }: {
-  search: string
-  status: string
-  month: string
-  setSearch: (s: string) => void
-  setMonth: (s: string) => void
-  setStatus: (s: string) => void
+  children: ReactNode
+  id: number
+  name?: string
 }) {
-  return (
-    <div className="flex justify-start items-center gap-8 ">
-      <div className="p-4">
-        <label htmlFor="input-group-1" className="sr-only">
-          Search
-        </label>
-
-        {/* Search filter */}
-        <div className="relative">
-          <div className="absolute inset-y-0 inset-s-0 flex items-center ps-3 pointer-events-none">
-            <svg
-              className="w-4 h-4 text-body"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-width="2"
-                d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"
-              />
-            </svg>
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            id="input-group-1"
-            className="block w-full max-w-96 ps-9 pe-3 py-2 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3 shadow-xs placeholder:text-body"
-            placeholder="Search"
-          />
-        </div>
-      </div>
-
-      {/* Status filter */}
-      <div>
-        <ButtonGroup>
-          <Button variant="outline" disabled>
-            Status
-          </Button>
-          <Select
-            defaultValue="null"
-            onValueChange={(value) => setStatus(value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={'null'}>No filter</SelectItem>
-                <SelectItem value={'a'}>Rejected</SelectItem>
-                <SelectItem value={'b'}>Pending</SelectItem>
-                <SelectItem value={'c'}>Approve</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </ButtonGroup>
-      </div>
-
-      {/* Month filter */}
-      <div>
-        <ButtonGroup>
-          <Button variant="outline" disabled>
-            Month
-          </Button>
-          <Select
-            defaultValue="null"
-            onValueChange={(value) => setMonth(value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={'null'}>No filter</SelectItem>
-                <SelectItem value={'a'}>January</SelectItem>
-                <SelectItem value={'b'}>February</SelectItem>
-                <SelectItem value={'c'}>March</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </ButtonGroup>
-      </div>
-    </div>
-  )
-}
-
-function DeleteDialog({ children }: { children: ReactNode }) {
+  const form = deleteCategoryForm(id)
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -250,14 +149,26 @@ function DeleteDialog({ children }: { children: ReactNode }) {
         <DialogHeader>
           <DialogTitle>Delete Category</DialogTitle>
           <DialogDescription>
-            <p>Are you want to delete this category?</p>
+            <p>Do you want to delete the category {name}?</p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button variant={'destructive'}>Delete</Button>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              form.handleSubmit()
+            }}
+          >
+            <form.AppForm>
+              <Button type="submit" variant={'destructive'}>
+                Delete
+              </Button>
+            </form.AppForm>
+          </form>
         </DialogFooter>
       </DialogContent>
     </Dialog>

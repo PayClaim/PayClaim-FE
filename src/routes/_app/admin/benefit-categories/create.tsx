@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_app/admin/benefit-categories/create')({
 function RouteComponent() {
   const form = createCategoryForm()
   return (
-    <main className="bg-card max-w-[800px] rounded-2xl p-4 mx-auto">
+    <main className="bg-card max-w-200 rounded-2xl p-4 mx-auto">
       <h1 className="text-3xl font-bold text-center mb-8">New Category</h1>
 
       <div>

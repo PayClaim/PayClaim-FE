@@ -34,6 +34,7 @@ export const useCreateBenefitMutation = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['benefits'] }),
   })
 }
+
 export const useUpdateBenefitMutation = (id: string) => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -43,6 +44,7 @@ export const useUpdateBenefitMutation = (id: string) => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['benefits'] }),
   })
 }
+
 export const useDeleteBenefitMutation = () => {
   const queryClient = useQueryClient()
   return useMutation({

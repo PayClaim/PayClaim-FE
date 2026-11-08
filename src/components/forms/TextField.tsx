@@ -21,7 +21,7 @@ export function TextField({ label, placeholder }: TextFieldProps) {
         {label}
       </Label>
       <Input
-        className="bg-input"
+        className="bg-input border border-border"
         type="text"
         value={field.state.value}
         placeholder={placeholder}
@@ -46,7 +46,7 @@ export function NumberField({ label, placeholder }: TextFieldProps) {
       </Label>
       <Input
         type="number"
-        className="bg-input"
+        className="bg-input border border-border"
         value={field.state.value}
         placeholder={placeholder}
         onBlur={field.handleBlur}
@@ -58,7 +58,7 @@ export function NumberField({ label, placeholder }: TextFieldProps) {
 }
 
 export function FileInput({ label, placeholder }: TextFieldProps) {
-  const field = useFieldContext<string>()
+  const field = useFieldContext<File | null>()
   const errors = useSelector(field.store, (state) => state.meta.errors)
   return (
     <div className="my-4">
@@ -69,12 +69,15 @@ export function FileInput({ label, placeholder }: TextFieldProps) {
         {label}
       </Label>
       <Input
-        className="bg-input"
+        className="bg-input border border-border"
         type="file"
-        value={field.state.value}
+        accept="image/*"
         placeholder={placeholder}
         onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
+        onChange={(e) => {
+          const file = e.target.files?.[0] || null
+          field.handleChange(file)
+        }}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>

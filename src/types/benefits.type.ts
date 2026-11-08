@@ -10,6 +10,20 @@ export interface EmployeeBenefitsResponse {
   isActive: boolean
 }
 
+interface EmployeeBenefitId {
+  id: '3fa85f64-5717-4562-b3fc-2c963f66afa6'
+  claimType: 'Benefit'
+  description: 'string'
+  transactionDate: '2026-11-08'
+  amount: 0
+  submittedAt: '2026-11-08T10:36:50.734Z'
+  status: 'Submitted'
+  employeeId: '3fa85f64-5717-4562-b3fc-2c963f66afa6'
+  employeeName: 'string'
+  benefitName: 'string'
+  tripProposalDescription: 'string'
+  filePath: 'string'
+}
 export interface BenefitResponse {
   id: string
   name: string

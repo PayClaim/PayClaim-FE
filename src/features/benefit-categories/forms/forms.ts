@@ -1,10 +1,16 @@
 import { useAppForm } from '#/hooks/demo.form'
 import type { UpdateBenefitCategory } from '#/types/benefitCategories'
+import { useNavigate } from '@tanstack/react-router'
+import {
+  useCreateCategoryMutation,
+  useDeleteCategoryMutation,
+  useUpdateCategoryMutation,
+} from '../queries/queries'
 import { createCategorySchema, updateCategorySchema } from './schemas'
 
 export const createCategoryForm = () => {
-  const today = new Date()
-  today.setHours(0)
+  const mutation = useCreateCategoryMutation()
+  const navigate = useNavigate()
 
   return useAppForm({
     defaultValues: {
@@ -14,21 +20,57 @@ export const createCategoryForm = () => {
       onBlur: createCategorySchema,
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
-      console.log(value)
+      try {
+        mutation.mutate(value)
+        await navigate({
+          to: '/admin/benefit-categories',
+        })
+      } catch (err) {
+        console.error(err)
+      }
     },
   })
 }
 
-export const editCategoryForm = (initialValue: UpdateBenefitCategory) => {
+export const editCategoryForm = (
+  id: number,
+  initialValue: UpdateBenefitCategory,
+) => {
+  const mutation = useUpdateCategoryMutation(id)
+  const navigate = useNavigate()
+
   return useAppForm({
     defaultValues: initialValue,
     validators: {
       onBlur: updateCategorySchema,
     },
     onSubmit: async ({ value }) => {
-      // Do something with form data
-      console.log(value)
+      try {
+        mutation.mutate(value)
+        await navigate({
+          to: '/admin/benefit-categories',
+        })
+      } catch (err) {
+        console.error(err)
+      }
+    },
+  })
+}
+
+export const deleteCategoryForm = (id: number) => {
+  const mutation = useDeleteCategoryMutation()
+  const navigate = useNavigate()
+  return useAppForm({
+    defaultValues: { id: id },
+    onSubmit: async ({ value }) => {
+      try {
+        mutation.mutate(value.id)
+        await navigate({
+          to: '/admin/benefit-categories',
+        })
+      } catch (err) {
+        console.error(err)
+      }
     },
   })
 }

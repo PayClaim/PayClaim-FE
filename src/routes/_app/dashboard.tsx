@@ -8,6 +8,9 @@ export const Route = createFileRoute('/_app/dashboard')({
 function Dashboard() {
   return (
     <main>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold">Dashboard</h1>
+      </div>
       <div className="grid grid-cols-[2fr_1fr] gap-4">
         <div className="flex flex-col gap-4">
           <Card>
