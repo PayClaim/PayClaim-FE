@@ -33,8 +33,9 @@ export const loginForm = () => {
         await navigate({
           to: search.redirect ?? '/dashboard',
         })
-      } catch (err: any) {
-        toast.error('Failed to login.', err)
+      } catch (err: unknown) {
+        const error = err as { message?: string }
+        toast.error(error.message || 'Failed to login.')
       }
     },
   })

@@ -45,10 +45,25 @@ export async function api<T>(
     ...init,
   })
 
-  const data = res.status === 204 ? null : await res.json().catch(() => null)
+  let data: any = null
+  if (res.status !== 204) {
+    const text = await res.text().catch(() => '')
+    try {
+      data = text ? JSON.parse(text) : null
+    } catch {
+      data = text ? { message: text } : null
+    }
+  }
 
-  if (!res.ok)
-    throw new ApiError(res.status, data?.message ?? res.statusText, data)
+  if (!res.ok) {
+    let errorMessage: string = res.statusText
+    if (Array.isArray(data?.errors) && data.errors.length > 0) {
+      errorMessage = data.errors.join('\n')
+    } else if (data?.message) {
+      errorMessage = data.message
+    }
+    throw new ApiError(res.status, errorMessage, data)
+  }
   return data as T
 }
 
