@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as AppAdminRouteRouteImport } from './routes/_app/admin/route'
@@ -19,6 +20,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+import { Route as AppAdminResetPasswordRouteImport } from './routes/_app/admin/reset-password'
 import { Route as AppApprovalIndexRouteImport } from './routes/_app/approval/index'
 import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
 import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
@@ -59,6 +61,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangePasswordRoute = ChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -92,6 +99,11 @@ const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
 const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppAdminResetPasswordRoute = AppAdminResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
 const AppApprovalIndexRoute = AppApprovalIndexRouteImport.update({
@@ -234,12 +246,14 @@ const AppAdminEmployeesEmployeeIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/admin': typeof AppAdminRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
@@ -270,11 +284,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/dashboard': typeof AppDashboardRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
@@ -307,12 +323,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/about': typeof AboutRoute
+  '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
   '/test': typeof TestRoute
   '/_app/admin': typeof AppAdminRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/_app/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/_app/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/_app/claims/create': typeof AppClaimsCreateRoute
   '/_app/trip-proposals/create': typeof AppTripProposalsCreateRoute
@@ -345,12 +363,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/change-password'
     | '/login'
     | '/test'
     | '/admin'
     | '/dashboard'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/admin/reset-password'
     | '/claims/$claimId'
     | '/claims/create'
     | '/trip-proposals/create'
@@ -381,11 +401,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/change-password'
     | '/login'
     | '/test'
     | '/dashboard'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/admin/reset-password'
     | '/claims/$claimId'
     | '/claims/create'
     | '/trip-proposals/create'
@@ -417,12 +439,14 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/about'
+    | '/change-password'
     | '/login'
     | '/test'
     | '/_app/admin'
     | '/_app/dashboard'
     | '/demo/store'
     | '/demo/tanstack-query'
+    | '/_app/admin/reset-password'
     | '/_app/claims/$claimId'
     | '/_app/claims/create'
     | '/_app/trip-proposals/create'
@@ -455,6 +479,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AboutRoute: typeof AboutRoute
+  ChangePasswordRoute: typeof ChangePasswordRoute
   LoginRoute: typeof LoginRoute
   TestRoute: typeof TestRoute
   DemoStoreRoute: typeof DemoStoreRoute
@@ -484,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/change-password': {
+      id: '/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof ChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -533,6 +565,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
+    '/_app/admin/reset-password': {
+      id: '/_app/admin/reset-password'
+      path: '/reset-password'
+      fullPath: '/admin/reset-password'
+      preLoaderRoute: typeof AppAdminResetPasswordRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
     '/_app/approval/': {
@@ -714,6 +753,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteRouteChildren {
+  AppAdminResetPasswordRoute: typeof AppAdminResetPasswordRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminBenefitCategoriesCreateRoute: typeof AppAdminBenefitCategoriesCreateRoute
   AppAdminBenefitPlansCreateRoute: typeof AppAdminBenefitPlansCreateRoute
@@ -733,6 +773,7 @@ interface AppAdminRouteRouteChildren {
 }
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
+  AppAdminResetPasswordRoute: AppAdminResetPasswordRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminBenefitCategoriesCreateRoute: AppAdminBenefitCategoriesCreateRoute,
   AppAdminBenefitPlansCreateRoute: AppAdminBenefitPlansCreateRoute,
@@ -798,6 +839,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AboutRoute: AboutRoute,
+  ChangePasswordRoute: ChangePasswordRoute,
   LoginRoute: LoginRoute,
   TestRoute: TestRoute,
   DemoStoreRoute: DemoStoreRoute,

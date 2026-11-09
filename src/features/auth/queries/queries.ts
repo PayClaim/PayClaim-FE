@@ -26,6 +26,30 @@ export const loginMutation = () => {
   })
 }
 
+interface ChangePasswordBody {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
+interface ResetPasswordBody {
+  username: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
+export const changePasswordMutation = () =>
+  useMutation({
+    mutationFn: (body: ChangePasswordBody) =>
+      api.put<{ message: string }>('/auth/change-password', body),
+  })
+
+export const resetPasswordMutation = () =>
+  useMutation({
+    mutationFn: (body: ResetPasswordBody) =>
+      api.post<{ message: string }>('/auth/reset-password', body),
+  })
+
 export const getCurrentUser = () =>
   queryOptions({
     queryKey: ['authUser'],

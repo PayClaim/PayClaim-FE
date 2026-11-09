@@ -76,6 +76,11 @@ const links: TLink[] = [
     label: 'Employees',
     adminOnly: true,
   },
+  {
+    to: '/admin/reset-password',
+    label: 'Reset Password',
+    adminOnly: true,
+  },
 ]
 
 function RouteComponent() {
