@@ -8,6 +8,7 @@ export interface TLink {
   label: string
   adminOnly?: boolean
   employeeOnly?: boolean
+  approverOnly?: boolean
 }
 
 export function Sidebar({
@@ -21,11 +22,15 @@ export function Sidebar({
   const roles = user?.roles || []
   const isAdmin = roles.some((r) => r.toLowerCase() === 'admin')
   const isEmployee = roles.some((r) => r.toLowerCase() === 'employee')
+  const isApprover = roles.some((r) =>
+    ['admin', 'manager', 'finance', 'finance manager'].includes(r.toLowerCase()),
+  )
 
   // Filter links berdasarkan role akun login
   const filteredLinks = links.filter((link) => {
     if (link.adminOnly && !isAdmin) return false
     if (link.employeeOnly && !isEmployee) return false
+    if (link.approverOnly && !isApprover) return false
     return true
   })
 
