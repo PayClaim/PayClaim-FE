@@ -1,6 +1,8 @@
 import { api } from '#/lib/api-client'
-import type { TripProposal } from '#/types/tripProposals.type'
-import type { MyClaimResponse } from '#/types/claims.type'
+import type {
+  TripProposal,
+  TripProposalDetail,
+} from '#/types/tripProposals.type'
 import { useQuery } from '@tanstack/react-query'
 
 export interface PagedTripResponse {
@@ -18,6 +20,7 @@ export interface PagedTripResponse {
 }
 
 export const useGetAllTripProposalsQuery = (params?: {
+  destination?: string
   status?: string
   pageNumber?: number
   pageSize?: number
@@ -31,4 +34,14 @@ export const useGetAllTripProposalsQuery = (params?: {
       return res.data || []
     },
     initialData: [],
+  })
+
+export const useGetTripProposalByIdQuery = (id: string | null) =>
+  useQuery({
+    queryKey: ['tripProposal', id],
+    queryFn: async () => {
+      if (!id) return null
+      return api.get<TripProposalDetail>(`/trip-proposals/${id}`)
+    },
+    enabled: !!id,
   })
