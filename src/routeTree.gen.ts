@@ -19,6 +19,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+import { Route as AppApprovalIndexRouteImport } from './routes/_app/approval/index'
 import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
 import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
 import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
@@ -88,6 +89,11 @@ const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppApprovalIndexRoute = AppApprovalIndexRouteImport.update({
+  id: '/approval/',
+  path: '/approval/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppBenefitsIndexRoute = AppBenefitsIndexRouteImport.update({
   id: '/benefits/',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/': typeof AppAdminIndexRoute
+  '/approval/': typeof AppApprovalIndexRoute
   '/benefits/': typeof AppBenefitsIndexRoute
   '/claims/': typeof AppClaimsIndexRoute
   '/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin': typeof AppAdminIndexRoute
+  '/approval': typeof AppApprovalIndexRoute
   '/benefits': typeof AppBenefitsIndexRoute
   '/claims': typeof AppClaimsIndexRoute
   '/trip-proposals': typeof AppTripProposalsIndexRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/approval/': typeof AppApprovalIndexRoute
   '/_app/benefits/': typeof AppBenefitsIndexRoute
   '/_app/claims/': typeof AppClaimsIndexRoute
   '/_app/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin/'
+    | '/approval/'
     | '/benefits/'
     | '/claims/'
     | '/trip-proposals/'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin'
+    | '/approval'
     | '/benefits'
     | '/claims'
     | '/trip-proposals'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/_app/admin/'
+    | '/_app/approval/'
     | '/_app/benefits/'
     | '/_app/claims/'
     | '/_app/trip-proposals/'
@@ -471,6 +483,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AppAdminIndexRouteImport
       parentRoute: typeof AppAdminRouteRoute
+    }
+    '/_app/approval/': {
+      id: '/_app/approval/'
+      path: '/approval'
+      fullPath: '/approval/'
+      preLoaderRoute: typeof AppApprovalIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/benefits/': {
       id: '/_app/benefits/'
@@ -615,26 +634,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-<<<<<<< HEAD
 interface AppAdminRouteRouteChildren {
-=======
-interface AppClaimsClaimIdRouteChildren {
-  AppClaimsClaimIdEditRoute: typeof AppClaimsClaimIdEditRoute
-}
-
-const AppClaimsClaimIdRouteChildren: AppClaimsClaimIdRouteChildren = {
-  AppClaimsClaimIdEditRoute: AppClaimsClaimIdEditRoute,
-}
-
-const AppClaimsClaimIdRouteWithChildren =
-  AppClaimsClaimIdRoute._addFileChildren(AppClaimsClaimIdRouteChildren)
-
-interface AppRouteChildren {
-  AppDashboardRoute: typeof AppDashboardRoute
-  AppHelloRoute: typeof AppHelloRoute
-  AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRouteWithChildren
-  AppClaimsCreateRoute: typeof AppClaimsCreateRoute
->>>>>>> c9c98dc8a7616183a3ac50dbf5b24c01e3dc6591
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppAdminBenefitCategoriesCreateRoute: typeof AppAdminBenefitCategoriesCreateRoute
   AppAdminBenefitsCreateRoute: typeof AppAdminBenefitsCreateRoute
@@ -650,15 +650,7 @@ interface AppRouteChildren {
   AppAdminEmployeesEmployeeIdEditRoute: typeof AppAdminEmployeesEmployeeIdEditRoute
 }
 
-<<<<<<< HEAD
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
-=======
-const AppRouteChildren: AppRouteChildren = {
-  AppDashboardRoute: AppDashboardRoute,
-  AppHelloRoute: AppHelloRoute,
-  AppClaimsClaimIdRoute: AppClaimsClaimIdRouteWithChildren,
-  AppClaimsCreateRoute: AppClaimsCreateRoute,
->>>>>>> c9c98dc8a7616183a3ac50dbf5b24c01e3dc6591
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppAdminBenefitCategoriesCreateRoute: AppAdminBenefitCategoriesCreateRoute,
   AppAdminBenefitsCreateRoute: AppAdminBenefitsCreateRoute,
@@ -680,11 +672,23 @@ const AppAdminRouteRouteWithChildren = AppAdminRouteRoute._addFileChildren(
   AppAdminRouteRouteChildren,
 )
 
+interface AppClaimsClaimIdRouteChildren {
+  AppClaimsClaimIdEditRoute: typeof AppClaimsClaimIdEditRoute
+}
+
+const AppClaimsClaimIdRouteChildren: AppClaimsClaimIdRouteChildren = {
+  AppClaimsClaimIdEditRoute: AppClaimsClaimIdEditRoute,
+}
+
+const AppClaimsClaimIdRouteWithChildren =
+  AppClaimsClaimIdRoute._addFileChildren(AppClaimsClaimIdRouteChildren)
+
 interface AppRouteChildren {
   AppAdminRouteRoute: typeof AppAdminRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
-  AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRoute
+  AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRouteWithChildren
   AppClaimsCreateRoute: typeof AppClaimsCreateRoute
+  AppApprovalIndexRoute: typeof AppApprovalIndexRoute
   AppBenefitsIndexRoute: typeof AppBenefitsIndexRoute
   AppClaimsIndexRoute: typeof AppClaimsIndexRoute
   AppTripProposalsIndexRoute: typeof AppTripProposalsIndexRoute
@@ -693,8 +697,9 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRouteRoute: AppAdminRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
-  AppClaimsClaimIdRoute: AppClaimsClaimIdRoute,
+  AppClaimsClaimIdRoute: AppClaimsClaimIdRouteWithChildren,
   AppClaimsCreateRoute: AppClaimsCreateRoute,
+  AppApprovalIndexRoute: AppApprovalIndexRoute,
   AppBenefitsIndexRoute: AppBenefitsIndexRoute,
   AppClaimsIndexRoute: AppClaimsIndexRoute,
   AppTripProposalsIndexRoute: AppTripProposalsIndexRoute,

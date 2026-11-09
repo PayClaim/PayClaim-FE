@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_app/claims/')({
 
 function RouteComponent() {
   const { data: user } = useQuery(getCurrentUser())
-  const isAdminOrFinance = user?.roles?.some((r) =>
+  const isAdminOrFinance = user?.roles.some((r) =>
     ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
   )
 
@@ -39,9 +39,11 @@ function RouteComponent() {
   const adminClaimsQuery = useGetAdminAllClaimsQuery()
   const myClaimsQuery = useGetAllClaimsQuery()
 
-  const { data: claimResponse, isError, isFetching } = isAdminOrFinance
-    ? adminClaimsQuery
-    : myClaimsQuery
+  const {
+    data: claimResponse,
+    isError,
+    isFetching,
+  } = isAdminOrFinance ? adminClaimsQuery : myClaimsQuery
 
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
@@ -86,7 +88,8 @@ function RouteComponent() {
       const searchLower = searchFilter.toLowerCase()
       const matchSearch =
         !searchFilter ||
-        (c.employeeName && c.employeeName.toLowerCase().includes(searchLower)) ||
+        (c.employeeName &&
+          c.employeeName.toLowerCase().includes(searchLower)) ||
         (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
         (c.description && c.description.toLowerCase().includes(searchLower)) ||
         (c.tripProposalDescription &&
@@ -138,6 +141,7 @@ function RouteComponent() {
 
   return (
     <main>
+      {/* Heading */}
       <div className="mb-4 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">
@@ -213,7 +217,9 @@ function ClaimTable({
     <Table className="w-full text-sm text-left rtl:text-right text-body max-w-full">
       <TableHeader className="text-sm border-b border-border">
         <TableRow>
-          {showEmployeeCol && <TableHead className={thClass}>EMPLOYEE</TableHead>}
+          {showEmployeeCol && (
+            <TableHead className={thClass}>EMPLOYEE</TableHead>
+          )}
           <TableHead className={thClass}>TYPE</TableHead>
           <TableHead className={thClass}>TRANSACTION DATE</TableHead>
           <TableHead className={thClass}>AMOUNT</TableHead>
@@ -255,7 +261,9 @@ function ClaimTable({
               {idNumberFormatter.format(claim.amount)}
             </TableCell>
             <TableCell className="px-6 py-4 text-muted-foreground">
-              {claim.submittedAt ? toDateTimeString(new Date(claim.submittedAt)) : '-'}
+              {claim.submittedAt
+                ? toDateTimeString(new Date(claim.submittedAt))
+                : '-'}
             </TableCell>
             <TableCell className="px-6 py-4">
               <span
@@ -276,7 +284,10 @@ function ClaimTable({
       {claims.length <= 0 && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={showEmployeeCol ? 7 : 6} className="text-center py-8 text-muted-foreground">
+            <TableCell
+              colSpan={showEmployeeCol ? 7 : 6}
+              className="text-center py-8 text-muted-foreground"
+            >
               <div className="flex flex-col items-center justify-center gap-1.5">
                 <FileText className="h-6 w-6 text-muted-foreground/60" />
                 <p>No claims found</p>
