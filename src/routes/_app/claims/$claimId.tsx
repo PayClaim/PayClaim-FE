@@ -145,10 +145,9 @@ function RouteComponent() {
   const backendBaseUrl = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace('/api', '')
     : ''
-  const receiptUrl =
-    claim.filePath?.startsWith('http')
-      ? claim.filePath
-      : `${backendBaseUrl}${claim.filePath?.startsWith('/') ? '' : '/'}${claim.filePath}`
+  const receiptUrl = claim.filePath?.startsWith('http')
+    ? claim.filePath
+    : `${backendBaseUrl}${claim.filePath?.startsWith('/') ? '' : '/'}${claim.filePath}`
 
   // Sort approval history dari aksi yang terbaru ke yang terlama
   const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort((a, b) => {
@@ -188,7 +187,9 @@ function RouteComponent() {
             </div>
             <p className="text-sm text-muted-foreground">
               Submitted on{' '}
-              {claim.submittedAt ? toDateTimeString(new Date(claim.submittedAt)) : '-'}
+              {claim.submittedAt
+                ? toDateTimeString(new Date(claim.submittedAt))
+                : '-'}
             </p>
           </div>
         </div>
@@ -373,7 +374,9 @@ function RouteComponent() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No receipt document attached.</p>
+              <p className="text-sm text-muted-foreground">
+                No receipt document attached.
+              </p>
             )}
           </div>
         </div>
@@ -387,8 +390,12 @@ function RouteComponent() {
             </h2>
             <div className="space-y-3 text-sm">
               <div>
-                <span className="text-xs text-muted-foreground block">Employee</span>
-                <p className="font-semibold text-heading">{claim.employeeName}</p>
+                <span className="text-xs text-muted-foreground block">
+                  Employee
+                </span>
+                <p className="font-semibold text-heading">
+                  {claim.employeeName}
+                </p>
                 <p className="text-xs font-mono text-muted-foreground">
                   {claim.employeeNumber}
                 </p>
@@ -396,8 +403,12 @@ function RouteComponent() {
 
               {claim.departmentName && (
                 <div>
-                  <span className="text-xs text-muted-foreground block">Department</span>
-                  <p className="font-medium text-heading">{claim.departmentName}</p>
+                  <span className="text-xs text-muted-foreground block">
+                    Department
+                  </span>
+                  <p className="font-medium text-heading">
+                    {claim.departmentName}
+                  </p>
                 </div>
               )}
             </div>
@@ -428,7 +439,9 @@ function RouteComponent() {
                     </div>
                     <p className="text-muted-foreground">
                       Level {h.approvalLevel} •{' '}
-                      {h.decidedAt ? toDateTimeString(new Date(h.decidedAt)) : '-'}
+                      {h.decidedAt
+                        ? toDateTimeString(new Date(h.decidedAt))
+                        : '-'}
                     </p>
                     {h.notes && (
                       <p className="p-2 rounded bg-muted/40 border border-border text-heading italic">
