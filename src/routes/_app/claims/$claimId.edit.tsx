@@ -126,7 +126,7 @@ function EditClaimFormContent({
             </form.AppField>
 
             <form.AppField name="amount">
-              {(field) => <field.NumberField label="Amount" />}
+              {(field) => <field.CurrencyField label="Amount" placeholder="0" />}
             </form.AppField>
 
             {currentClaimType === 'BusinessTripReimbursement' && (

@@ -1,5 +1,5 @@
 import { useSelector } from '@tanstack/react-form'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { cn } from 'cn'
 import { Input } from '../ui/input'
@@ -88,6 +88,86 @@ export function NumberField({ label, placeholder }: TextFieldProps) {
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.valueAsNumber)}
       />
+      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+    </div>
+  )
+}
+
+interface CurrencyFieldProps {
+  label: string
+  placeholder?: string
+  disabled?: boolean
+  className?: string
+}
+
+export function CurrencyField({
+  label,
+  placeholder = '0',
+  disabled,
+  className,
+}: CurrencyFieldProps) {
+  const field = useFieldContext<number>()
+  const errors = useSelector(field.store, (state) => state.meta.errors)
+
+  const formatDots = (n: number | null | undefined): string => {
+    if (n === null || n === undefined || n === 0 || isNaN(n)) return ''
+    return new Intl.NumberFormat('id-ID').format(n)
+  }
+
+  const [displayValue, setDisplayValue] = useState<string>(() =>
+    formatDots(field.state.value),
+  )
+
+  useEffect(() => {
+    const formatted = formatDots(field.state.value)
+    if (field.state.value === 0 && displayValue === '') {
+      return
+    }
+    if (formatted !== displayValue) {
+      setDisplayValue(formatted)
+    }
+  }, [field.state.value])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawDigits = e.target.value.replace(/\D/g, '')
+    if (!rawDigits) {
+      setDisplayValue('')
+      field.handleChange(0)
+      return
+    }
+
+    const num = parseInt(rawDigits, 10)
+    const formatted = new Intl.NumberFormat('id-ID').format(num)
+    setDisplayValue(formatted)
+    field.handleChange(num)
+  }
+
+  return (
+    <div className="my-4">
+      <Label
+        htmlFor={label}
+        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+      >
+        {label}
+      </Label>
+      <div className="relative">
+        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-muted-foreground font-semibold text-sm pointer-events-none select-none">
+          Rp
+        </span>
+        <Input
+          className={cn(
+            'bg-input border border-border ps-10 font-medium',
+            className,
+          )}
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          onBlur={field.handleBlur}
+          onChange={handleInputChange}
+        />
+      </div>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   )

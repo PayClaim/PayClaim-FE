@@ -84,9 +84,9 @@ function CreateBenefitPlanPage() {
           <div className="sm:col-span-2">
             <form.AppField name="limitAmount">
               {(field) => (
-                <field.NumberField
+                <field.CurrencyField
                   label="Limit Amount (IDR)"
-                  placeholder="Contoh: 2000000"
+                  placeholder="0"
                 />
               )}
             </form.AppField>
