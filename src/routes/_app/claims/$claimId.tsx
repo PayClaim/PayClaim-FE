@@ -138,7 +138,7 @@ function RouteComponent() {
 
   const showApprovalActions = canManagerApprove || canFinanceApprove
 
-  // Poin 3: Tombol Edit & Resubmit khusus pemilik klaim saat status NeedsRevision
+  // Tombol Edit & Resubmit khusus pemilik klaim saat status NeedsRevision
   const canResubmitClaim =
     claim.status === 'NeedsRevision' && (isOwnClaim || isAdmin)
 
@@ -149,6 +149,13 @@ function RouteComponent() {
     claim.filePath?.startsWith('http')
       ? claim.filePath
       : `${backendBaseUrl}${claim.filePath?.startsWith('/') ? '' : '/'}${claim.filePath}`
+
+  // Sort approval history dari aksi yang terbaru ke yang terlama
+  const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort((a, b) => {
+    const timeA = a.decidedAt ? new Date(a.decidedAt).getTime() : 0
+    const timeB = b.decidedAt ? new Date(b.decidedAt).getTime() : 0
+    return timeB - timeA
+  })
 
   return (
     <main className="max-w-5xl mx-auto space-y-6">
@@ -188,7 +195,6 @@ function RouteComponent() {
 
         {/* Action Buttons Container */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Poin 3: Tombol Edit / Resubmit saat NeedsRevision */}
           {canResubmitClaim && (
             <Link
               to="/claims/$claimId/edit"
@@ -397,15 +403,15 @@ function RouteComponent() {
             </div>
           </div>
 
-          {/* Approval History Timeline */}
+          {/* Approval History Timeline (Sorted Newest First) */}
           <div className="bg-card p-6 rounded-2xl border border-border space-y-4 shadow-xs">
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Approval History
+              Approval History (Latest First)
             </h2>
 
-            {claim.approvalHistory && claim.approvalHistory.length > 0 ? (
+            {sortedApprovalHistory.length > 0 ? (
               <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-                {claim.approvalHistory.map((h) => (
+                {sortedApprovalHistory.map((h) => (
                   <div key={h.id} className="relative pl-7 text-xs space-y-1">
                     <div className="absolute left-1.5 top-1 h-3 w-3 rounded-full bg-primary border-2 border-background" />
                     <div className="flex items-center justify-between">

@@ -1,11 +1,11 @@
 export interface TripProposal {
   id: string
   destination: string
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   totalAmount: number
-  submittedAt: Date
-  status: string
+  submittedAt: string
+  status: TripProposalStatus
   picName?: string
   participantCount: number
   filePath?: string
@@ -14,39 +14,41 @@ export interface TripProposal {
 export type TripProposalStatus =
   | 'Submitted'
   | 'UnderReview'
+  | 'FinanceManagerReview'
   | 'NeedsRevision'
   | 'Approved'
   | 'Rejected'
   | 'Completed'
   | 'Cancelled'
 
-/*
-    public Guid Id { get; set; }
+export interface ParticipantItem {
+  employeeId: string
+  employeeName?: string
+  employeeNumber?: string
+  isPic: boolean
+  amount: number
+}
 
-    public string Destination { get; set; } = string.Empty;
+export interface TripApprovalHistory {
+  id: number
+  approverId: string
+  approverName: string
+  decision: 'Approved' | 'Rejected' | 'NeedsRevision'
+  notes?: string
+  approvalLevel: number
+  decidedAt: string
+}
 
-    public DateOnly StartDate { get; set; }
-
-    public DateOnly EndDate { get; set; }
-
-    public decimal TotalAmount { get; set; }
-
-    public DateTime SubmittedAt { get; set; }
-
-    public TripProposalStatus Status { get; set; }
-
-    public string? PicName { get; set; }
-
-    public int ParticipantCount { get; set; }
-
-    public string? FilePath { get; set; }
-
-    Submitted = 1,
-    UnderReview = 2,
-    NeedsRevision = 3,
-    Approved = 4,
-    Rejected = 5,
-    Completed = 6,
-    Cancelled = 7
-
-    */
+export interface TripProposalDetail {
+  id: string
+  destination: string
+  startDate: string
+  endDate: string
+  totalAmount: number
+  submittedAt: string
+  description: string
+  status: TripProposalStatus
+  filePath: string
+  participants: ParticipantItem[]
+  approvalHistory: TripApprovalHistory[]
+}
