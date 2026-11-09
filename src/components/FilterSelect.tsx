@@ -11,34 +11,56 @@ import {
 
 interface FilterSelectProps<T extends string | number> {
   filterLabel: string
-  val: T
+  val: T | null
   options: {
     label: string
     optionValue: T
   }[]
-  setValue: (v: T) => void
+  setValue: (v: T | null) => void
+  nullable?: boolean
+  nullLabel?: string
 }
+
+const NULL_VALUE = '__null__'
 
 export function FilterSelect({
   filterLabel,
   val,
   options,
   setValue,
+  nullLabel = 'None',
+  nullable = false,
 }: FilterSelectProps<string>) {
+  const radixValue =
+    val === null
+      ? nullable
+        ? NULL_VALUE // null terpilih -> item "None" tampil
+        : '' // tidak nullable -> placeholder
+      : val
+
   return (
     <ButtonGroup>
       <Button variant="outline" disabled>
         {filterLabel}
       </Button>
-      <Select value={val} onValueChange={(value) => setValue(value)}>
+      <Select
+        value={radixValue}
+        onValueChange={(raw) => {
+          setValue(raw === NULL_VALUE ? null : raw)
+        }}
+      >
         <SelectTrigger>
           <SelectValue placeholder="No Filter" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value={''}>No Filter</SelectItem>
+            <SelectItem value={NULL_VALUE} className="text-muted-foreground">
+              {nullLabel}
+            </SelectItem>
             {options.map((op) => (
-              <SelectItem value={op.optionValue}>{op.label}</SelectItem>
+              <SelectItem key={op.optionValue} value={op.optionValue}>
+                {op.label}
+              </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>
@@ -52,24 +74,37 @@ export function FilterSelectNumber({
   val,
   options,
   setValue,
+  nullLabel = 'None',
+  nullable = false,
 }: FilterSelectProps<number>) {
+  const radixValue =
+    val === null
+      ? nullable
+        ? NULL_VALUE // null terpilih -> item "None" tampil
+        : '' // tidak nullable -> placeholder
+      : String(val)
+
   return (
     <ButtonGroup>
       <Button variant="outline" disabled>
         {filterLabel}
       </Button>
       <Select
-        value={String(val)}
-        onValueChange={(value) => setValue(Number(value))}
+        value={radixValue}
+        onValueChange={(raw) => {
+          setValue(raw === NULL_VALUE ? null : Number(raw))
+        }}
       >
         <SelectTrigger>
           <SelectValue placeholder="No Filter" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value={String(0)}>No Filter</SelectItem>
+            <SelectItem value={NULL_VALUE}>{nullLabel}</SelectItem>
             {options.map((op) => (
-              <SelectItem value={String(op.optionValue)}>{op.label}</SelectItem>
+              <SelectItem key={op.optionValue} value={String(op.optionValue)}>
+                {op.label}
+              </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>

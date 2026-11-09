@@ -36,8 +36,8 @@ export const Route = createFileRoute('/_app/admin/benefits/')({
 function RouteComponent() {
   const { data: benefits, isError, isFetching } = useGetAllBenefitsQuery()
   const { data: categories } = useGetAllCategoriesQuery()
-  const [periodFilter, setPeriodFilter] = useState<string>('')
-  const [categoryFilter, setCategoryFilter] = useState<number>(0)
+  const [periodFilter, setPeriodFilter] = useState<string | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<number | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
 
   const categoryOptions = categories.map((c) => {

@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 
 export const useGetAllEmployeeBenefitsQuery = () =>
   useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employeesBenefit.me'],
     queryFn: () => {
-      return api.get<EmployeeBenefitResponse[]>('/employeeBenefits')
+      return api.get<EmployeeBenefitResponse[]>('/employeeBenefits/me')
     },
     initialData: [],
   })

@@ -2,7 +2,6 @@ import { toDateOnly } from '#/lib/utils'
 import z from 'zod'
 
 export const createClaimSchema = z.object({
-  employeeId: z.string().min(1),
   claimType: z.string(),
   description: z.string().min(5),
   transactionDate: z.iso

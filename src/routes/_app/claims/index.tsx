@@ -1,14 +1,7 @@
+import { FilterSelect, FilterSelectNumber } from '#/components/FilterSelect'
+import { SearchFilter } from '#/components/SearchFilter'
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
-import { ButtonGroup } from '#/components/ui/button-group'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import {
   Table,
   TableBody,
@@ -17,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { useGetAllClaimsQuery } from '#/features/claims/queries/getAllClaims'
+import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
+import { toDateTimeString } from '#/lib/utils'
 import type { ClaimResponse } from '#/types/claims.type'
 // import { idNumberFormatter, usDateFormatter } from '#/lib/formatter'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
@@ -28,35 +22,78 @@ export const Route = createFileRoute('/_app/claims/')({
 })
 
 function RouteComponent() {
-  const { data: claims, isError, isFetching } = useGetAllClaimsQuery()
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [monthFilter, setMonthFilter] = useState<string>('')
+  const { data: myClaimResponse, isError, isFetching } = useGetAllClaimsQuery()
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [monthFilter, setMonthFilter] = useState<number | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
 
-  if (isError) return <div>Terjadi Error</div>
+  const monthOptions = [
+    { label: 'Jan', optionValue: 0 },
+    { label: 'Feb', optionValue: 1 },
+    { label: 'Mar', optionValue: 2 },
+    { label: 'Apr', optionValue: 3 },
+    { label: 'May', optionValue: 4 },
+    { label: 'Jun', optionValue: 5 },
+    { label: 'Jul', optionValue: 6 },
+    { label: 'Aug', optionValue: 7 },
+    { label: 'Sep', optionValue: 8 },
+    { label: 'Oct', optionValue: 9 },
+    { label: 'Nov', optionValue: 10 },
+    { label: 'Des', optionValue: 11 },
+  ]
+
+  const statusOptions = [
+    { optionValue: 'Submitted', label: 'Submitted' },
+    { optionValue: 'UnderReview', label: 'UnderReview' },
+    { optionValue: 'NeedsRevision', label: 'NeedsRevision' },
+    { optionValue: 'Approved', label: 'Approved' },
+    { optionValue: 'Rejected', label: 'Rejected' },
+    { optionValue: 'Paid', label: 'Paid' },
+  ]
+
+  if (isError || !myClaimResponse) return <div>Terjadi Error</div>
   if (isFetching) return <div>Loading...</div>
 
+  const displayData = myClaimResponse.data.filter((c) => {
+    const matchSearch =
+      !searchFilter || c.benefitName?.toLowerCase().includes(searchFilter)
+    const matchMonth =
+      monthFilter === null || c.transactionDate.getMonth() === monthFilter
+    const matchStatus = !statusFilter || c.status === statusFilter
+
+    return matchSearch && matchMonth && matchStatus
+  })
+
   return (
-    <main className="bg-card p-8 rounded-2xl">
-      <div className="mb-8 flex justify-between">
-        <h1 className="text-3xl font-bold">20 Claims</h1>
+    <main>
+      <div className="mb-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">My Claims</h1>
         <Link to="/claims/create">
           <Button className="bg-primary">New Claim</Button>
         </Link>
       </div>
-      <div className=" border-t border-border">
-        <FilterSection
-          status={statusFilter}
-          search={searchFilter}
-          month={monthFilter}
-          setMonth={setMonthFilter}
-          setSearch={setSearchFilter}
-          setStatus={setStatusFilter}
-        />
+      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
+        <div className="flex justify-start items-center gap-8 border-b border-border">
+          <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
+          <FilterSelectNumber
+            nullable
+            val={monthFilter}
+            setValue={setMonthFilter}
+            options={monthOptions}
+            filterLabel="By Month"
+          />
+          <FilterSelect
+            nullable
+            val={statusFilter}
+            setValue={setStatusFilter}
+            options={statusOptions}
+            filterLabel="By Status"
+          />
+        </div>
 
         {/* Table */}
-        {claims.length != 0 ? (
-          <ClaimTable claims={claims} />
+        {displayData.length != 0 ? (
+          <ClaimTable claims={displayData} />
         ) : (
           <p>You have 0 Claims</p>
         )}
@@ -99,11 +136,11 @@ function ClaimTable({ claims }: { claims: ClaimResponse[] }) {
               {claim.claimType}
             </TableCell>
             <TableCell className="px-6 py-4">
-              {claim.transactionDate.toLocaleDateString()}
+              {claim.transactionDate.toString()}
             </TableCell>
             <TableCell className="px-6 py-4">{claim.amount}</TableCell>
             <TableCell className="px-6 py-4">
-              {claim.submittedAt.toLocaleDateString()}
+              {toDateTimeString(claim.submittedAt)}
             </TableCell>
             <TableCell className="px-6 py-4">
               <Badge
@@ -118,112 +155,5 @@ function ClaimTable({ claims }: { claims: ClaimResponse[] }) {
         ))}
       </TableBody>
     </Table>
-  )
-}
-
-// fungsi belum diimplementasi
-function FilterSection({
-  search,
-  status,
-  month,
-  setSearch,
-  setMonth,
-  setStatus,
-}: {
-  search: string
-  status: string
-  month: string
-  setSearch: (s: string) => void
-  setMonth: (s: string) => void
-  setStatus: (s: string) => void
-}) {
-  return (
-    <div className="flex justify-start items-center gap-8 ">
-      <div className="p-4">
-        <label htmlFor="input-group-1" className="sr-only">
-          Search
-        </label>
-
-        {/* Search filter */}
-        <div className="relative">
-          <div className="absolute inset-y-0 inset-s-0 flex items-center ps-3 pointer-events-none">
-            <svg
-              className="w-4 h-4 text-body"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-width="2"
-                d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"
-              />
-            </svg>
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            id="input-group-1"
-            className="block w-full max-w-96 ps-9 pe-3 py-2 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3 shadow-xs placeholder:text-body"
-            placeholder="Search"
-          />
-        </div>
-      </div>
-
-      {/* Status filter */}
-      <div>
-        <ButtonGroup>
-          <Button variant="outline" disabled>
-            Status
-          </Button>
-          <Select
-            defaultValue="null"
-            onValueChange={(value) => setStatus(value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={'null'}>No filter</SelectItem>
-                <SelectItem value={'a'}>Rejected</SelectItem>
-                <SelectItem value={'b'}>Pending</SelectItem>
-                <SelectItem value={'c'}>Approve</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </ButtonGroup>
-      </div>
-
-      {/* Month filter */}
-      <div>
-        <ButtonGroup>
-          <Button variant="outline" disabled>
-            Month
-          </Button>
-          <Select
-            defaultValue="null"
-            onValueChange={(value) => setMonth(value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={'null'}>No filter</SelectItem>
-                <SelectItem value={'a'}>January</SelectItem>
-                <SelectItem value={'b'}>February</SelectItem>
-                <SelectItem value={'c'}>March</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </ButtonGroup>
-      </div>
-    </div>
   )
 }

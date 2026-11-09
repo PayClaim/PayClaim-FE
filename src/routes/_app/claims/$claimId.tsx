@@ -1,4 +1,4 @@
-import { useGetClaimsQuery } from '#/features/claims/queries/getAllClaims'
+import { useGetClaimsQuery } from '#/features/claims/queries/queries'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/claims/$claimId')({
@@ -7,10 +7,10 @@ export const Route = createFileRoute('/_app/claims/$claimId')({
 
 function RouteComponent() {
   const { claimId } = Route.useParams()
-  const { data: claim, isFetching, isError } = useGetClaimsQuery(claimId)
+  const { data: claim, isFetching, isError, error } = useGetClaimsQuery(claimId)
 
   if (isFetching) return <p>Loading...</p>
-  if (isError) return <p>Error happened</p>
+  if (isError) return <p>Error happened: {error.message}</p>
 
   return (
     <main>
@@ -20,6 +20,7 @@ function RouteComponent() {
           <p>{claim.amount}</p>
           <p>{claim.benefitName}</p>
           <p>{claim.claimType}</p>
+          <p>{claim.filePath}</p>
         </div>
       ) : (
         <p>Claim not found</p>

@@ -25,17 +25,23 @@ export async function api<T>(
   const qs = params
     ? '?' + new URLSearchParams(params as Record<string, string>)
     : ''
+  const isFormData = body instanceof FormData
 
   const token = storage.get('token')
   const res = await fetch(`${BASE_URL}${path}${qs}`, {
     // credentials: 'include', // kirim cookie sesi HttpOnly
     headers: {
-      'Content-Type': 'application/json',
-      ...headers,
+      ...(!isFormData && body !== undefined
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    // jika tidak memiliki body : undefined
+    // jika memiliki body dan form-data : body as form data
+    // jika regular json body : kirim as json
+    body:
+      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
     ...init,
   })
 

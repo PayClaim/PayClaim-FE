@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCreateClaimMutation } from '../queries/queries'
 import { createClaimSchema } from './schemas'
 
-export const createClaimForm = (employeeId: string) => {
+export const createClaimForm = () => {
   const mutation = useCreateClaimMutation()
   const navigate = useNavigate()
   const today = new Date()
@@ -12,7 +12,6 @@ export const createClaimForm = (employeeId: string) => {
 
   return useAppForm({
     defaultValues: {
-      employeeId: employeeId,
       claimType: 'Benefit',
       description: '',
       transactionDate: toDateOnly(new Date(today)),
