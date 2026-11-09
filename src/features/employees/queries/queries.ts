@@ -53,3 +53,13 @@ export const useDeleteEmployeeMutation = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
   })
 }
+
+export const useActivateEmployeeMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => {
+      return api.patch(`/employees/${id}/activate`)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+  })
+}
