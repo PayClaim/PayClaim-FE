@@ -49,6 +49,11 @@ const links: TLink[] = [
     adminOnly: true,
   },
   {
+    to: '/admin/benefit-plans',
+    label: 'Benefit Plans',
+    adminOnly: true,
+  },
+  {
     to: '/admin/benefit-categories',
     label: 'Benefits Categories',
     adminOnly: true,
