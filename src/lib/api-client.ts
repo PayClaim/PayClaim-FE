@@ -61,5 +61,8 @@ api.post = <T>(path: string, body?: unknown, o?: Options) =>
 api.put = <T>(path: string, body?: unknown, o?: Options) =>
   api<T>(path, { ...o, method: 'PUT', body })
 
+api.patch = <T>(path: string, body?: unknown, o?: Options) =>
+  api<T>(path, { ...o, method: 'PATCH', body })
+
 api.delete = <T>(path: string, body?: unknown, o?: Options) =>
   api<T>(path, { ...o, method: 'DELETE', body })
