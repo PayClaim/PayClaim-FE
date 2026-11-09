@@ -34,8 +34,8 @@ export const Route = createFileRoute('/_app/admin/benefits/')({
 })
 
 function RouteComponent() {
-  const { data: benefits, isError, isFetching } = useGetAllBenefitsQuery()
-  const { data: categories } = useGetAllCategoriesQuery()
+  const { data: benefits = [], isError, isLoading } = useGetAllBenefitsQuery()
+  const { data: categories = [] } = useGetAllCategoriesQuery()
   const [periodFilter, setPeriodFilter] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
@@ -51,15 +51,15 @@ function RouteComponent() {
 
   const displayData = benefits.filter((b) => {
     const matchSearch =
-      !searchFilter || b.name.toLowerCase().includes(searchFilter)
+      !searchFilter || b.name.toLowerCase().includes(searchFilter.toLowerCase())
     const matchCategory = !categoryFilter || b.categoryId === categoryFilter
     const matchPeriod = !periodFilter || b.periodType === periodFilter
 
     return matchSearch && matchCategory && matchPeriod
   })
 
-  if (isError) return <div>Terjadi Error</div>
-  if (isFetching) return <div>Loading...</div>
+  if (isError) return <div className="p-4 text-destructive">Terjadi Error saat mengambil data benefit</div>
+  if (isLoading) return <div className="p-4 text-muted-foreground">Loading benefits...</div>
 
   return (
     <main>
@@ -77,6 +77,8 @@ function RouteComponent() {
             setValue={setPeriodFilter}
             options={periodOptions}
             filterLabel="Period Type"
+            nullable
+            nullLabel="All Periods"
           />
 
           <FilterSelectNumber
@@ -84,14 +86,16 @@ function RouteComponent() {
             setValue={setCategoryFilter}
             options={categoryOptions}
             filterLabel="Category"
+            nullable
+            nullLabel="All Categories"
           />
         </div>
 
         {/* Table */}
-        {benefits.length != 0 ? (
+        {benefits.length !== 0 ? (
           <BenefitTable benefits={displayData} />
         ) : (
-          <p>You have 0 Claims</p>
+          <p className="mt-4 text-muted-foreground">No benefits found</p>
         )}
       </div>
     </main>
@@ -118,15 +122,6 @@ function BenefitTable({ benefits }: { benefits: BenefitResponse[] }) {
           <TableRow
             key={b.id}
             className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
-            // onClick={() => {
-            //   console.log('Click')
-            //   navigate({
-            //     to: '/claims/$claimId',
-            //     params: {
-            //       claimId: claim.id.toString(),
-            //     },
-            //   })
-            // }}
           >
             <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
               {b.name}
@@ -163,9 +158,11 @@ function BenefitTable({ benefits }: { benefits: BenefitResponse[] }) {
 
       {benefits.length <= 0 && (
         <TableFooter>
-          <TableCell colSpan={5}>
-            <p className="text-center">Benefit not found</p>
-          </TableCell>
+          <TableRow>
+            <TableCell colSpan={5}>
+              <p className="text-center">No benefits match the filter</p>
+            </TableCell>
+          </TableRow>
         </TableFooter>
       )}
     </Table>
@@ -189,7 +186,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Benefit</DialogTitle>
           <DialogDescription>
-            <p>Are you want to delete the benefits {name}?</p>
+            Are you sure you want to delete {name}?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

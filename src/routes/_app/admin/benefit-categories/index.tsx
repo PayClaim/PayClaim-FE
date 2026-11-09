@@ -32,15 +32,15 @@ export const Route = createFileRoute('/_app/admin/benefit-categories/')({
 })
 
 function RouteComponent() {
-  const { data: categories, isError, isFetching } = useGetAllCategoriesQuery()
+  const { data: categories = [], isError, isLoading } = useGetAllCategoriesQuery()
   const [searchFilter, setSearchFilter] = useState<string>('')
 
   const displayData = categories.filter((c) => {
-    return !searchFilter || c.name.toLowerCase().includes(searchFilter)
+    return !searchFilter || c.name.toLowerCase().includes(searchFilter.toLowerCase())
   })
 
-  if (isError) return <div>Terjadi Error</div>
-  if (isFetching) return <div>Loading...</div>
+  if (isError) return <div className="p-4 text-destructive">Terjadi Error saat mengambil kategori benefit</div>
+  if (isLoading) return <div className="p-4 text-muted-foreground">Loading categories...</div>
 
   return (
     <main>
@@ -50,20 +50,19 @@ function RouteComponent() {
           <Button className="bg-primary">New Category</Button>
         </Link>
       </div>
-
       <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
-        <div className="flex justify-start items-center gap-8 ">
+        <div className="flex justify-start items-center gap-8 border-b border-border">
           <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
         </div>
 
         {/* Table */}
-        <BenefitTable categories={displayData} />
+        <CategoryTable categories={displayData} />
       </div>
     </main>
   )
 }
 
-function BenefitTable({
+function CategoryTable({
   categories,
 }: {
   categories: BenefitCategoryResponse[]
@@ -84,30 +83,19 @@ function BenefitTable({
             key={c.id}
             className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
           >
-            <TableCell
-              className="px-6 py-4 font-medium text-heading whitespace-nowrap"
-              onClick={() => {
-                console.log('Click')
-                navigate({
-                  to: '/admin/benefits',
-                  search: {
-                    categoryId: c.id,
-                  },
-                })
-              }}
-            >
+            <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
               {c.name}
             </TableCell>
             <TableCell className="px-6 py-4 flex gap-2">
               <Button
                 className="bg-amber-400 text-slate-900"
-                onClick={() =>
+                onClick={() => {
                   navigate({
                     to: '/admin/benefit-categories/$categoryId/edit',
-                    params: { categoryId: String(c.id) },
+                    params: { categoryId: c.id.toString() },
                     search: { name: c.name },
                   })
-                }
+                }}
               >
                 <Pencil />
               </Button>
@@ -123,9 +111,11 @@ function BenefitTable({
       </TableBody>
       {categories.length <= 0 && (
         <TableFooter>
-          <TableCell colSpan={5}>
-            <p className="text-center">Benefit not found</p>
-          </TableCell>
+          <TableRow>
+            <TableCell colSpan={2}>
+              <p className="text-center">No categories found</p>
+            </TableCell>
+          </TableRow>
         </TableFooter>
       )}
     </Table>
@@ -139,7 +129,7 @@ function DeleteDialog({
 }: {
   children: ReactNode
   id: number
-  name?: string
+  name: string
 }) {
   const form = deleteCategoryForm(id)
   return (
@@ -149,7 +139,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Category</DialogTitle>
           <DialogDescription>
-            <p>Do you want to delete the category {name}?</p>
+            Are you sure you want to delete category "{name}"?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
