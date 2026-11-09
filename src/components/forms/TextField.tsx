@@ -173,7 +173,11 @@ export function CurrencyField({
   )
 }
 
-export function FileInput({ label, placeholder }: TextFieldProps) {
+export function FileInput({
+  label,
+  placeholder,
+  accept = 'image/*,.pdf,application/pdf',
+}: TextFieldProps & { accept?: string }) {
   const field = useFieldContext<File | null>()
   const errors = useSelector(field.store, (state) => state.meta.errors)
   return (
@@ -187,7 +191,7 @@ export function FileInput({ label, placeholder }: TextFieldProps) {
       <Input
         className="bg-input border border-border"
         type="file"
-        accept="image/*"
+        accept={accept}
         placeholder={placeholder}
         onBlur={field.handleBlur}
         onChange={(e) => {
