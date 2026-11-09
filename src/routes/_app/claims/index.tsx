@@ -1,6 +1,6 @@
 import { FilterSelect, FilterSelectNumber } from '#/components/FilterSelect'
 import { SearchFilter } from '#/components/SearchFilter'
-import { Badge, getClaimBadgeClass } from '#/components/ui/badge'
+import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
   Table,
@@ -11,39 +11,21 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import {
-  useGetAdminAllClaimsQuery,
-  useGetAllClaimsQuery,
-} from '#/features/claims/queries/queries'
-import { getCurrentUser } from '#/features/auth/queries/queries'
+import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateTimeString } from '#/lib/utils'
 import type { ClaimResponse } from '#/types/claims.type'
-import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
+import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 
 export const Route = createFileRoute('/_app/claims/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data: user } = useQuery(getCurrentUser())
-  const isAdminOrFinance = user?.roles.some((r) =>
-    ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
-  )
-
-  // Jika admin / finance / manager: panggil endpoint GET /api/claims (semua klaim)
-  // Jika employee biasa: panggil endpoint GET /api/claims/my-claims
-  const adminClaimsQuery = useGetAdminAllClaimsQuery()
-  const myClaimsQuery = useGetAllClaimsQuery()
-
-  const {
-    data: claimResponse,
-    isError,
-    isFetching,
-  } = isAdminOrFinance ? adminClaimsQuery : myClaimsQuery
+  const { data: claimResponse, isError, isFetching } = useGetAllClaimsQuery()
 
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
@@ -88,8 +70,6 @@ function RouteComponent() {
       const searchLower = searchFilter.toLowerCase()
       const matchSearch =
         !searchFilter ||
-        (c.employeeName &&
-          c.employeeName.toLowerCase().includes(searchLower)) ||
         (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
         (c.description && c.description.toLowerCase().includes(searchLower)) ||
         (c.tripProposalDescription &&
@@ -111,46 +91,19 @@ function RouteComponent() {
       return timeB - timeA
     })
 
-  if (isError) {
-    return (
-      <main className="space-y-4">
-        <h1 className="text-xl font-bold">
-          {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
-        </h1>
-        <div className="bg-card p-8 rounded-2xl border border-destructive text-destructive">
-          Failed to load claims. Please ensure backend connection is active.
-        </div>
-      </main>
-    )
-  }
+  if (isError) return <ErrorComponent pageTitle="My Claims" />
 
-  if (isFetching && !claimResponse) {
-    return (
-      <main>
-        <div className="mb-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">
-            {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
-          </h1>
-        </div>
-        <div className="bg-card p-8 rounded-2xl border border-border">
-          <p>Loading claims data...</p>
-        </div>
-      </main>
-    )
-  }
+  if (isFetching && !claimResponse)
+    return <LoadingComponent pageTitle="My Claims" />
 
   return (
     <main>
       {/* Heading */}
       <div className="mb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">
-            {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
-          </h1>
+          <h1 className="text-xl font-bold">My Claims</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {isAdminOrFinance
-              ? 'Review, approve, and disburse employee claims and reimbursements'
-              : 'Submit and track your benefit and reimbursement claims'}
+            Submit and track your benefit and reimbursement claims
           </p>
         </div>
 
@@ -193,23 +146,14 @@ function RouteComponent() {
 
         {/* Table */}
         <div className="mt-6">
-          <ClaimTable
-            claims={displayData}
-            showEmployeeCol={Boolean(isAdminOrFinance)}
-          />
+          <ClaimTable claims={displayData} />
         </div>
       </div>
     </main>
   )
 }
 
-function ClaimTable({
-  claims,
-  showEmployeeCol,
-}: {
-  claims: ClaimResponse[]
-  showEmployeeCol: boolean
-}) {
+function ClaimTable({ claims }: { claims: ClaimResponse[] }) {
   const navigate = useNavigate()
   const thClass = 'px-6 py-3 font-bold'
 
@@ -217,9 +161,6 @@ function ClaimTable({
     <Table className="w-full text-sm text-left rtl:text-right text-body max-w-full">
       <TableHeader className="text-sm border-b border-border">
         <TableRow>
-          {showEmployeeCol && (
-            <TableHead className={thClass}>EMPLOYEE</TableHead>
-          )}
           <TableHead className={thClass}>TYPE</TableHead>
           <TableHead className={thClass}>TRANSACTION DATE</TableHead>
           <TableHead className={thClass}>AMOUNT</TableHead>
@@ -242,11 +183,6 @@ function ClaimTable({
               })
             }}
           >
-            {showEmployeeCol && (
-              <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
-                {claim.employeeName || 'Unknown'}
-              </TableCell>
-            )}
             <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
               {claim.claimType === 'OperationalReimbursement'
                 ? 'Operational'
@@ -285,7 +221,7 @@ function ClaimTable({
         <TableFooter>
           <TableRow>
             <TableCell
-              colSpan={showEmployeeCol ? 7 : 6}
+              colSpan={6}
               className="text-center py-8 text-muted-foreground"
             >
               <div className="flex flex-col items-center justify-center gap-1.5">

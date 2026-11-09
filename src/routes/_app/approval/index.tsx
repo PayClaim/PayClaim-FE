@@ -28,7 +28,18 @@ export const Route = createFileRoute('/_app/approval/')({
 })
 
 function RouteComponent() {
-  //   const { user } = useRouteContext({ from: '/_app' })
+  const navigate = useNavigate()
+  const { user } = useRouteContext({ from: '/_app' })
+  const canView = user.roles.some((r) =>
+    ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
+  )
+
+  if (!canView) {
+    navigate({
+      to: '/dashboard',
+    })
+  }
+
   const {
     data: claimResponse,
     isError,
