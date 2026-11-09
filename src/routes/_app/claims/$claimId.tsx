@@ -25,10 +25,12 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   DollarSign,
   Download,
+  Edit,
   FileCheck,
   FileText,
   XCircle,
@@ -50,7 +52,7 @@ function RouteComponent() {
   )
   const isManager = roles.some((r) => r.toLowerCase() === 'manager')
 
-  // Validasi agar pengguna tidak bisa menyetujui klaim miliknya sendiri
+  // Validasi kepemilikan klaim
   const isOwnClaim = Boolean(
     user?.employeeId && claim?.employeeId && user.employeeId === claim.employeeId,
   )
@@ -124,21 +126,7 @@ function RouteComponent() {
     )
   }
 
-  /**
-   * Aturan Visibilitas Tombol Action (Berdasarkan tahap 2-Step Approval Backend):
-   * 1. Status 'Submitted' (Level 1):
-   *    - Menunggu persetujuan Manager langsung atau Admin.
-   *    - Tombol Approve, Reject, dan Request Revision hanya muncul jika user adalah Manager atau Admin (dan bukan klaim sendiri).
-   * 2. Status 'UnderReview' (Level 2):
-   *    - Manager sudah approve, sekarang berada di tangan Finance.
-   *    - Tombol Approve, Reject, dan Request Revision HANYA muncul untuk Finance, Finance Manager, atau Admin.
-   *    - Manager biasa TIDAK BOLEH melihat tombol lagi.
-   * 3. Status 'Approved' (Level 3 - Disbursement / Opsi A):
-   *    - Sudah disetujui Finance, saldo benefit sudah terpotong.
-   *    - Hanya Finance, Finance Manager, atau Admin yang dapat melihat tombol "Disburse & Mark as Paid".
-   * 4. Status 'Paid', 'Rejected', 'NeedsRevision':
-   *    - Tidak ada aksi approval yang bisa dilakukan lagi.
-   */
+  // Visibilitas tombol aksi berdasarkan role & tahap
   const canManagerApprove =
     claim.status === 'Submitted' && (isManager || isAdmin) && !isOwnClaim
 
@@ -149,6 +137,10 @@ function RouteComponent() {
     claim.status === 'Approved' && (isFinance || isAdmin)
 
   const showApprovalActions = canManagerApprove || canFinanceApprove
+
+  // Poin 3: Tombol Edit & Resubmit khusus pemilik klaim saat status NeedsRevision
+  const canResubmitClaim =
+    claim.status === 'NeedsRevision' && (isOwnClaim || isAdmin)
 
   const backendBaseUrl = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace('/api', '')
@@ -182,7 +174,9 @@ function RouteComponent() {
                   ? 'Under Review (Finance)'
                   : claim.status === 'Approved'
                     ? 'Approved (Pending Payment)'
-                    : claim.status}
+                    : claim.status === 'NeedsRevision'
+                      ? 'Needs Revision'
+                      : claim.status}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -194,6 +188,18 @@ function RouteComponent() {
 
         {/* Action Buttons Container */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Poin 3: Tombol Edit / Resubmit saat NeedsRevision */}
+          {canResubmitClaim && (
+            <Link
+              to="/claims/$claimId/edit"
+              params={{ claimId: claim.id }}
+            >
+              <Button className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold gap-1.5 shadow-xs">
+                <Edit className="h-4 w-4" /> Edit & Resubmit Claim
+              </Button>
+            </Link>
+          )}
+
           {showApprovalActions && (
             <>
               <Button
@@ -246,6 +252,19 @@ function RouteComponent() {
           )}
         </div>
       </div>
+
+      {/* Warning banner jika status NeedsRevision */}
+      {claim.status === 'NeedsRevision' && (
+        <div className="p-4 rounded-xl bg-purple-500/15 border border-purple-300 text-purple-900 dark:text-purple-200 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-purple-600 dark:text-purple-400" />
+          <div className="text-sm">
+            <p className="font-semibold">Revisi Diperlukan</p>
+            <p className="text-xs mt-0.5 opacity-90">
+              Klaim ini dikembalikan oleh reviewer untuk diperbaiki. Silakan periksa catatan pada Riwayat Approval dan klik tombol <strong>Edit & Resubmit Claim</strong> untuk mengajukan ulang.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Side: Claim Information Details */}
