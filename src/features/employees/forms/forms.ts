@@ -89,7 +89,7 @@ export const deleteEmployeeForm = (id: string) => {
     onSubmit: async ({ value }) => {
       try {
         await mutation.mutateAsync(value.id)
-        toast.success('Employee deleted successfully')
+        toast.success('Employee deactivated successfully')
         await navigate({
           to: '/admin/employees',
         })
