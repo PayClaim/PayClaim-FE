@@ -1,25 +1,41 @@
-export interface TripProposal {
+export type TripProposal = {
   id: string
   destination: string
   startDate: string
   endDate: string
   totalAmount: number
   submittedAt: string
-  status: TripProposalStatus
-  picName?: string
+  status: string
+  picName: string | null
   participantCount: number
-  filePath?: string
+  filePath: string | null
 }
 
-export type TripProposalStatus =
-  | 'Submitted'
-  | 'UnderReview'
-  | 'FinanceManagerReview'
-  | 'NeedsRevision'
-  | 'Approved'
-  | 'Rejected'
-  | 'Completed'
-  | 'Cancelled'
+export enum TripProposalStatus {
+  Submitted = 'Submitted',
+  UnderReview = 'Under Review',
+  NeedsRevision = 'Needs Revision',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled',
+  FinanceManagerReview = 'Review by Finance Manager',
+}
+
+export interface TripProposalParticipantInput {
+  employeeId: string
+  isPic: boolean
+  amount: number
+}
+
+export interface CreateTripProposalFormValues {
+  destination: string
+  startDate: string
+  endDate: string
+  description: string
+  participants: TripProposalParticipantInput[]
+  file: File | null
+}
 
 export interface ParticipantItem {
   employeeId: string
