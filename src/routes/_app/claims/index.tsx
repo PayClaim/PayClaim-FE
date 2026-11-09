@@ -1,29 +1,50 @@
 import { FilterSelect, FilterSelectNumber } from '#/components/FilterSelect'
 import { SearchFilter } from '#/components/SearchFilter'
-import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
+import { Badge, getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
+import {
+  useGetAdminAllClaimsQuery,
+  useGetAllClaimsQuery,
+} from '#/features/claims/queries/queries'
+import { getCurrentUser } from '#/features/auth/queries/queries'
+import { idNumberFormatter } from '#/lib/formatter'
 import { toDateTimeString } from '#/lib/utils'
 import type { ClaimResponse } from '#/types/claims.type'
-// import { idNumberFormatter, usDateFormatter } from '#/lib/formatter'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { FileText, Plus } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/claims/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data: myClaimResponse, isError, isFetching } = useGetAllClaimsQuery()
+  const { data: user } = useQuery(getCurrentUser())
+  const isAdminOrFinance = user?.roles?.some((r) =>
+    ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
+  )
+
+  // Jika admin / finance / manager: panggil endpoint GET /api/claims (semua klaim)
+  // Jika employee biasa: panggil endpoint GET /api/claims/my-claims
+  const adminClaimsQuery = useGetAdminAllClaimsQuery()
+  const myClaimsQuery = useGetAllClaimsQuery()
+
+  const { data: claimResponse, isError, isFetching } = isAdminOrFinance
+    ? adminClaimsQuery
+    : myClaimsQuery
+
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [monthFilter, setMonthFilter] = useState<number | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
 
@@ -39,7 +60,7 @@ function RouteComponent() {
     { label: 'Sep', optionValue: 8 },
     { label: 'Oct', optionValue: 9 },
     { label: 'Nov', optionValue: 10 },
-    { label: 'Des', optionValue: 11 },
+    { label: 'Dec', optionValue: 11 },
   ]
 
   const statusOptions = [
@@ -47,113 +68,216 @@ function RouteComponent() {
     { optionValue: 'UnderReview', label: 'UnderReview' },
     { optionValue: 'NeedsRevision', label: 'NeedsRevision' },
     { optionValue: 'Approved', label: 'Approved' },
-    { optionValue: 'Rejected', label: 'Rejected' },
     { optionValue: 'Paid', label: 'Paid' },
+    { optionValue: 'Rejected', label: 'Rejected' },
   ]
 
-  if (isError || !myClaimResponse) return <div>Terjadi Error</div>
-  if (isFetching) return <div>Loading...</div>
+  const typeOptions = [
+    { optionValue: 'Benefit', label: 'Benefit' },
+    { optionValue: 'OperationalReimbursement', label: 'Operational' },
+    { optionValue: 'BusinessTripReimbursement', label: 'Business Trip' },
+  ]
 
-  const displayData = myClaimResponse.data.filter((c) => {
+  const claimsList = claimResponse?.data || []
+
+  const displayData = claimsList.filter((c) => {
+    const searchLower = searchFilter.toLowerCase()
     const matchSearch =
-      !searchFilter || c.benefitName?.toLowerCase().includes(searchFilter)
-    const matchMonth =
-      monthFilter === null || c.transactionDate.getMonth() === monthFilter
-    const matchStatus = !statusFilter || c.status === statusFilter
+      !searchFilter ||
+      (c.employeeName && c.employeeName.toLowerCase().includes(searchLower)) ||
+      (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
+      (c.description && c.description.toLowerCase().includes(searchLower)) ||
+      (c.tripProposalDescription &&
+        c.tripProposalDescription.toLowerCase().includes(searchLower))
 
-    return matchSearch && matchMonth && matchStatus
+    const txDate = new Date(c.transactionDate)
+    const matchMonth =
+      monthFilter === null ||
+      (!isNaN(txDate.getTime()) && txDate.getMonth() === monthFilter)
+
+    const matchStatus = !statusFilter || c.status === statusFilter
+    const matchType = !typeFilter || c.claimType === typeFilter
+
+    return matchSearch && matchMonth && matchStatus && matchType
   })
+
+  if (isError) {
+    return (
+      <main className="space-y-4">
+        <h1 className="text-xl font-bold">
+          {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
+        </h1>
+        <div className="bg-card p-8 rounded-2xl border border-destructive text-destructive">
+          Failed to load claims. Please ensure backend connection is active.
+        </div>
+      </main>
+    )
+  }
+
+  if (isFetching && !claimResponse) {
+    return (
+      <main>
+        <div className="mb-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold">
+            {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
+          </h1>
+        </div>
+        <div className="bg-card p-8 rounded-2xl border border-border">
+          <p>Loading claims data...</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main>
       <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">My Claims</h1>
+        <div>
+          <h1 className="text-xl font-bold">
+            {isAdminOrFinance ? 'All Claims Management' : 'My Claims'}
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {isAdminOrFinance
+              ? 'Review, approve, and disburse employee claims and reimbursements'
+              : 'Submit and track your benefit and reimbursement claims'}
+          </p>
+        </div>
+
         <Link to="/claims/create">
-          <Button className="bg-primary">New Claim</Button>
+          <Button className="bg-primary hover:bg-primary/90 flex items-center gap-1.5">
+            <Plus className="h-4 w-4" />
+            <span>New Claim</span>
+          </Button>
         </Link>
       </div>
-      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
-        <div className="flex justify-start items-center gap-8 border-b border-border">
+
+      <div className="bg-card p-8 rounded-2xl mb-8 border border-border">
+        <div className="flex flex-wrap justify-start items-center gap-4 pb-6 border-b border-border">
           <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
-          <FilterSelectNumber
+          <FilterSelect
             nullable
-            val={monthFilter}
-            setValue={setMonthFilter}
-            options={monthOptions}
-            filterLabel="By Month"
+            val={typeFilter}
+            setValue={setTypeFilter}
+            options={typeOptions}
+            filterLabel="Claim Type"
+            nullLabel="All Types"
           />
           <FilterSelect
             nullable
             val={statusFilter}
             setValue={setStatusFilter}
             options={statusOptions}
-            filterLabel="By Status"
+            filterLabel="Status"
+            nullLabel="All Statuses"
+          />
+          <FilterSelectNumber
+            nullable
+            val={monthFilter}
+            setValue={setMonthFilter}
+            options={monthOptions}
+            filterLabel="By Month"
+            nullLabel="All Months"
           />
         </div>
 
         {/* Table */}
-        {displayData.length != 0 ? (
-          <ClaimTable claims={displayData} />
-        ) : (
-          <p>You have 0 Claims</p>
-        )}
+        <div className="mt-6">
+          <ClaimTable
+            claims={displayData}
+            showEmployeeCol={Boolean(isAdminOrFinance)}
+          />
+        </div>
       </div>
     </main>
   )
 }
 
-function ClaimTable({ claims }: { claims: ClaimResponse[] }) {
+function ClaimTable({
+  claims,
+  showEmployeeCol,
+}: {
+  claims: ClaimResponse[]
+  showEmployeeCol: boolean
+}) {
   const navigate = useNavigate()
   const thClass = 'px-6 py-3 font-bold'
+
   return (
-    <Table className="w-full text-sm text-left rtl:text-right text-body">
+    <Table className="w-full text-sm text-left rtl:text-right text-body max-w-full">
       <TableHeader className="text-sm border-b border-border">
         <TableRow>
+          {showEmployeeCol && <TableHead className={thClass}>EMPLOYEE</TableHead>}
           <TableHead className={thClass}>TYPE</TableHead>
           <TableHead className={thClass}>TRANSACTION DATE</TableHead>
           <TableHead className={thClass}>AMOUNT</TableHead>
           <TableHead className={thClass}>SUBMITTED</TableHead>
           <TableHead className={thClass}>STATUS</TableHead>
-          <TableHead className={thClass}>BENEFIT/TRIP</TableHead>
+          <TableHead className={thClass}>BENEFIT / TRIP</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {claims.map((claim) => (
           <TableRow
             key={claim.id}
-            className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
+            className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow) transition-colors"
             onClick={() => {
-              console.log('Click')
               navigate({
                 to: '/claims/$claimId',
                 params: {
-                  claimId: claim.id.toString(),
+                  claimId: claim.id,
                 },
               })
             }}
           >
+            {showEmployeeCol && (
+              <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
+                {claim.employeeName || 'Unknown'}
+              </TableCell>
+            )}
             <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
-              {claim.claimType}
+              {claim.claimType === 'OperationalReimbursement'
+                ? 'Operational'
+                : claim.claimType === 'BusinessTripReimbursement'
+                  ? 'Business Trip'
+                  : 'Benefit'}
             </TableCell>
             <TableCell className="px-6 py-4">
-              {claim.transactionDate.toString()}
+              {claim.transactionDate ? String(claim.transactionDate) : '-'}
             </TableCell>
-            <TableCell className="px-6 py-4">{claim.amount}</TableCell>
-            <TableCell className="px-6 py-4">
-              {toDateTimeString(claim.submittedAt)}
+            <TableCell className="px-6 py-4 font-semibold">
+              {idNumberFormatter.format(claim.amount)}
+            </TableCell>
+            <TableCell className="px-6 py-4 text-muted-foreground">
+              {claim.submittedAt ? toDateTimeString(new Date(claim.submittedAt)) : '-'}
             </TableCell>
             <TableCell className="px-6 py-4">
-              <Badge
-                variant="default"
-                color={getTripProposalBadgeColor(claim.status)}
+              <span
+                className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getClaimBadgeClass(
+                  claim.status,
+                )}`}
               >
                 {claim.status}
-              </Badge>
+              </span>
             </TableCell>
-            <TableCell className="px-6 py-4">{claim.benefitName}</TableCell>
+            <TableCell className="px-6 py-4">
+              {claim.benefitName || claim.tripProposalDescription || '-'}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
+
+      {claims.length <= 0 && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={showEmployeeCol ? 7 : 6} className="text-center py-8 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center gap-1.5">
+                <FileText className="h-6 w-6 text-muted-foreground/60" />
+                <p>No claims found</p>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   )
 }

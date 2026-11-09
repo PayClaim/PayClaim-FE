@@ -5,19 +5,16 @@ import { cn } from 'cn'
 import { Slot } from 'radix-ui'
 
 const badgeVariants = cva(
-  'inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3',
+  'inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors focus-visible:outline-none',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
-        secondary:
-          'bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
-        destructive:
-          'bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90',
-        outline:
-          'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
-        ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 [a&]:hover:underline',
+        default: 'bg-primary text-primary-foreground',
+        secondary: 'bg-secondary text-secondary-foreground',
+        destructive: 'bg-destructive text-white',
+        outline: 'border-border text-foreground',
+        ghost: 'hover:bg-accent text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
     },
     defaultVariants: {
@@ -45,14 +42,31 @@ function Badge({
   )
 }
 
+function getClaimBadgeClass(status: string) {
+  switch (status?.toUpperCase()) {
+    case 'SUBMITTED':
+      return 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-300'
+    case 'UNDERREVIEW':
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300'
+    case 'NEEDSREVISION':
+      return 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-300'
+    case 'APPROVED':
+      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+    case 'PAID':
+      return 'bg-green-600/20 text-green-800 dark:text-green-300 border-green-400 font-bold'
+    case 'REJECTED':
+      return 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-300'
+    default:
+      return 'bg-muted text-muted-foreground'
+  }
+}
+
 function getTripProposalBadgeColor(status: string) {
-  switch (status) {
+  switch (status?.toUpperCase()) {
     case 'SUBMITTED':
       return '#00ffff'
     case 'UNDERREVIEW':
       return '#ffff00'
-    // case 'NeedsRevision':
-    //   return '#000000'
     case 'APPROVED':
       return '#00ff00'
     case 'REJECTED':
@@ -66,4 +80,4 @@ function getTripProposalBadgeColor(status: string) {
   }
 }
 
-export { Badge, badgeVariants, getTripProposalBadgeColor }
+export { Badge, badgeVariants, getClaimBadgeClass, getTripProposalBadgeColor }

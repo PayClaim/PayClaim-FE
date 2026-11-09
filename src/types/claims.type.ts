@@ -2,9 +2,9 @@ export interface ClaimResponse {
   id: string
   claimType: ClaimTypeEnum
   description: string
-  transactionDate: Date
+  transactionDate: string
   amount: number
-  submittedAt: Date
+  submittedAt: string
   status: ClaimStatusEnum
   employeeId: string
   employeeName: string | null
@@ -14,7 +14,9 @@ export interface ClaimResponse {
 }
 
 export type ClaimTypeEnum =
-  'Benefit' | 'OperationalReimbursement' | 'BusinessTripReimbursement'
+  | 'Benefit'
+  | 'OperationalReimbursement'
+  | 'BusinessTripReimbursement'
 
 export type ClaimStatusEnum =
   | 'Submitted'
@@ -23,6 +25,20 @@ export type ClaimStatusEnum =
   | 'Approved'
   | 'Rejected'
   | 'Paid'
+
+export type ApprovalDecisionEnum =
+  | 'Approved'
+  | 'Rejected'
+  | 'NeedsRevision'
+
+export interface ClaimApprovalActionRequest {
+  decision: ApprovalDecisionEnum
+  notes?: string
+}
+
+export interface ClaimPayActionRequest {
+  notes?: string
+}
 
 export interface MyClaimResponse {
   pageNumber: number
@@ -42,26 +58,27 @@ export interface ClaimResponseWithHistory {
   id: string
   claimType: ClaimTypeEnum
   description: string
-  transactionDate: Date
+  transactionDate: string
   amount: number
-  submittedAt: Date
+  submittedAt: string
   status: ClaimStatusEnum
   filePath: string
   employeeId: string
   employeeName: string
   employeeNumber: string
-  departmentName: string
-  employeeBenefitId: string
-  benefitName: string
-  tripProposalId: string
+  departmentName?: string | null
+  employeeBenefitId?: string | null
+  benefitName?: string | null
+  tripProposalId?: string | null
   approvalHistory: ApprovalHistory[]
 }
-interface ApprovalHistory {
+
+export interface ApprovalHistory {
   id: number
   approverId: string
   approverName: string
-  decision: string
-  notes: string
+  decision: ApprovalDecisionEnum | string
+  notes?: string | null
   approvalLevel: number
-  decidedAt: Date
+  decidedAt: string
 }
