@@ -85,18 +85,10 @@ function DepartmentTable({
         {departments.map((d) => (
           <TableRow
             key={d.id}
-            className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
+            className="bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
           >
             <TableCell>{d.id}</TableCell>
-            <TableCell
-              className="px-6 py-4 font-medium text-heading whitespace-nowrap"
-              onClick={() => {
-                console.log('Click')
-                navigate({
-                  to: '/dashboard',
-                })
-              }}
-            >
+            <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
               {d.name}
             </TableCell>
             <TableCell>{d.parentDeptName ?? ''}</TableCell>
@@ -128,8 +120,8 @@ function DepartmentTable({
       </TableBody>
       {departments.length <= 0 && (
         <TableFooter>
-          <TableCell colSpan={5}>
-            <p className="text-center">Benefit not found</p>
+          <TableCell colSpan={4}>
+            <p className="text-center py-4 text-muted-foreground">No departments found</p>
           </TableCell>
         </TableFooter>
       )}
@@ -152,7 +144,7 @@ function DeleteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Category</DialogTitle>
+          <DialogTitle>Delete Department</DialogTitle>
           <DialogDescription>
             <p>Do you want to delete the department {name}?</p>
           </DialogDescription>
