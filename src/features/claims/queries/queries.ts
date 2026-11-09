@@ -1,26 +1,52 @@
 import { api } from '#/lib/api-client'
 import type {
+  ClaimApprovalActionRequest,
+  ClaimPayActionRequest,
   ClaimResponseWithHistory,
   MyClaimResponse,
 } from '#/types/claims.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-export const useGetAllClaimsQuery = () =>
+export interface ClaimFilterParams {
+  claimType?: string
+  status?: string
+  startDate?: string
+  endDate?: string
+  employeeId?: string
+  pageNumber?: number
+  pageSize?: number
+}
+
+// Digunakan oleh Admin / Manager / Finance untuk melihat semua klaim
+export const useGetAdminAllClaimsQuery = (params?: ClaimFilterParams) =>
   useQuery({
-    queryKey: ['claims'],
+    queryKey: ['admin.claims', params],
     queryFn: async () => {
-      return api.get<MyClaimResponse>('/claims/my-claims')
+      return api.get<MyClaimResponse>('/claims', {
+        params: params as Record<string, string | number>,
+      })
     },
-    initialData: null,
   })
 
+// Digunakan untuk klaim pribadi (My Claims)
+export const useGetAllClaimsQuery = (params?: ClaimFilterParams) =>
+  useQuery({
+    queryKey: ['claims', params],
+    queryFn: async () => {
+      return api.get<MyClaimResponse>('/claims/my-claims', {
+        params: params as Record<string, string | number>,
+      })
+    },
+  })
+
+// Digunakan untuk detail klaim & riwayat approval
 export const useGetClaimsQuery = (id: string) =>
   useQuery({
     queryKey: ['claims', id],
     queryFn: async () => {
       return api.get<ClaimResponseWithHistory>(`/claims/${id}`)
     },
-    initialData: null,
+    enabled: !!id,
   })
 
 export const useCreateClaimMutation = () => {
@@ -29,6 +55,54 @@ export const useCreateClaimMutation = () => {
     mutationFn: (body: FormData) => {
       return api.post('/claims', body)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['claims'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+    },
+  })
+}
+
+// Action: Approve Claim
+export const useApproveClaimMutation = (id: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: ClaimApprovalActionRequest) => {
+      return api.post(`/claims/${id}/approve`, body)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['claims', id] })
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+    },
+  })
+}
+
+// Action: Reject Claim
+export const useRejectClaimMutation = (id: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: ClaimApprovalActionRequest) => {
+      return api.post(`/claims/${id}/reject`, body)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['claims', id] })
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+    },
+  })
+}
+
+// Action: Pay Claim
+export const usePayClaimMutation = (id: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: ClaimPayActionRequest) => {
+      return api.post(`/claims/${id}/pay`, body)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['claims', id] })
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+    },
   })
 }

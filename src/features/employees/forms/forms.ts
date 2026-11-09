@@ -8,6 +8,7 @@ import {
 import { createEmployeeSchema, updateEmployeeSchema } from './schemas'
 import type { UpdateEmployeeRequest } from '#/types/employee.type'
 import { toDateOnly } from '#/lib/utils'
+import { toast } from 'sonner'
 
 export const createEmployeeForm = () => {
   const mutation = useCreateEmployeeMutation()
@@ -17,7 +18,7 @@ export const createEmployeeForm = () => {
     defaultValues: {
       fullName: '',
       email: '',
-      hireDate: new Date(),
+      hireDate: toDateOnly(new Date()),
       positionId: '',
       departmentId: '',
       managerId: null as string | null,
@@ -26,17 +27,15 @@ export const createEmployeeForm = () => {
       onBlur: createEmployeeSchema,
     },
     onSubmit: async ({ value }) => {
-      const payload = {
-        ...value,
-        hireDate: toDateOnly(value.hireDate),
-      }
       try {
-        mutation.mutate(payload)
+        await mutation.mutateAsync(value)
+        toast.success('Employee created successfully')
         await navigate({
           to: '/admin/employees',
         })
-      } catch (e) {
-        console.log(e)
+      } catch (e: unknown) {
+        const error = e as { message?: string }
+        toast.error(error.message || 'Failed to create employee')
       }
     },
   })
@@ -55,12 +54,14 @@ export const editEmployeeForm = (
     },
     onSubmit: async ({ value }) => {
       try {
-        mutation.mutate(value)
+        await mutation.mutateAsync(value)
+        toast.success('Employee updated successfully')
         await navigate({
           to: '/admin/employees',
         })
-      } catch (err) {
-        console.log(err)
+      } catch (err: unknown) {
+        const error = err as { message?: string }
+        toast.error(error.message || 'Failed to update employee')
       }
     },
   })
@@ -73,12 +74,14 @@ export const deleteEmployeeForm = (id: string) => {
     defaultValues: { id: id },
     onSubmit: async ({ value }) => {
       try {
-        mutation.mutate(value.id)
+        await mutation.mutateAsync(value.id)
+        toast.success('Employee deleted successfully')
         await navigate({
           to: '/admin/employees',
         })
-      } catch (err) {
-        console.log(err)
+      } catch (err: unknown) {
+        const error = err as { message?: string }
+        toast.error(error.message || 'Failed to delete employee')
       }
     },
   })
