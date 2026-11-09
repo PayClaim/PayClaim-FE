@@ -1,4 +1,3 @@
-
 import {
   useMutation,
   useQuery,
@@ -62,6 +61,8 @@ export const useGetAllProposalsQuery = () =>
     queryFn: getAllProposals,
   })
 
+export const useGetAllTripProposalsQuery = useGetAllProposalsQuery
+
 export const useCreateTripProposalMutation = () => {
   const queryClient = useQueryClient()
 
@@ -84,3 +85,5 @@ export const useGetProposalByIdQuery = (id: string) =>
       api.get<TripProposalDetailResponse>(`/trip-proposals/${id}`),
     enabled: Boolean(id),
   })
+
+export const useGetTripProposalByIdQuery = useGetProposalByIdQuery
