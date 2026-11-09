@@ -32,13 +32,13 @@ const getAllProposals = async (): Promise<TripProposal[]> => {
     },
   })
 
-if (!response.ok) {
-  const errorText = await response.text()
+  if (!response.ok) {
+    const errorText = await response.text()
 
-  throw new Error(
-    `HTTP ${response.status} ${response.statusText}: ${errorText}`,
-  )
-}
+    throw new Error(
+      `HTTP ${response.status} ${response.statusText}: ${errorText}`,
+    )
+  }
 
   const result: PagedResponse<TripProposal> = await response.json()
 

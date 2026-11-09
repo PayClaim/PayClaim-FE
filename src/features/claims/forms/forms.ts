@@ -1,8 +1,12 @@
 import { useAppForm } from '#/hooks/app.form'
 import { toDateOnly } from '#/lib/utils'
 import { useNavigate } from '@tanstack/react-router'
-import { useCreateClaimMutation } from '../queries/queries'
+import {
+  useCreateClaimMutation,
+  useUpdateClaimMutation,
+} from '../queries/queries'
 import { createClaimSchema } from './schemas'
+import { toast } from 'sonner'
 
 export const createClaimForm = () => {
   const mutation = useCreateClaimMutation()
@@ -25,15 +29,15 @@ export const createClaimForm = () => {
     },
     onSubmit: async ({ value }) => {
       const formData = new FormData()
-      // Do something with form data
       formData.append('claimType', value.claimType)
       formData.append('description', value.description)
       formData.append('transactionDate', value.transactionDate)
       formData.append('amount', value.amount.toString())
-      if (value.employeeBenefitId) {
+
+      if (value.claimType === 'Benefit' && value.employeeBenefitId) {
         formData.append('employeeBenefitId', value.employeeBenefitId)
       }
-      if (value.tripProposalId) {
+      if (value.claimType === 'BusinessTripReimbursement' && value.tripProposalId) {
         formData.append('tripProposalId', value.tripProposalId)
       }
       if (value.receiptFile) {
@@ -41,12 +45,68 @@ export const createClaimForm = () => {
       }
 
       try {
-        mutation.mutate(formData)
+        await mutation.mutateAsync(formData)
+        toast.success('Claim submitted successfully')
         await navigate({
           to: '/claims',
         })
-      } catch (err) {
-        console.error(err)
+      } catch (err: unknown) {
+        const error = err as { message?: string }
+        toast.error(error.message || 'Failed to submit claim')
+      }
+    },
+  })
+}
+
+export const editClaimForm = (
+  claimId: string,
+  initialValues: {
+    claimType: string
+    description: string
+    transactionDate: string
+    amount: number
+    employeeBenefitId: string | null
+    tripProposalId: string | null
+  },
+) => {
+  const mutation = useUpdateClaimMutation(claimId)
+  const navigate = useNavigate()
+
+  return useAppForm({
+    defaultValues: {
+      ...initialValues,
+      receiptFile: null as File | null,
+    },
+    validators: {
+      onBlur: createClaimSchema,
+    },
+    onSubmit: async ({ value }) => {
+      const formData = new FormData()
+      formData.append('claimType', value.claimType)
+      formData.append('description', value.description)
+      formData.append('transactionDate', value.transactionDate)
+      formData.append('amount', value.amount.toString())
+
+      if (value.claimType === 'Benefit' && value.employeeBenefitId) {
+        formData.append('employeeBenefitId', value.employeeBenefitId)
+      }
+      if (value.claimType === 'BusinessTripReimbursement' && value.tripProposalId) {
+        formData.append('tripProposalId', value.tripProposalId)
+      }
+      if (value.receiptFile) {
+        formData.append('receiptFile', value.receiptFile)
+      }
+
+      try {
+        await mutation.mutateAsync(formData)
+        toast.success('Claim resubmitted successfully')
+        await navigate({
+          to: '/claims/$claimId',
+          params: { claimId },
+        })
+      } catch (err: unknown) {
+        const error = err as { message?: string }
+        toast.error(error.message || 'Failed to resubmit claim')
       }
     },
   })

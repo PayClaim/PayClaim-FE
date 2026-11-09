@@ -11,17 +11,17 @@ export const Route = createFileRoute('/_app/admin/employees/create')({
 function RouteComponent() {
   const form = createEmployeeForm()
 
-  const { data: positions } = useGetAllPositionsQuery()
+  const { data: positions = [] } = useGetAllPositionsQuery()
   const positionOptions = positions.map((p) => {
     return { label: p.title, value: p.id }
   })
 
-  const { data: departments } = useGetAllDepartmentsQuery()
+  const { data: departments = [] } = useGetAllDepartmentsQuery()
   const departmentOptions = departments.map((d) => {
     return { label: d.name, value: d.id }
   })
 
-  const { data: employees } = useGetAllEmployeeQuery()
+  const { data: employees = [] } = useGetAllEmployeeQuery()
   const managerOptions = employees.map((e) => {
     return { label: e.fullName, value: e.id }
   })
@@ -71,15 +71,29 @@ function RouteComponent() {
               )}
             </form.AppField>
 
-            <form.AppField name="managerId">
-              {(field) => (
-                <field.FormSelect
-                  nullable
-                  values={managerOptions}
-                  label="Manager"
-                />
-              )}
-            </form.AppField>
+            <form.Subscribe selector={(state) => state.values.positionId}>
+              {(positionId) => {
+                const selectedPos = positions.find((p) => p.id === positionId)
+                const isManager =
+                  positionId?.toUpperCase() === 'MGR' ||
+                  Boolean(selectedPos?.title.toLowerCase().includes('manager'))
+
+                if (isManager) return null
+
+                return (
+                  <form.AppField name="managerId">
+                    {(field) => (
+                      <field.FormSelect
+                        nullable
+                        values={managerOptions}
+                        label="Manager"
+                        placeholder="Pick Manager"
+                      />
+                    )}
+                  </form.AppField>
+                )
+              }}
+            </form.Subscribe>
           </div>
 
           <form.AppForm>

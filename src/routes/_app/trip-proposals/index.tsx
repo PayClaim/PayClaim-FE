@@ -1,8 +1,6 @@
+
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-
-import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
-import { Button } from '#/components/ui/button'
 
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -23,14 +21,18 @@ import {
   TableRow,
 } from '#/components/ui/table'
 
-import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/getAllProposals'
-import { TripProposalStatus, type TripProposal } from '#/types/tripProposals.type'
+import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
+import {
+  TripProposalStatus,
+  type TripProposal,
+} from '#/types/tripProposals.type'
 
 export const Route = createFileRoute('/_app/trip-proposals/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  // Mengambil data Trip Proposals dari backend
   const {
     data: proposals = [],
     isError,
@@ -38,14 +40,17 @@ function RouteComponent() {
     error,
   } = useGetAllProposalsQuery()
 
+  // State untuk menyimpan nilai filter
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchFilter, setSearchFilter] = useState('')
 
+  // Tampilan ketika data sedang dimuat
   if (isFetching && proposals.length === 0) {
     return <p>Loading trip proposals...</p>
   }
 
+  // Tampilan ketika gagal mengambil data
   if (isError) {
     return (
       <div className="space-y-2">
@@ -60,6 +65,7 @@ function RouteComponent() {
     )
   }
 
+  // Filter data berdasarkan pencarian, status, dan bulan
   const filteredProposals = proposals.filter((proposal) => {
     const search = searchFilter.toLowerCase()
 
@@ -72,13 +78,15 @@ function RouteComponent() {
 
     const matchesMonth =
       monthFilter === 'all' ||
-      (new Date(proposal.startDate).getMonth() + 1).toString() === monthFilter
+      (new Date(proposal.startDate).getMonth() + 1).toString() ===
+        monthFilter
 
     return matchesSearch && matchesStatus && matchesMonth
   })
 
   return (
     <main className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-xl font-bold">Trip Proposals</h1>
@@ -89,31 +97,39 @@ function RouteComponent() {
         </Button>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="Total Proposals" value={proposals.length} />
+        <SummaryCard
+          title="Total Proposals"
+          value={proposals.length}
+        />
 
         <SummaryCard
           title="Submitted"
           value={proposals.filter(
-            (p) => p.status.toLowerCase() === 'submitted',
+            (proposal) =>
+              proposal.status.toLowerCase() === 'submitted',
           ).length}
         />
 
         <SummaryCard
           title="Approved"
           value={proposals.filter(
-            (p) => p.status.toLowerCase() === 'approved',
+            (proposal) =>
+              proposal.status.toLowerCase() === 'approved',
           ).length}
         />
 
         <SummaryCard
           title="Completed"
           value={proposals.filter(
-            (p) => p.status.toLowerCase() === 'completed',
+            (proposal) =>
+              proposal.status.toLowerCase() === 'completed',
           ).length}
         />
       </div>
 
+      {/* Proposal Table Section */}
       <section className="rounded-xl border border-border bg-card p-5">
         <div className="mb-5">
           <h2 className="text-lg font-semibold text-foreground">
@@ -125,6 +141,7 @@ function RouteComponent() {
           </p>
         </div>
 
+        {/* Search and Filters */}
         <FilterSection
           search={searchFilter}
           status={statusFilter}
@@ -135,6 +152,7 @@ function RouteComponent() {
           setMonth={setMonthFilter}
         />
 
+        {/* Table or Empty State */}
         {filteredProposals.length > 0 ? (
           <ProposalTable proposals={filteredProposals} />
         ) : (
@@ -145,6 +163,7 @@ function RouteComponent() {
           </div>
         )}
 
+        {/* Total Data */}
         <div className="mt-4 text-sm text-muted-foreground">
           Showing {filteredProposals.length} of {proposals.length} proposals
         </div>
@@ -153,6 +172,7 @@ function RouteComponent() {
   )
 }
 
+// Summary Card Component
 function SummaryCard({
   title,
   value,
@@ -173,11 +193,13 @@ function SummaryCard({
   )
 }
 
+// Proposal Table Component
 function ProposalTable({
   proposals,
 }: {
   proposals: TripProposal[]
 }) {
+  // Format angka menjadi mata uang Rupiah
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -186,13 +208,14 @@ function ProposalTable({
     }).format(amount)
   }
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+  // Format tanggal
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -216,8 +239,9 @@ const formatDate = (date: string) => {
                 {proposal.destination}
               </TableCell>
 
-              <TableCell className="px-4 py-4 whitespace-nowrap">
+              <TableCell className="whitespace-nowrap px-4 py-4">
                 <div>{formatDate(proposal.startDate)}</div>
+
                 <div className="text-xs text-muted-foreground">
                   to {formatDate(proposal.endDate)}
                 </div>
@@ -231,11 +255,11 @@ const formatDate = (date: string) => {
                 {proposal.participantCount}
               </TableCell>
 
-              <TableCell className="px-4 py-4 whitespace-nowrap">
+              <TableCell className="whitespace-nowrap px-4 py-4">
                 {formatCurrency(proposal.totalAmount)}
               </TableCell>
 
-              <TableCell className="px-4 py-4 whitespace-nowrap">
+              <TableCell className="whitespace-nowrap px-4 py-4">
                 {formatDate(proposal.submittedAt)}
               </TableCell>
 
@@ -255,6 +279,7 @@ const formatDate = (date: string) => {
   )
 }
 
+// Filter Section Component
 function FilterSection({
   search,
   status,
@@ -293,7 +318,7 @@ function FilterSection({
       <input
         type="text"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(event) => setSearch(event.target.value)}
         placeholder="Search destination or PIC..."
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring md:max-w-sm"
       />
@@ -328,7 +353,10 @@ function FilterSection({
             <SelectItem value="all">All Months</SelectItem>
 
             {months.map((item, index) => (
-              <SelectItem key={item} value={(index + 1).toString()}>
+              <SelectItem
+                key={item}
+                value={(index + 1).toString()}
+              >
                 {item}
               </SelectItem>
             ))}
@@ -337,5 +365,4 @@ function FilterSection({
       </Select>
     </div>
   )
-
 }

@@ -80,26 +80,33 @@ function RouteComponent() {
 
   const claimsList = claimResponse?.data || []
 
-  const displayData = claimsList.filter((c) => {
-    const searchLower = searchFilter.toLowerCase()
-    const matchSearch =
-      !searchFilter ||
-      (c.employeeName && c.employeeName.toLowerCase().includes(searchLower)) ||
-      (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
-      (c.description && c.description.toLowerCase().includes(searchLower)) ||
-      (c.tripProposalDescription &&
-        c.tripProposalDescription.toLowerCase().includes(searchLower))
+  // Filter dan Sort Terbaru (SubmittedAt DESC atau TransactionDate DESC)
+  const displayData = claimsList
+    .filter((c) => {
+      const searchLower = searchFilter.toLowerCase()
+      const matchSearch =
+        !searchFilter ||
+        (c.employeeName && c.employeeName.toLowerCase().includes(searchLower)) ||
+        (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
+        (c.description && c.description.toLowerCase().includes(searchLower)) ||
+        (c.tripProposalDescription &&
+          c.tripProposalDescription.toLowerCase().includes(searchLower))
 
-    const txDate = new Date(c.transactionDate)
-    const matchMonth =
-      monthFilter === null ||
-      (!isNaN(txDate.getTime()) && txDate.getMonth() === monthFilter)
+      const txDate = new Date(c.transactionDate)
+      const matchMonth =
+        monthFilter === null ||
+        (!isNaN(txDate.getTime()) && txDate.getMonth() === monthFilter)
 
-    const matchStatus = !statusFilter || c.status === statusFilter
-    const matchType = !typeFilter || c.claimType === typeFilter
+      const matchStatus = !statusFilter || c.status === statusFilter
+      const matchType = !typeFilter || c.claimType === typeFilter
 
-    return matchSearch && matchMonth && matchStatus && matchType
-  })
+      return matchSearch && matchMonth && matchStatus && matchType
+    })
+    .sort((a, b) => {
+      const timeA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0
+      const timeB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0
+      return timeB - timeA
+    })
 
   if (isError) {
     return (

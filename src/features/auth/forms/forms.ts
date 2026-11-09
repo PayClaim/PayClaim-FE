@@ -17,6 +17,7 @@ export const loginForm = () => {
     },
     validators: {
       onBlur: loginSchema,
+      onSubmit: loginSchema,
     },
     onSubmit: async ({ value }) => {
       try {

@@ -1,5 +1,6 @@
 import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
+import type { TLink } from '#/components/Sidebar'
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
@@ -23,7 +24,7 @@ export const Route = createFileRoute('/_app')({
   },
 })
 
-const links = [
+const links: TLink[] = [
   {
     to: '/dashboard',
     label: 'Dashboard',
@@ -38,33 +39,29 @@ const links = [
   },
   {
     to: '/benefits',
-    label: 'Benefits',
+    label: 'My Benefits',
+    employeeOnly: true,
   },
-  // Admin
+  // Admin Only
   {
     to: '/admin/benefits',
     label: 'Admin Benefits',
-    admin: true,
+    adminOnly: true,
   },
   {
     to: '/admin/benefit-categories',
     label: 'Benefits Categories',
-    admin: true,
+    adminOnly: true,
   },
   {
     to: '/admin/departments',
     label: 'Departments',
-    admin: true,
+    adminOnly: true,
   },
   {
     to: '/admin/employees',
     label: 'Employees',
-    admin: true,
-  },
-  {
-    to: '/admin/positions',
-    label: 'Positions',
-    admin: true,
+    adminOnly: true,
   },
 ]
 
