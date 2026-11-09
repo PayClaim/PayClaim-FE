@@ -24,6 +24,7 @@ import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
 import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
 import { Route as AppClaimsCreateRouteImport } from './routes/_app/claims/create'
 import { Route as AppTripProposalsIndexRouteImport } from './routes/_app/trip-proposals/index'
+import { Route as AppTripProposalsIdRouteImport } from './routes/_app/trip-proposals/$id'
 import { Route as AppTripProposalsCreateRouteImport } from './routes/_app/trip-proposals/create'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -113,6 +114,11 @@ const AppClaimsCreateRoute = AppClaimsCreateRouteImport.update({
 const AppTripProposalsIndexRoute = AppTripProposalsIndexRouteImport.update({
   id: '/trip-proposals/',
   path: '/trip-proposals/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripProposalsIdRoute = AppTripProposalsIdRouteImport.update({
+  id: '/trip-proposals/$id',
+  path: '/trip-proposals/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTripProposalsCreateRoute = AppTripProposalsCreateRouteImport.update({
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
+  '/trip-proposals/$id': typeof AppTripProposalsIdRoute
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
+  '/trip-proposals/$id': typeof AppTripProposalsIdRoute
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/_app/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/_app/claims/create': typeof AppClaimsCreateRoute
+  '/_app/trip-proposals/$id': typeof AppTripProposalsIdRoute
   '/_app/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/claims/$claimId'
     | '/claims/create'
+    | '/trip-proposals/$id'
     | '/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/claims/$claimId'
     | '/claims/create'
+    | '/trip-proposals/$id'
     | '/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/_app/claims/$claimId'
     | '/_app/claims/create'
+    | '/_app/trip-proposals/$id'
     | '/_app/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -521,6 +533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripProposalsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/trip-proposals/$id': {
+      id: '/_app/trip-proposals/$id'
+      path: '/trip-proposals/$id'
+      fullPath: '/trip-proposals/$id'
+      preLoaderRoute: typeof AppTripProposalsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/trip-proposals/create': {
       id: '/_app/trip-proposals/create'
       path: '/trip-proposals/create'
@@ -652,6 +671,7 @@ interface AppRouteChildren {
   AppHelloRoute: typeof AppHelloRoute
   AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRouteWithChildren
   AppClaimsCreateRoute: typeof AppClaimsCreateRoute
+  AppTripProposalsIdRoute: typeof AppTripProposalsIdRoute
   AppTripProposalsCreateRoute: typeof AppTripProposalsCreateRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
   AppBenefitsIndexRoute: typeof AppBenefitsIndexRoute
@@ -676,6 +696,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHelloRoute: AppHelloRoute,
   AppClaimsClaimIdRoute: AppClaimsClaimIdRouteWithChildren,
   AppClaimsCreateRoute: AppClaimsCreateRoute,
+  AppTripProposalsIdRoute: AppTripProposalsIdRoute,
   AppTripProposalsCreateRoute: AppTripProposalsCreateRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
   AppBenefitsIndexRoute: AppBenefitsIndexRoute,

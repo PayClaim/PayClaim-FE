@@ -1,6 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+
+import { api } from '#/lib/api-client'
 import { getToken } from '#/hooks/auth.hook'
-import type { TripProposal } from '#/types/tripProposals.type'
+import type { TripProposal, TripProposalDetailResponse } from '#/types/tripProposals.type'
 
 type PagedResponse<T> = {
   success: boolean
@@ -53,4 +60,27 @@ export const useGetAllProposalsQuery = () =>
   useQuery({
     queryKey: ['trip-proposals'],
     queryFn: getAllProposals,
+  })
+
+export const useCreateTripProposalMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (formData: FormData) => {
+      return api.post('/trip-proposals', formData)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['trip-proposals'],
+      })
+    },
+  })
+}
+
+export const useGetProposalByIdQuery = (id: string) =>
+  useQuery({
+    queryKey: ['trip-proposals', id],
+    queryFn: () =>
+      api.get<TripProposalDetailResponse>(`/trip-proposals/${id}`),
+    enabled: Boolean(id),
   })

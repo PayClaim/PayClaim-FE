@@ -68,3 +68,35 @@ export interface TripProposalDetail {
   participants: ParticipantItem[]
   approvalHistory: TripApprovalHistory[]
 }
+
+export interface TripProposalDetailResponse {
+  id: string
+  destination: string
+  startDate: string
+  endDate: string
+  totalAmount: number
+  submittedAt: string
+  description: string
+  status: TripProposalStatus
+  filePath: string
+  participants: TripProposalDetailParticipant[]
+  approvalHistory: TripProposalApprovalHistory[]
+}
+
+export interface TripProposalDetailParticipant {
+  employeeId: string
+  employeeName: string | null
+  employeeNumber: string | null
+  isPic: boolean
+  amount: number
+}
+
+export interface TripProposalApprovalHistory {
+  id: number
+  approverId: string
+  approverName: string
+  decision: string
+  notes: string | null
+  approvalLevel: number
+  decidedAt: string
+}
