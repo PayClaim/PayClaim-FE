@@ -2,6 +2,7 @@ import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
@@ -9,10 +10,13 @@ export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context, location }) => {
     try {
       const user = await context.queryClient.query(getCurrentUser())
+      const isAdmin = user.roles.includes('Admin')
       return {
         user,
+        isAdmin,
       }
     } catch (err) {
+      toast.error('User session not found, please login')
       throw redirect({
         to: '/login',
         search: {
