@@ -14,8 +14,6 @@ export const useGetAllPositionsQuery = () =>
 export const useGetPositionQuery = (id: string) =>
   useQuery({
     queryKey: ['positions', id],
-    queryFn: async () => {
-      return api.get<PositionResponse>('/positions')
-    },
-    initialData: null,
+    queryFn: () => api.get<PositionResponse>(`/positions/${id}`),
+    enabled: Boolean(id),
   })
