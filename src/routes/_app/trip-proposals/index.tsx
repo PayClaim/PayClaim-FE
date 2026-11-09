@@ -1,11 +1,8 @@
-<<<<<<< Updated upstream
-import { Button } from '#/components/ui/button'
-import { createFileRoute, Link } from '@tanstack/react-router'
-=======
-
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
->>>>>>> Stashed changes
+
+import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
 
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -34,21 +31,6 @@ export const Route = createFileRoute('/_app/trip-proposals/')({
 })
 
 function RouteComponent() {
-<<<<<<< Updated upstream
-  return (
-    <main>
-      <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">My Claims</h1>
-        <Link to="/claims/create">
-          <Button className="bg-primary">New Claim</Button>
-        </Link>
-      </div>
-      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
-        hello trip proposals
-      </div>
-    </main>
-  )
-=======
   const {
     data: proposals = [],
     isError,
@@ -56,9 +38,9 @@ function RouteComponent() {
     error,
   } = useGetAllProposalsQuery()
 
-const [statusFilter, setStatusFilter] = useState('all')
-const [monthFilter, setMonthFilter] = useState('all')
-const [searchFilter, setSearchFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [monthFilter, setMonthFilter] = useState('all')
+  const [searchFilter, setSearchFilter] = useState('')
 
   if (isFetching && proposals.length === 0) {
     return <p>Loading trip proposals...</p>
@@ -85,7 +67,7 @@ const [searchFilter, setSearchFilter] = useState('')
       proposal.destination.toLowerCase().includes(search) ||
       (proposal.picName?.toLowerCase().includes(search) ?? false)
 
-   const matchesStatus =
+    const matchesStatus =
       statusFilter === 'all' || proposal.status === statusFilter
 
     const matchesMonth =
@@ -99,9 +81,7 @@ const [searchFilter, setSearchFilter] = useState('')
     <main className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold">
-            Trip Proposals
-          </h1>
+          <h1 className="text-xl font-bold">Trip Proposals</h1>
         </div>
 
         <Button>
@@ -110,10 +90,7 @@ const [searchFilter, setSearchFilter] = useState('')
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard
-          title="Total Proposals"
-          value={proposals.length}
-        />
+        <SummaryCard title="Total Proposals" value={proposals.length} />
 
         <SummaryCard
           title="Submitted"
@@ -360,5 +337,5 @@ function FilterSection({
       </Select>
     </div>
   )
->>>>>>> Stashed changes
+
 }
