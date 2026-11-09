@@ -28,7 +28,14 @@ export const createEmployeeForm = () => {
     },
     onSubmit: async ({ value }) => {
       try {
-        await mutation.mutateAsync(value)
+        const isManager =
+          value.positionId?.toUpperCase() === 'MGR' ||
+          value.positionId?.toLowerCase().includes('manager')
+        const payload = {
+          ...value,
+          managerId: isManager ? null : value.managerId,
+        }
+        await mutation.mutateAsync(payload)
         toast.success('Employee created successfully')
         await navigate({
           to: '/admin/employees',
@@ -54,7 +61,14 @@ export const editEmployeeForm = (
     },
     onSubmit: async ({ value }) => {
       try {
-        await mutation.mutateAsync(value)
+        const isManager =
+          value.positionId?.toUpperCase() === 'MGR' ||
+          value.positionId?.toLowerCase().includes('manager')
+        const payload = {
+          ...value,
+          managerId: isManager ? null : value.managerId,
+        }
+        await mutation.mutateAsync(payload)
         toast.success('Employee updated successfully')
         await navigate({
           to: '/admin/employees',

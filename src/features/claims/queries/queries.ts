@@ -58,6 +58,23 @@ export const useCreateClaimMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['claims'] })
       queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
+    },
+  })
+}
+
+// Resubmit / Update claim (needs revision)
+export const useUpdateClaimMutation = (id: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: FormData) => {
+      return api.put(`/claims/${id}`, body)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['claims', id] })
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
+      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
     },
   })
 }
@@ -73,6 +90,7 @@ export const useApproveClaimMutation = (id: string) => {
       queryClient.invalidateQueries({ queryKey: ['claims', id] })
       queryClient.invalidateQueries({ queryKey: ['claims'] })
       queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
+      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
     },
   })
 }
