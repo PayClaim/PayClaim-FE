@@ -29,10 +29,13 @@ function EditBenefitPlanPage() {
   )
 
   const { data: departments = [] } = useGetAllDepartmentsQuery()
-  const departmentOptions = departments.map((d) => ({
-    label: d.name,
-    value: d.id,
-  }))
+  const departmentOptions = [
+    { label: 'Semua Departemen', value: 'ALL' },
+    ...departments.map((d) => ({
+      label: d.name,
+      value: d.id,
+    })),
+  ]
 
   const { data: positions = [] } = useGetAllPositionsQuery()
   const positionOptions = positions.map((p) => ({

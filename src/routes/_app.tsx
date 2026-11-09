@@ -45,7 +45,7 @@ const links: TLink[] = [
   // Admin Only
   {
     to: '/admin/benefits',
-    label: 'Admin Benefits',
+    label: 'Benefits',
     adminOnly: true,
   },
   {

@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
+import { api } from '#/lib/api-client'
 import { getToken } from '#/hooks/auth.hook'
-import type { TripProposal } from '#/types/tripProposals.type'
+import type {
+  TripProposal,
+  TripProposalDetail,
+} from '#/types/tripProposals.type'
 
 type PagedResponse<T> = {
   success: boolean
@@ -53,4 +57,16 @@ export const useGetAllProposalsQuery = () =>
   useQuery({
     queryKey: ['trip-proposals'],
     queryFn: getAllProposals,
+  })
+
+export const useGetAllTripProposalsQuery = useGetAllProposalsQuery
+
+export const useGetTripProposalByIdQuery = (id: string | null) =>
+  useQuery({
+    queryKey: ['tripProposal', id],
+    queryFn: async () => {
+      if (!id) return null
+      return api.get<TripProposalDetail>(`/trip-proposals/${id}`)
+    },
+    enabled: !!id,
   })
