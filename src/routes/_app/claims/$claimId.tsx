@@ -44,11 +44,15 @@ function RouteComponent() {
   const { data: user } = useQuery(getCurrentUser())
 
   const roles = user?.roles || []
-  const isAdminOrApprover = roles.some((r) =>
-    ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
+  const isAdmin = roles.some((r) => r.toLowerCase() === 'admin')
+  const isFinance = roles.some((r) =>
+    ['finance', 'finance manager'].includes(r.toLowerCase()),
   )
-  const isFinanceOrAdmin = roles.some((r) =>
-    ['Admin', 'Finance', 'Finance Manager'].includes(r),
+  const isManager = roles.some((r) => r.toLowerCase() === 'manager')
+
+  // Validasi agar pengguna tidak bisa menyetujui klaim miliknya sendiri
+  const isOwnClaim = Boolean(
+    user?.employeeId && claim?.employeeId && user.employeeId === claim.employeeId,
   )
 
   const approveMutation = useApproveClaimMutation(claimId)
@@ -120,9 +124,31 @@ function RouteComponent() {
     )
   }
 
-  const isPendingApproval =
-    claim.status === 'Submitted' || claim.status === 'UnderReview'
-  const isReadyToPay = claim.status === 'Approved'
+  /**
+   * Aturan Visibilitas Tombol Action (Berdasarkan tahap 2-Step Approval Backend):
+   * 1. Status 'Submitted' (Level 1):
+   *    - Menunggu persetujuan Manager langsung atau Admin.
+   *    - Tombol Approve, Reject, dan Request Revision hanya muncul jika user adalah Manager atau Admin (dan bukan klaim sendiri).
+   * 2. Status 'UnderReview' (Level 2):
+   *    - Manager sudah approve, sekarang berada di tangan Finance.
+   *    - Tombol Approve, Reject, dan Request Revision HANYA muncul untuk Finance, Finance Manager, atau Admin.
+   *    - Manager biasa TIDAK BOLEH melihat tombol lagi.
+   * 3. Status 'Approved' (Level 3 - Disbursement / Opsi A):
+   *    - Sudah disetujui Finance, saldo benefit sudah terpotong.
+   *    - Hanya Finance, Finance Manager, atau Admin yang dapat melihat tombol "Disburse & Mark as Paid".
+   * 4. Status 'Paid', 'Rejected', 'NeedsRevision':
+   *    - Tidak ada aksi approval yang bisa dilakukan lagi.
+   */
+  const canManagerApprove =
+    claim.status === 'Submitted' && (isManager || isAdmin) && !isOwnClaim
+
+  const canFinanceApprove =
+    claim.status === 'UnderReview' && (isFinance || isAdmin) && !isOwnClaim
+
+  const canDisburseAndPay =
+    claim.status === 'Approved' && (isFinance || isAdmin)
+
+  const showApprovalActions = canManagerApprove || canFinanceApprove
 
   const backendBaseUrl = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace('/api', '')
@@ -151,7 +177,11 @@ function RouteComponent() {
                   claim.status,
                 )}`}
               >
-                {claim.status}
+                {claim.status === 'UnderReview'
+                  ? 'Under Review (Finance)'
+                  : claim.status === 'Approved'
+                    ? 'Approved (Pending Payment)'
+                    : claim.status}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -163,60 +193,59 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Action Buttons for Admin / Manager / Finance */}
-        {isAdminOrApprover && (
-          <div className="flex flex-wrap items-center gap-2">
-            {isPendingApproval && (
-              <>
-                <Button
-                  variant="outline"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/30"
-                  onClick={() => {
-                    setActionType('NeedsRevision')
-                    setNotes('')
-                    setDialogOpen(true)
-                  }}
-                >
-                  Request Revision
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="gap-1.5"
-                  onClick={() => {
-                    setActionType('Rejected')
-                    setNotes('')
-                    setDialogOpen(true)
-                  }}
-                >
-                  <XCircle className="h-4 w-4" /> Reject
-                </Button>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
-                  onClick={() => {
-                    setActionType('Approved')
-                    setNotes('')
-                    setDialogOpen(true)
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Approve
-                </Button>
-              </>
-            )}
-
-            {isReadyToPay && isFinanceOrAdmin && (
+        {/* Action Buttons Container */}
+        <div className="flex flex-wrap items-center gap-2">
+          {showApprovalActions && (
+            <>
               <Button
-                className="bg-green-700 hover:bg-green-800 text-white gap-1.5"
+                variant="outline"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/30"
                 onClick={() => {
-                  setActionType('Pay')
+                  setActionType('NeedsRevision')
                   setNotes('')
                   setDialogOpen(true)
                 }}
               >
-                <DollarSign className="h-4 w-4" /> Disburse & Mark Paid
+                Request Revision
               </Button>
-            )}
-          </div>
-        )}
+              <Button
+                variant="destructive"
+                className="gap-1.5"
+                onClick={() => {
+                  setActionType('Rejected')
+                  setNotes('')
+                  setDialogOpen(true)
+                }}
+              >
+                <XCircle className="h-4 w-4" /> Reject
+              </Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                onClick={() => {
+                  setActionType('Approved')
+                  setNotes('')
+                  setDialogOpen(true)
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {claim.status === 'Submitted' ? 'Approve (Manager)' : 'Approve (Finance)'}
+              </Button>
+            </>
+          )}
+
+          {canDisburseAndPay && (
+            <Button
+              className="bg-green-700 hover:bg-green-800 text-white gap-1.5 shadow-xs"
+              onClick={() => {
+                setActionType('Pay')
+                setNotes('')
+                setDialogOpen(true)
+              }}
+            >
+              <DollarSign className="h-4 w-4" /> Disburse & Mark Paid
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -327,9 +356,9 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Right Side: Employee Details & Approval Log */}
+        {/* Right Side: Submitter Details & Approval Log */}
         <div className="space-y-6">
-          {/* Employee Card */}
+          {/* Submitter Card */}
           <div className="bg-card p-6 rounded-2xl border border-border space-y-4 shadow-xs">
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Submitter Information
@@ -413,7 +442,7 @@ function RouteComponent() {
           <DialogHeader>
             <DialogTitle>
               {actionType === 'Approved'
-                ? 'Approve Claim'
+                ? `Approve Claim (${claim.status === 'Submitted' ? 'Level 1: Manager' : 'Level 2: Finance'})`
                 : actionType === 'Rejected'
                   ? 'Reject Claim'
                   : actionType === 'NeedsRevision'
@@ -422,24 +451,30 @@ function RouteComponent() {
             </DialogTitle>
             <DialogDescription>
               {actionType === 'Approved'
-                ? 'Are you sure you want to approve this claim step?'
+                ? claim.status === 'Submitted'
+                  ? 'Sebagai Manager, Anda akan menyetujui klaim ini untuk diteruskan ke tim Finance (Under Review).'
+                  : 'Sebagai Finance, menyetujui klaim ini akan langsung memotong saldo kuota benefit karyawan dan mengubah status menjadi Approved (siap dicairkan).'
                 : actionType === 'Rejected'
-                  ? 'Please specify reasons for rejecting this claim.'
+                  ? 'Klaim ini akan ditolak secara permanen. Berikan alasan penolakan.'
                   : actionType === 'NeedsRevision'
-                    ? 'Provide notes explaining what the employee needs to revise.'
-                    : 'Confirm that this reimbursement amount has been disbursed and added to payroll.'}
+                    ? 'Kembalikan klaim ke karyawan agar dapat diperbaiki (misal: nota tidak jelas/salah nominal).'
+                    : 'Konfirmasi bahwa dana reimbursement telah ditransfer/dicairkan ke karyawan dan dicatat ke payroll.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2">
             <Label htmlFor="notes" className="text-xs font-semibold">
-              Notes / Feedback (Optional)
+              Notes / Feedback {actionType === 'NeedsRevision' ? '(Required)' : '(Optional)'}
             </Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add remarks or justification..."
+              placeholder={
+                actionType === 'NeedsRevision'
+                  ? 'Jelaskan apa yang perlu diperbaiki oleh karyawan...'
+                  : 'Tambahkan catatan jika diperlukan...'
+              }
               rows={3}
             />
           </div>
@@ -457,6 +492,7 @@ function RouteComponent() {
                     : 'bg-primary hover:bg-primary/90 text-white'
               }
               disabled={
+                (actionType === 'NeedsRevision' && !notes.trim()) ||
                 approveMutation.isPending ||
                 rejectMutation.isPending ||
                 payMutation.isPending
