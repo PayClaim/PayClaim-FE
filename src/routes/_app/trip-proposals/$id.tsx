@@ -1,5 +1,6 @@
 
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Download, FileText } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
@@ -223,26 +224,57 @@ function RouteComponent() {
 
       {/* Proposal Attachment */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 text-lg font-semibold">
-          Lampiran Proposal
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">
+            Lampiran Proposal
+          </h2>
+          {proposal.filePath && (
+            <a
+              href={
+                proposal.filePath.startsWith('http')
+                  ? proposal.filePath
+                  : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : ''}${proposal.filePath.startsWith('/') ? '' : '/'}${proposal.filePath}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+            >
+              <Download className="h-4 w-4" /> Buka / Unduh Berkas
+            </a>
+          )}
+        </div>
 
         {proposal.filePath ? (
-          <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-            <div className="rounded-md bg-muted p-3">
-              <span className="text-xl">📄</span>
+          <a
+            href={
+              proposal.filePath.startsWith('http')
+                ? proposal.filePath
+                : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : ''}${proposal.filePath.startsWith('/') ? '' : '/'}${proposal.filePath}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 rounded-lg border border-border p-4 hover:bg-muted/40 transition-colors"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="rounded-md bg-primary/10 p-3 text-primary">
+                <FileText className="h-6 w-6" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="break-all text-sm font-medium hover:underline">
+                  {getFileName(proposal.filePath)}
+                </p>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {proposal.filePath}
+                </p>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <p className="break-all text-sm font-medium">
-                {getFileName(proposal.filePath)}
-              </p>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                {proposal.filePath}
-              </p>
-            </div>
-          </div>
+            <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
+              <Download className="h-3.5 w-3.5" /> Buka
+            </Button>
+          </a>
         ) : (
           <p className="text-sm text-muted-foreground">
             No proposal attachment.
