@@ -39,8 +39,8 @@ function RouteComponent() {
   const { data: departments } = useGetAllDepartmentsQuery()
   const { data: positions } = useGetAllPositionsQuery()
 
-  const [departmentFilter, setDepartmentFilter] = useState<string>('')
-  const [positionFilter, setPositionFilter] = useState<string>('')
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null)
+  const [positionFilter, setPositionFilter] = useState<string | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
 
   const departmentOptions = departments.map((d) => {
@@ -51,8 +51,12 @@ function RouteComponent() {
   })
 
   const displayData = employees.filter((e) => {
+    const searchLower = searchFilter.toLowerCase()
     const matchSearch =
-      !searchFilter || e.fullName.toLowerCase().includes(searchFilter)
+      !searchFilter ||
+      e.fullName.toLowerCase().includes(searchLower) ||
+      e.email.toLowerCase().includes(searchLower) ||
+      e.number.toLowerCase().includes(searchLower)
     const matchDepartment =
       !departmentFilter || e.departmentId === departmentFilter
     const matchPosition = !positionFilter || e.positionId === positionFilter
@@ -66,20 +70,22 @@ function RouteComponent() {
   return (
     <main>
       <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Benefit List</h1>
+        <h1 className="text-xl font-bold">Employee List</h1>
         <Link to="/admin/employees/create">
           <Button className="bg-primary">New Employee</Button>
         </Link>
       </div>
 
-      <div className="bg-card p-8 rounded-2xl mb-8  border border-border">
-        <div className="flex justify-start items-center gap-8 ">
+      <div className="bg-card p-8 rounded-2xl mb-8 border border-border">
+        <div className="flex justify-start items-center gap-8 border-b border-border">
           <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
           <FilterSelect
             val={positionFilter}
             setValue={setPositionFilter}
             options={positionOptions}
             filterLabel="Position"
+            nullable
+            nullLabel="None"
           />
 
           <FilterSelect
@@ -87,10 +93,16 @@ function RouteComponent() {
             setValue={setDepartmentFilter}
             options={departmentOptions}
             filterLabel="Department"
+            nullable
+            nullLabel="None"
           />
         </div>
 
-        <EmployeeTable employees={displayData} />
+        {employees.length !== 0 ? (
+          <EmployeeTable employees={displayData} />
+        ) : (
+          <p className="mt-4">You have 0 Employees</p>
+        )}
       </div>
     </main>
   )
@@ -118,15 +130,6 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
           <TableRow
             key={e.id}
             className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
-            // onClick={() => {
-            //   console.log('Click')
-            //   navigate({
-            //     to: '/claims/$claimId',
-            //     params: {
-            //       claimId: claim.id.toString(),
-            //     },
-            //   })
-            // }}
           >
             <TableCell className="px-6 py-4">{e.number}</TableCell>
             <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
@@ -158,11 +161,11 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
                 <Pencil />
               </Button>
 
-              {/* <DeleteDialog id={e.id} name={e.fullName}>
+              <DeleteDialog id={e.id} name={e.fullName}>
                 <Button variant={'destructive'}>
                   <Trash />
                 </Button>
-              </DeleteDialog> */}
+              </DeleteDialog>
             </TableCell>
           </TableRow>
         ))}
@@ -196,7 +199,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Employee</DialogTitle>
           <DialogDescription>
-            <p>Are you want to delete the employee {name}?</p>
+            Are you sure you want to delete the employee {name}?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
