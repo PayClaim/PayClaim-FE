@@ -21,7 +21,7 @@ export const useGetEmployeeQuery = (id: string) =>
     queryFn: async () => {
       return api.get<EmployeeResponse>(`/employees/${id}`)
     },
-    initialData: null,
+    enabled: Boolean(id),
   })
 
 export const useCreateEmployeeMutation = () => {

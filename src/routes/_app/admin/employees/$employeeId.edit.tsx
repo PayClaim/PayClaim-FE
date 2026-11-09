@@ -1,49 +1,95 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { editEmployeeForm } from '#/features/employees/forms/forms'
-import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
+import {
+  useGetAllEmployeeQuery,
+  useGetEmployeeQuery,
+} from '#/features/employees/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
-import type { UpdateEmployeeRequest } from '#/types/employee.type'
+import type { EmployeeResponse } from '#/types/employee.type'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 
 export const Route = createFileRoute('/_app/admin/employees/$employeeId/edit')({
   component: RouteComponent,
-  validateSearch: (s): UpdateEmployeeRequest => {
-    return {
-      fullName: s.fullName as string,
-      email: s.email as string,
-      hireDate: s.hireDate as string,
-      positionId: s.positionId as string,
-      departmentId: s.departmentId as string,
-      managerId: s.managerId as string,
-      isActive: s.isActive as boolean,
-    }
-  },
+  validateSearch: (s: Record<string, unknown>) => s,
 })
 
 function RouteComponent() {
   const { employeeId } = Route.useParams()
-  const initialValue = Route.useSearch()
-  const form = editEmployeeForm(employeeId, initialValue)
-
-  const isInactive =
-    initialValue.isActive === false || String(initialValue.isActive) === 'false'
-
+  const { data: employee, isLoading, isError } = useGetEmployeeQuery(employeeId)
   const { data: positions = [] } = useGetAllPositionsQuery()
+  const { data: departments = [] } = useGetAllDepartmentsQuery()
+  const { data: employees = [] } = useGetAllEmployeeQuery()
+
+  if (isLoading) {
+    return (
+      <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto border border-border text-center text-muted-foreground">
+        Loading employee data...
+      </main>
+    )
+  }
+
+  if (isError || !employee) {
+    return (
+      <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto border border-border text-center text-destructive">
+        Employee not found.
+      </main>
+    )
+  }
+
+  return (
+    <EditEmployeeFormContent
+      employeeId={employeeId}
+      employee={employee}
+      positions={positions}
+      departments={departments}
+      employees={employees}
+    />
+  )
+}
+
+function EditEmployeeFormContent({
+  employeeId,
+  employee,
+  positions,
+  departments,
+  employees,
+}: {
+  employeeId: string
+  employee: EmployeeResponse
+  positions: any[]
+  departments: any[]
+  employees: EmployeeResponse[]
+}) {
+  const isInactive = !employee.isActive
+  const formattedHireDate = employee.hireDate
+    ? employee.hireDate.split('T')[0]
+    : ''
+
+  const form = editEmployeeForm(employeeId, {
+    fullName: employee.fullName,
+    email: employee.email,
+    hireDate: formattedHireDate,
+    positionId: employee.positionId,
+    departmentId: employee.departmentId,
+    managerId: employee.managerId,
+    isActive: employee.isActive,
+  })
+
   const positionOptions = positions.map((p) => {
     return { label: p.title, value: p.id }
   })
 
-  const { data: departments = [] } = useGetAllDepartmentsQuery()
   const departmentOptions = departments.map((d) => {
     return { label: d.name, value: d.id }
   })
 
-  const { data: employees = [] } = useGetAllEmployeeQuery()
-  const managerOptions = employees.map((e) => {
-    return { label: e.fullName, value: e.id }
-  })
+  const managerOptions = employees
+    .filter((e) => e.id !== employeeId)
+    .map((e) => {
+      return { label: e.fullName, value: e.id }
+    })
 
   return (
     <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto border border-border">
@@ -84,6 +130,16 @@ function RouteComponent() {
 
             <form.AppField name="email">
               {(field) => <field.TextField label="Email" disabled={isInactive} />}
+            </form.AppField>
+
+            {/* Hire date cannot be modified */}
+            <form.AppField name="hireDate">
+              {(field) => (
+                <field.TextField
+                  label="Hire Date (Permanent)"
+                  disabled={true}
+                />
+              )}
             </form.AppField>
 
             <form.AppField name="positionId">

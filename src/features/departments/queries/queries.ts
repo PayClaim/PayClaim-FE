@@ -17,7 +17,7 @@ export const useGetDepartmentQuery = (id: string) =>
   useQuery({
     queryKey: ['departments', id],
     queryFn: async () => api.get<DepartmentResponse>(`/departments/${id}`),
-    initialData: null,
+    enabled: Boolean(id),
   })
 
 export const useCreateDepartmentMutation = () => {
