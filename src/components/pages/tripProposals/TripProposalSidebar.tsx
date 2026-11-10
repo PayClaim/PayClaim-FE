@@ -1,82 +1,289 @@
+import { useState } from 'react'
+
+import {
+  Download,
+  Eye,
+  FileText,
+  Users,
+} from 'lucide-react'
+
 import type { TripProposalDetailResponse } from '#/types/tripProposals.type'
 
 import { Badge } from '#/components/ui/badge'
+import { Button } from '#/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 
 type Props = {
   proposal: TripProposalDetailResponse
+  attachmentUrl: string
+  attachmentFileName: string
+  isPdf: boolean
 }
 
-export function TripProposalSidebar({ proposal }: Props) {
+export function TripProposalSidebar({
+  proposal,
+  attachmentUrl,
+  attachmentFileName,
+  isPdf,
+}: Props) {
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const isImage = /\.(jpg|jpeg|png|webp|gif)(?:[?#].*)?$/i.test(
+    attachmentFileName,
+  )
+
+  const canPreview = isPdf || isImage
+
+  const previewUrl = attachmentUrl
+    ? `${attachmentUrl}${attachmentUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&scrollbar=0&view=FitH`
+    : ''
+
+  const handleDownload = async () => {
+    if (!attachmentUrl) return
+
+    try {
+      await downloadAttachment(attachmentUrl, attachmentFileName)
+    } catch (error) {
+      console.error('Failed to download proposal attachment:', error)
+    }
+  }
+
   return (
-    <aside className="space-y-5">
-      {/* Informasi perjalanan. */}
-      <section className="space-y-3 rounded-2xl border border-border bg-card p-5">
-        <h2 className="border-b border-border pb-3 text-sm font-bold">
-          Trip Information
-        </h2>
+    <>
+      <aside className="flex flex-col border-b border-border bg-card lg:col-span-4 lg:border-b-0 lg:border-r xl:col-span-3">
 
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">
-            Description
-          </p>
+        {/* Description dan dokumen proposal. */}
+        <div className="space-y-5 p-5 sm:p-6">
+          <section className="space-y-3">
+            <h2 className="text-base font-bold">
+              Proposal Description
+            </h2>
 
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
-            {proposal.description || 'No description provided.'}
-          </p>
-        </div>
-      </section>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              {proposal.description || 'No description provided.'}
+            </p>
+          </section>
 
-      {/* Daftar peserta dibuat compact agar tetap rapi hingga 10 orang. */}
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <h2 className="text-sm font-bold">
-            Participants
-          </h2>
+          <section className="space-y-3 border-t border-border pt-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-bold">
+                Proposal Letter
+              </h2>
 
-          <Badge variant="outline">
-            {proposal.participants.length}
-          </Badge>
-        </div>
+              {attachmentUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => void handleDownload()}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </Button>
+              )}
+            </div>
 
-        <div className="divide-y divide-border">
-          {proposal.participants.map((participant) => (
-            <div
-              key={participant.employeeId}
-              className="flex items-center justify-between gap-3 py-3"
-            >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-sm font-semibold">
-                    {participant.employeeName || 'Unknown Employee'}
+            {attachmentUrl ? (
+              <div className="space-y-2">
+                {/* Thumbnail dokumen. */}
+                <button
+                  type="button"
+                  disabled={!canPreview}
+                  onClick={() => setPreviewOpen(true)}
+                  className="group relative block aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted/30"
+                >
+                  {isPdf ? (
+                    <iframe
+                      src={previewUrl}
+                      title="Proposal PDF Thumbnail"
+                      className="pointer-events-none h-full w-full"
+                    />
+                  ) : isImage ? (
+                    <img
+                      src={attachmentUrl}
+                      alt="Proposal attachment"
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-3">
+                      <FileText className="h-12 w-12 text-primary" />
+
+                      <p className="px-4 text-xs font-medium">
+                        {attachmentFileName}
+                      </p>
+                    </div>
+                  )}
+
+                  {canPreview && (
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <Eye className="h-5 w-5" />
+                      Preview Document
+                    </div>
+                  )}
+                </button>
+
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-primary" />
+
+                  <p className="truncate text-xs font-medium">
+                    {attachmentFileName}
                   </p>
 
-                  {participant.isPic && (
-                    <Badge color="info">
-                      PIC
+                  {isPdf && (
+                    <Badge variant="outline" className="ml-auto shrink-0">
+                      PDF
                     </Badge>
                   )}
                 </div>
 
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {participant.employeeNumber || '-'}
+                {!canPreview && (
+                  <p className="text-xs text-muted-foreground">
+                    Preview is not available for this file type.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
+
+                <p className="text-xs text-muted-foreground">
+                  No proposal attachment uploaded.
                 </p>
               </div>
-
-              <p className="shrink-0 text-right text-xs font-semibold">
-                {formatCurrency(participant.amount)}
-              </p>
-            </div>
-          ))}
-
-          {proposal.participants.length === 0 && (
-            <p className="py-5 text-center text-xs text-muted-foreground">
-              No participants found.
-            </p>
-          )}
+            )}
+          </section>
         </div>
-      </section>
-    </aside>
+
+        {/* Daftar peserta perjalanan. */}
+        <section className="border-t border-border p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+
+              <h2 className="text-base font-bold">
+                Participants
+              </h2>
+            </div>
+
+            <Badge variant="outline">
+              {proposal.participants.length}
+            </Badge>
+          </div>
+
+          <div className="max-h-[480px] divide-y divide-border overflow-y-auto">
+            {proposal.participants.map((participant) => (
+              <div
+                key={participant.employeeId}
+                className="flex items-center justify-between gap-3 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold">
+                      {participant.employeeName || 'Unknown Employee'}
+                    </p>
+
+                    {participant.isPic && (
+                      <Badge color="info">
+                        PIC
+                      </Badge>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {participant.employeeNumber || '-'}
+                  </p>
+                </div>
+
+                <p className="shrink-0 text-right text-xs font-semibold">
+                  {formatCurrency(participant.amount)}
+                </p>
+              </div>
+            ))}
+
+            {proposal.participants.length === 0 && (
+              <p className="py-5 text-center text-xs text-muted-foreground">
+                No participants found.
+              </p>
+            )}
+          </div>
+        </section>
+      </aside>
+
+      {/* Modal preview dokumen. */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="flex h-[92vh] w-[96vw] !max-w-[1400px] flex-col gap-3">
+          <DialogHeader>
+            <DialogTitle className="truncate">
+              {attachmentFileName}
+            </DialogTitle>
+
+            <DialogDescription>
+              Trip proposal document preview.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/20">
+            {previewOpen && attachmentUrl && (
+              isPdf ? (
+                <iframe
+                  src={previewUrl}
+                  title="Full Proposal PDF Preview"
+                  className="h-full w-full"
+                />
+              ) : isImage ? (
+                <img
+                  src={attachmentUrl}
+                  alt="Full proposal attachment"
+                  className="h-full w-full object-contain"
+                />
+              ) : null
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              className="gap-2"
+              onClick={() => void handleDownload()}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
+}
+
+async function downloadAttachment(url: string, fileName: string) {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const objectUrl = window.URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = fileName || 'proposal-attachment'
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(objectUrl)
+  }, 1000)
 }
 
 function formatCurrency(amount: number) {

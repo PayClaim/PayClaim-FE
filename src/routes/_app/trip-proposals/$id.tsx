@@ -8,7 +8,9 @@ import {
   TripProposalTimeline,
   type ProposalTimelineItem,
 } from '#/components/pages/tripProposals/TripProposalTimeline'
+
 import { TripProposalStatus } from '#/types/tripProposals.type'
+
 export const Route = createFileRoute('/_app/trip-proposals/$id')({
   component: RouteComponent,
 })
@@ -25,8 +27,8 @@ function RouteComponent() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+      <main className="mx-auto w-full max-w-[1600px]">
+        <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
           Loading trip proposal details...
         </div>
       </main>
@@ -35,8 +37,8 @@ function RouteComponent() {
 
   if (isError || !proposal) {
     return (
-      <main className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-destructive bg-card p-8 text-destructive">
+      <main className="mx-auto w-full max-w-[1600px]">
+        <div className="rounded-xl border border-destructive bg-card p-8 text-destructive">
           {error instanceof Error
             ? error.message
             : 'Trip proposal not found.'}
@@ -61,93 +63,149 @@ function RouteComponent() {
   const attachmentFileName = getFileName(filePath)
   const isPdf = /\.pdf(?:$|[?#])/i.test(filePath)
 
-  // Mengambil aktivitas approval dari backend.
-// Mengambil aktivitas approval dari backend.
-const activities: ProposalTimelineItem[] = (
-  proposal.approvalHistory || []
-).map((history) => ({
-  id: `approval-${history.id}`,
-  approverName: history.approverName,
-  decision: history.decision,
-  approvalLevel: history.approvalLevel,
-  decidedAt: history.decidedAt,
-}))
+  const approvalHistory = proposal.approvalHistory || []
 
-// Menambahkan Submitted sementara jika belum ada dari backend.
-const hasSubmittedActivity = activities.some(
-  (activity) => activity.decision.toLowerCase() === 'submitted',
-)
+  // Mengambil record approval terbaru untuk setiap level.
+  const getLatestApproval = (level: number) => {
+    return [...approvalHistory]
+      .filter(
+        (history) =>
+          history.approvalLevel === level &&
+          history.decision.toLowerCase() !== 'submitted',
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.decidedAt).getTime() -
+          new Date(a.decidedAt).getTime(),
+      )[0]
+  }
 
-if (!hasSubmittedActivity) {
+  const managerApproval = getLatestApproval(1)
+  const financeApproval = getLatestApproval(2)
+  const financeManagerApproval = getLatestApproval(3)
+
+  // Menentukan apakah tahapan Finance dan Finance Manager diperlukan.
+  const showFinanceStage =
+    Boolean(financeApproval || financeManagerApproval) ||
+    [
+      TripProposalStatus.UnderReview,
+      TripProposalStatus.FinanceManagerReview,
+      TripProposalStatus.Approved,
+      TripProposalStatus.Completed,
+    ].includes(proposal.status)
+
+  const showFinanceManagerStage =
+    Boolean(financeManagerApproval) ||
+    proposal.status === TripProposalStatus.FinanceManagerReview
+
+  // Menampilkan aktivitas Submitted dari backend jika tersedia.
+  const submittedActivity = approvalHistory.find(
+    (history) => history.decision.toLowerCase() === 'submitted',
+  )
+
   const pic = proposal.participants.find(
     (participant) => participant.isPic,
   )
 
-  activities.push({
+  const submittedBy =
+    submittedActivity?.approverName ||
+    pic?.employeeName ||
+    'Proposal PIC'
+
+  const submittedAt =
+    submittedActivity?.decidedAt ||
+    proposal.submittedAt
+
+  // Membuat card untuk setiap tahapan approval.
+  const createApprovalStage = (
+    level: number,
+    title: string,
+    roleName: string,
+    approval: (typeof approvalHistory)[number] | undefined,
+    isPending: boolean,
+  ): ProposalTimelineItem => ({
+    id: `level-${level}`,
+    title,
+    approverName: approval?.approverName || roleName,
+    decision: approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
+    approvalLevel: level,
+    decidedAt: approval?.decidedAt || '',
+    notes: approval?.notes || null,
+    isPending: !approval && isPending,
+  })
+
+  // Urutan dari tahap terakhir di atas ke Submitted di bawah.
+  const timelineStages: ProposalTimelineItem[] = []
+
+  if (showFinanceManagerStage) {
+    timelineStages.push(
+      createApprovalStage(
+        3,
+        'Finance Manager Approval (Level 3)',
+        'Finance Manager',
+        financeManagerApproval,
+        proposal.status === TripProposalStatus.FinanceManagerReview,
+      ),
+    )
+  }
+
+  if (showFinanceStage) {
+    timelineStages.push(
+      createApprovalStage(
+        2,
+        'Finance Review (Level 2)',
+        'Finance Officer',
+        financeApproval,
+        proposal.status === TripProposalStatus.UnderReview,
+      ),
+    )
+  }
+
+  timelineStages.push(
+    createApprovalStage(
+      1,
+      'Manager Approval (Level 1)',
+      'Direct Manager',
+      managerApproval,
+      proposal.status === TripProposalStatus.Submitted,
+    ),
+  )
+
+  // Submission selalu menjadi aktivitas paling bawah.
+  timelineStages.push({
     id: 'submission',
-    approverName: pic?.employeeName || 'Proposal PIC',
+    title: 'Proposal Submission',
+    approverName: submittedBy,
     decision: 'Submitted',
     approvalLevel: null,
-    decidedAt: proposal.submittedAt,
+    decidedAt: submittedAt,
+    notes: null,
+    isSubmission: true,
   })
-}
-
-// Menentukan siapa yang sedang menunggu untuk melakukan approval.
-let pendingApprover: string | null = null
-
-switch (proposal.status) {
-  case TripProposalStatus.Submitted:
-    pendingApprover = 'Manager'
-    break
-
-  case TripProposalStatus.UnderReview:
-    pendingApprover = 'Finance'
-    break
-
-  case TripProposalStatus.FinanceManagerReview:
-    pendingApprover = 'Finance Manager'
-    break
-}
-
-// Urutkan aktivitas terbaru dahulu.
-// Dengan demikian proses dibaca dari bawah ke atas.
-activities.sort(
-  (a, b) =>
-    new Date(b.decidedAt).getTime() -
-    new Date(a.decidedAt).getTime(),
-)
-
-// Pending selalu berada paling atas.
-const timelineActivities: ProposalTimelineItem[] = [
-  ...(pendingApprover
-    ? [
-        {
-          id: 'pending-current',
-          approverName: pendingApprover,
-          decision: 'Pending',
-          approvalLevel: null,
-          decidedAt: '',
-          isPending: true,
-        },
-      ]
-    : []),
-
-  ...activities,
-]
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6">
+    <main className="mx-auto w-full max-w-[1600px] space-y-4">
+
+      {/* Header tetap menggunakan desain sebelumnya. */}
       <TripProposalHeader proposal={proposal} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <TripProposalSidebar proposal={proposal} />
+      {/* Workspace dua panel seperti halaman Claim Detail. */}
+      <div className="grid min-h-[720px] grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12">
 
-        <TripProposalTimeline
-            activities={timelineActivities}
-            attachmentUrl={attachmentUrl}
-            attachmentFileName={attachmentFileName}
+        <TripProposalSidebar
+          proposal={proposal}
+          attachmentUrl={attachmentUrl}
+          attachmentFileName={attachmentFileName}
           isPdf={isPdf}
         />
+
+        <TripProposalTimeline
+            stages={timelineStages}
+            attachmentUrl={attachmentUrl}
+            attachmentFileName={attachmentFileName}
+            isPdf={isPdf}
+          />
+        
       </div>
     </main>
   )
@@ -156,7 +214,8 @@ const timelineActivities: ProposalTimelineItem[] = [
 function getFileName(path: string) {
   if (!path) return ''
 
-  const fileName = path.split(/[\\/]/).pop()?.split(/[?#]/)[0] || path
+  const fileName =
+    path.split(/[\\/]/).pop()?.split(/[?#]/)[0] || path
 
   try {
     return decodeURIComponent(fileName)
