@@ -64,12 +64,12 @@ const MENU_CATEGORIES: MenuCategory[] = [
     title: 'Reimbursement & Trips',
     items: [
       {
-        label: 'Claims',
+        label: 'My Claims',
         to: '/claims',
         icon: Receipt,
       },
       {
-        label: 'Trip Proposals',
+        label: 'My Trip Proposals',
         to: '/trip-proposals/',
         icon: Plane,
       },

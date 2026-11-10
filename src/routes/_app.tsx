@@ -44,7 +44,7 @@ const links: TLink[] = [
   },
   {
     to: '/trip-proposals',
-    label: 'Trip Proposals',
+    label: 'My Trip Proposals',
   },
   {
     to: '/benefits',
