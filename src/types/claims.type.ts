@@ -66,6 +66,7 @@ export interface ClaimResponseWithHistory {
   employeeId: string
   employeeName: string
   employeeNumber: string
+  managerName?: string | null
   departmentName?: string | null
   employeeBenefitId?: string | null
   benefitName?: string | null

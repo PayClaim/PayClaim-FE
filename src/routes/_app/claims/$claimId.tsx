@@ -27,18 +27,73 @@ import { toast } from 'sonner'
 import {
   AlertTriangle,
   ArrowLeft,
+  Calendar,
   CheckCircle2,
+  Clock,
   DollarSign,
   Download,
   Edit,
+  Eye,
   FileCheck,
   FileText,
+  Flag,
   XCircle,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/claims/$claimId')({
   component: RouteComponent,
 })
+
+function getInitials(name?: string | null): string {
+  if (!name) return 'U'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return 'th'
+  switch (day % 10) {
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
+  }
+}
+
+function formatDateBox(dateStr?: string | null) {
+  const d = dateStr ? new Date(dateStr) : new Date()
+  if (isNaN(d.getTime())) {
+    return {
+      day: '--',
+      suffix: '',
+      monthYear: '-',
+      time: '--:--',
+      longDate: '-',
+    }
+  }
+  const day = d.getDate()
+  const suffix = getOrdinalSuffix(day)
+  const monthShort = d.toLocaleDateString('en-US', { month: 'short' })
+  const monthLong = d.toLocaleDateString('en-US', { month: 'long' })
+  const year = d.getFullYear()
+  const time = d.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return {
+    day: String(day),
+    suffix,
+    monthYear: `${monthShort}, ${year}`,
+    time,
+    longDate: `${day} ${monthLong}, ${year}`,
+  }
+}
 
 function RouteComponent() {
   const { claimId } = Route.useParams()
@@ -52,7 +107,6 @@ function RouteComponent() {
   )
   const isManager = roles.some((r) => r.toLowerCase() === 'manager')
 
-  // Validasi kepemilikan klaim
   const isOwnClaim = Boolean(
     user?.employeeId && claim?.employeeId && user.employeeId === claim.employeeId,
   )
@@ -62,6 +116,8 @@ function RouteComponent() {
   const payMutation = usePayClaimMutation(claimId)
 
   const [notes, setNotes] = useState('')
+  const [expandDescription, setExpandDescription] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
   const [actionType, setActionType] = useState<
     'Approved' | 'Rejected' | 'NeedsRevision' | 'Pay' | null
   >(null)
@@ -103,9 +159,9 @@ function RouteComponent() {
 
   if (isFetching) {
     return (
-      <main className="max-w-4xl mx-auto space-y-4">
-        <div className="bg-card p-8 rounded-2xl border border-border text-center text-muted-foreground">
-          Loading claim details...
+      <main className="w-full max-w-[1600px] mx-auto">
+        <div className="bg-card p-10 rounded-xl border border-border text-center text-muted-foreground">
+          Loading claim details and approval workflow...
         </div>
       </main>
     )
@@ -113,20 +169,19 @@ function RouteComponent() {
 
   if (isError || !claim) {
     return (
-      <main className="max-w-4xl mx-auto space-y-4">
+      <main className="w-full max-w-[1600px] mx-auto space-y-4">
         <Link to="/claims">
           <Button variant="outline" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Claims
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Claims
           </Button>
         </Link>
-        <div className="bg-card p-8 rounded-2xl border border-destructive text-destructive">
-          Error: {error ? error.message : 'Claim not found.'}
+        <div className="bg-card p-8 rounded-xl border border-destructive text-destructive">
+          Failed to load claim details: {error ? error.message : 'Claim record was not found.'}
         </div>
       </main>
     )
   }
 
-  // Visibilitas tombol aksi berdasarkan role & tahap
   const canManagerApprove =
     claim.status === 'Submitted' && (isManager || isAdmin) && !isOwnClaim
 
@@ -138,7 +193,6 @@ function RouteComponent() {
 
   const showApprovalActions = canManagerApprove || canFinanceApprove
 
-  // Tombol Edit & Resubmit khusus pemilik klaim saat status NeedsRevision
   const canResubmitClaim =
     claim.status === 'NeedsRevision' && (isOwnClaim || isAdmin)
 
@@ -149,317 +203,849 @@ function RouteComponent() {
     ? claim.filePath
     : `${backendBaseUrl}${claim.filePath?.startsWith('/') ? '' : '/'}${claim.filePath}`
 
-  // Sort approval history dari aksi yang terbaru ke yang terlama
-  const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort((a, b) => {
-    const timeA = a.decidedAt ? new Date(a.decidedAt).getTime() : 0
-    const timeB = b.decidedAt ? new Date(b.decidedAt).getTime() : 0
-    return timeB - timeA
-  })
+  const isImageReceipt = Boolean(
+    claim.filePath && claim.filePath.match(/\.(jpeg|jpg|png|webp|gif)$/i),
+  )
+  const receiptFileName = claim.filePath
+    ? claim.filePath.split('/').pop() || 'Receipt_Attachment'
+    : null
+
+  const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort(
+    (a, b) => {
+      const timeA = a.decidedAt ? new Date(a.decidedAt).getTime() : 0
+      const timeB = b.decidedAt ? new Date(b.decidedAt).getTime() : 0
+      return timeB - timeA
+    },
+  )
+
+  const level1Approval = sortedApprovalHistory.find(
+    (h) => h.approvalLevel === 1,
+  )
+  const level2Approval = sortedApprovalHistory.find(
+    (h) => h.approvalLevel === 2,
+  )
+
+  const submittedDateInfo = formatDateBox(claim.submittedAt)
+  const txDateInfo = formatDateBox(claim.transactionDate)
+
+  const claimTypeLabel =
+    claim.claimType === 'OperationalReimbursement'
+      ? 'Operational Reimbursement'
+      : claim.claimType === 'BusinessTripReimbursement'
+        ? 'Business Trip Reimbursement'
+        : 'Benefit Reimbursement'
+
+  const statusDisplayLabel =
+    claim.status === 'UnderReview'
+      ? 'Under Review (Finance)'
+      : claim.status === 'Approved'
+        ? 'Approved (Pending Payment)'
+        : claim.status === 'NeedsRevision'
+          ? 'Needs Revision'
+          : claim.status
+
+  const descriptionText = claim.description || 'No additional description provided.'
+  const isLongDescription = descriptionText.length > 140
 
   return (
-    <main className="max-w-5xl mx-auto space-y-6">
-      {/* Header & Back Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link to="/claims">
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-heading">
-                Claim #{claim.id.slice(0, 8)}
-              </h1>
-              <span
-                className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getClaimBadgeClass(
-                  claim.status,
-                )}`}
-              >
-                {claim.status === 'UnderReview'
-                  ? 'Under Review (Finance)'
-                  : claim.status === 'Approved'
-                    ? 'Approved (Pending Payment)'
-                    : claim.status === 'NeedsRevision'
-                      ? 'Needs Revision'
-                      : claim.status}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Submitted on{' '}
-              {claim.submittedAt
-                ? toDateTimeString(new Date(claim.submittedAt))
-                : '-'}
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons Container */}
-        <div className="flex flex-wrap items-center gap-2">
-          {canResubmitClaim && (
-            <Link
-              to="/claims/$claimId/edit"
-              params={{ claimId: claim.id }}
-            >
-              <Button className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold gap-1.5 shadow-xs">
-                <Edit className="h-4 w-4" /> Edit & Resubmit Claim
-              </Button>
-            </Link>
-          )}
-
-          {showApprovalActions && (
-            <>
-              <Button
-                variant="outline"
-                className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/30"
-                onClick={() => {
-                  setActionType('NeedsRevision')
-                  setNotes('')
-                  setDialogOpen(true)
-                }}
-              >
-                Request Revision
-              </Button>
-              <Button
-                variant="destructive"
-                className="gap-1.5"
-                onClick={() => {
-                  setActionType('Rejected')
-                  setNotes('')
-                  setDialogOpen(true)
-                }}
-              >
-                <XCircle className="h-4 w-4" /> Reject
-              </Button>
-              <Button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
-                onClick={() => {
-                  setActionType('Approved')
-                  setNotes('')
-                  setDialogOpen(true)
-                }}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {claim.status === 'Submitted' ? 'Approve (Manager)' : 'Approve (Finance)'}
-              </Button>
-            </>
-          )}
-
-          {canDisburseAndPay && (
-            <Button
-              className="bg-green-700 hover:bg-green-800 text-white gap-1.5 shadow-xs"
-              onClick={() => {
-                setActionType('Pay')
-                setNotes('')
-                setDialogOpen(true)
-              }}
-            >
-              <DollarSign className="h-4 w-4" /> Disburse & Mark Paid
-            </Button>
-          )}
-        </div>
-      </div>
-
+    <main className="w-full max-w-[1600px] mx-auto space-y-4">
       {/* Warning banner jika status NeedsRevision */}
       {claim.status === 'NeedsRevision' && (
-        <div className="p-4 rounded-xl bg-purple-500/15 border border-purple-300 text-purple-900 dark:text-purple-200 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5 text-purple-600 dark:text-purple-400" />
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 flex items-start gap-3">
+          <AlertTriangle
+            className="h-5 w-5 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400"
+            aria-hidden="true"
+          />
           <div className="text-sm">
             <p className="font-semibold">Revisi Diperlukan</p>
-            <p className="text-xs mt-0.5 opacity-90">
-              Klaim ini dikembalikan oleh reviewer untuk diperbaiki. Silakan periksa catatan pada Riwayat Approval dan klik tombol <strong>Edit & Resubmit Claim</strong> untuk mengajukan ulang.
+            <p className="text-xs mt-0.5">
+              Klaim ini dikembalikan oleh reviewer untuk diperbaiki. Silakan periksa catatan pada kartu proses, lalu klik tombol <strong>Edit & Resubmit Claim</strong> untuk mengajukan ulang.
             </p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Side: Claim Information Details */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-card p-6 sm:p-8 rounded-2xl border border-border space-y-6 shadow-xs">
-            <h2 className="text-lg font-bold border-b border-border pb-3">
-              Claim Overview
-            </h2>
+      {/* Two-Pane Workspace Container (Wide Layout) */}
+      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[720px]">
+        {/* ================= LEFT PANE: CLAIM INFO & ATTACHMENT THUMBNAIL ================= */}
+        <aside className="lg:col-span-4 xl:col-span-3 border-b lg:border-b-0 lg:border-r border-border flex flex-col justify-between bg-card">
+          <div>
+            {/* Top Summary Block */}
+            <div className="p-6 border-b border-border space-y-4">
+              <div className="flex items-center justify-between">
+                <Link
+                  to="/claims"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-heading hover:text-primary transition-colors"
+                >
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-muted/40">
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span>Back to Claims</span>
+                </Link>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground block text-xs uppercase font-medium">
-                  Claim Type
-                </span>
-                <span className="font-semibold text-heading">
-                  {claim.claimType === 'OperationalReimbursement'
-                    ? 'Operational Reimbursement'
-                    : claim.claimType === 'BusinessTripReimbursement'
-                      ? 'Business Trip Reimbursement'
-                      : 'Benefit Reimbursement'}
-                </span>
+                {claim.filePath && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs gap-1.5"
+                    onClick={() => setPreviewOpen(true)}
+                  >
+                    <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                    Preview
+                  </Button>
+                )}
               </div>
 
-              <div>
-                <span className="text-muted-foreground block text-xs uppercase font-medium">
-                  Amount Requested
-                </span>
-                <span className="text-lg font-bold text-primary">
-                  {idNumberFormatter.format(claim.amount)}
-                </span>
-              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-extrabold tracking-tight text-heading">
+                    CLM-{claim.id.slice(0, 6).toUpperCase()}
+                  </h2>
+                  <Flag
+                    className="h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
 
-              <div>
-                <span className="text-muted-foreground block text-xs uppercase font-medium">
-                  Transaction Date
-                </span>
-                <span className="font-medium text-heading">
-                  {claim.transactionDate ? String(claim.transactionDate) : '-'}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-muted-foreground block text-xs uppercase font-medium">
-                  Benefit / Plan
-                </span>
-                <span className="font-medium text-heading">
-                  {claim.benefitName || '-'}
-                </span>
-              </div>
-
-              <div className="sm:col-span-2">
-                <span className="text-muted-foreground block text-xs uppercase font-medium">
-                  Description
-                </span>
-                <p className="mt-1 p-3 rounded-xl bg-muted/30 border border-border whitespace-pre-wrap">
-                  {claim.description || 'No description provided.'}
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block" />
+                  Submitted on {submittedDateInfo.longDate}
                 </p>
+
+                <div className="pt-1">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${getClaimBadgeClass(
+                      claim.status,
+                    )}`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {statusDisplayLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Block: Claim Info */}
+            <div className="p-6 border-b border-border space-y-4">
+              <h3 className="text-base font-bold text-heading">Claim Info</h3>
+
+              <div className="space-y-3.5 text-sm">
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1">
+                    Claimant Name
+                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0"
+                      aria-hidden="true"
+                    >
+                      {getInitials(claim.employeeName)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-heading leading-tight">
+                        {claim.employeeName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {claim.employeeNumber}
+                        {claim.departmentName ? ` • ${claim.departmentName}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-0.5">
+                    Claim Type
+                  </span>
+                  <p className="font-semibold text-heading">{claimTypeLabel}</p>
+                </div>
+
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-0.5">
+                    Benefit / Trip Reference
+                  </span>
+                  <p className="font-semibold text-heading">
+                    {claim.benefitName ||
+                      claim.tripProposalDescription ||
+                      'Operational Expense'}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-0.5">
+                    Amount Requested
+                  </span>
+                  <p className="text-base font-extrabold text-primary">
+                    {idNumberFormatter.format(claim.amount)}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1">
+                    Date of Transaction
+                  </span>
+                  <div className="flex items-center gap-2 font-semibold text-heading">
+                    <Calendar
+                      className="h-4 w-4 text-muted-foreground shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>{txDateInfo.longDate}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-muted-foreground block mb-1">
+                    Notes
+                  </span>
+                  <p className="text-xs text-heading/90 leading-relaxed whitespace-pre-wrap">
+                    {isLongDescription && !expandDescription
+                      ? `${descriptionText.slice(0, 140)}... `
+                      : descriptionText}
+                    {isLongDescription && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandDescription((prev) => !prev)}
+                        className="text-primary font-semibold hover:underline ml-1"
+                      >
+                        {expandDescription ? 'Show Less' : 'View More'}
+                      </button>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Receipt Proof Attachment */}
-          <div className="bg-card p-6 sm:p-8 rounded-2xl border border-border space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="text-lg font-bold">Receipt / Proof Document</h2>
-              {claim.filePath && (
-                <a
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold"
-                >
-                  <Download className="h-3.5 w-3.5" /> Open / Download File
-                </a>
-              )}
-            </div>
-
+          {/* Bottom Block: Thumbnail Lampiran Nota Langsung (tanpa tulisan Comments & tanpa daftar komentar reviewer) */}
+          <div className="p-6 space-y-3">
             {claim.filePath ? (
-              <div className="mt-2">
-                {claim.filePath.match(/\.(jpeg|jpg|png|webp|gif)$/i) ? (
-                  <div className="rounded-xl border border-border overflow-hidden max-h-96 flex items-center justify-center bg-muted/20">
-                    <img
-                      src={receiptUrl}
-                      alt="Receipt Attachment"
-                      className="max-h-96 object-contain"
-                    />
+              <div className="rounded-xl border border-border bg-muted/20 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-heading">
+                    Receipt Attachment
+                  </span>
+                  <a
+                    href={receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                  >
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    Download
+                  </a>
+                </div>
+
+                {isImageReceipt ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewOpen(true)}
+                      className="group relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/40 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary cursor-pointer"
+                      aria-label="Open full receipt image preview"
+                    >
+                      <img
+                        src={receiptUrl}
+                        alt={`Receipt uploaded by ${claim.employeeName}`}
+                        width={320}
+                        height={180}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
+                        <Eye className="h-4 w-4" aria-hidden="true" /> Click to enlarge
+                      </span>
+                    </button>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {receiptFileName}
+                    </p>
                   </div>
                 ) : (
-                  <div className="p-6 rounded-xl border border-border bg-muted/10 flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-primary" />
-                    <div>
-                      <p className="font-medium text-sm text-heading">
-                        Document Attachment
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {claim.filePath.split('/').pop()}
-                      </p>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileText
+                        className="h-6 w-6 text-primary shrink-0"
+                        aria-hidden="true"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-heading truncate">
+                          {receiptFileName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Supporting Document
+                        </p>
+                      </div>
                     </div>
+                    <a
+                      href={receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline shrink-0 ml-2"
+                    >
+                      <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                      Open
+                    </a>
                   </div>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No receipt document attached.
-              </p>
+              <div className="rounded-xl border border-border bg-muted/10 p-4 text-xs text-muted-foreground text-center">
+                No receipt attachment uploaded.
+              </div>
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* Right Side: Submitter Details & Approval Log */}
-        <div className="space-y-6">
-          {/* Submitter Card */}
-          <div className="bg-card p-6 rounded-2xl border border-border space-y-4 shadow-xs">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Submitter Information
-            </h2>
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-xs text-muted-foreground block">
-                  Employee
+        {/* ================= RIGHT PANE: CLAIM PROCESS (SINGLE VIEW) ================= */}
+        <section className="lg:col-span-8 xl:col-span-9 p-6 lg:p-8 space-y-6 bg-muted/10">
+          {/* Top Header & Action Bar */}
+          <div className="space-y-3 border-b border-border pb-5">
+            <h1 className="text-lg font-bold text-heading">Claim Process</h1>
+
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+              {/* Preserved Info Row: Claim #id, Status Badge, Submitted Date */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-base font-extrabold text-heading">
+                  Claim #{claim.id.slice(0, 8)}
                 </span>
-                <p className="font-semibold text-heading">
-                  {claim.employeeName}
-                </p>
-                <p className="text-xs font-mono text-muted-foreground">
-                  {claim.employeeNumber}
-                </p>
+
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border ${getClaimBadgeClass(
+                    claim.status,
+                  )}`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-current" />
+                  {statusDisplayLabel}
+                </span>
+
+                <span className="text-xs text-muted-foreground">
+                  Submitted on{' '}
+                  {claim.submittedAt
+                    ? toDateTimeString(new Date(claim.submittedAt))
+                    : '-'}
+                </span>
               </div>
 
-              {claim.departmentName && (
-                <div>
-                  <span className="text-xs text-muted-foreground block">
-                    Department
-                  </span>
-                  <p className="font-medium text-heading">
-                    {claim.departmentName}
-                  </p>
-                </div>
-              )}
+              {/* Action Buttons (Revision, Reject, Approval, Disburse, Resubmit) */}
+              <div className="flex flex-wrap items-center gap-2">
+                {canResubmitClaim && (
+                  <Link
+                    to="/claims/$claimId/edit"
+                    params={{ claimId: claim.id }}
+                  >
+                    <Button
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold gap-1.5"
+                    >
+                      <Edit className="h-4 w-4" aria-hidden="true" /> Edit & Resubmit Claim
+                    </Button>
+                  </Link>
+                )}
+
+                {showApprovalActions && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-border text-heading hover:bg-muted font-semibold"
+                      onClick={() => {
+                        setActionType('NeedsRevision')
+                        setNotes('')
+                        setDialogOpen(true)
+                      }}
+                    >
+                      Request Revision
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/40 font-semibold gap-1.5"
+                      onClick={() => {
+                        setActionType('Rejected')
+                        setNotes('')
+                        setDialogOpen(true)
+                      }}
+                    >
+                      <XCircle className="h-4 w-4" aria-hidden="true" /> Reject
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
+                      onClick={() => {
+                        setActionType('Approved')
+                        setNotes('')
+                        setDialogOpen(true)
+                      }}
+                    >
+                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                      {claim.status === 'Submitted'
+                        ? 'Approve (Manager)'
+                        : 'Approve (Finance)'}
+                    </Button>
+                  </>
+                )}
+
+                {canDisburseAndPay && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold gap-1.5"
+                    onClick={() => {
+                      setActionType('Pay')
+                      setNotes('')
+                      setDialogOpen(true)
+                    }}
+                  >
+                    <DollarSign className="h-4 w-4" aria-hidden="true" /> Disburse & Mark Paid
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Approval History Timeline (Sorted Newest First) */}
-          <div className="bg-card p-6 rounded-2xl border border-border space-y-4 shadow-xs">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Approval History (Latest First)
-            </h2>
+          {/* Vertical Process Timeline Cards */}
+          <div className="relative pl-10 space-y-6 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-border">
+            {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT (Level 2) */}
+            {(claim.status === 'UnderReview' ||
+              claim.status === 'Approved' ||
+              claim.status === 'Paid' ||
+              level2Approval) && (
+              <div className="relative">
+                {/* Timeline Status Node */}
+                <div
+                  className={`absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                    claim.status === 'Approved' || claim.status === 'Paid'
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-600 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-400'
+                      : claim.status === 'UnderReview'
+                        ? 'bg-amber-50 border-amber-300 text-amber-600 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-400'
+                        : 'bg-rose-50 border-rose-300 text-rose-600 dark:bg-rose-950 dark:border-rose-700 dark:text-rose-400'
+                  }`}
+                >
+                  {claim.status === 'Approved' || claim.status === 'Paid' ? (
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Clock className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </div>
 
-            {sortedApprovalHistory.length > 0 ? (
-              <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-                {sortedApprovalHistory.map((h) => (
-                  <div key={h.id} className="relative pl-7 text-xs space-y-1">
-                    <div className="absolute left-1.5 top-1 h-3 w-3 rounded-full bg-primary border-2 border-background" />
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-heading">
-                        {h.approverName || 'Approver'}
-                      </span>
+                <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-bold text-heading">
+                      Finance Verification & Disbursement (Level 2)
+                    </h2>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <span
+                          className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center"
+                          aria-hidden="true"
+                        >
+                          {getInitials(level2Approval?.approverName || 'Finance')}
+                        </span>
+                        <span>
+                          {level2Approval?.approverName || 'Finance Officer'}
+                        </span>
+                      </div>
+                      {claim.filePath && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewOpen(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-semibold text-heading hover:bg-muted transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" /> View
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-5 flex flex-col sm:flex-row gap-4 items-start">
+                    {/* Signature Date Box */}
+                    {(() => {
+                      const dBox = formatDateBox(
+                        level2Approval?.decidedAt || claim.submittedAt,
+                      )
+                      return (
+                        <div className="w-full sm:w-28 shrink-0 rounded-lg bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900 p-3 text-center">
+                          <div className="text-2xl font-extrabold text-sky-950 dark:text-sky-200 leading-none">
+                            {dBox.day}
+                            <sup className="text-xs font-bold">{dBox.suffix}</sup>
+                          </div>
+                          <div className="text-xs text-sky-800 dark:text-sky-300 mt-1 pb-2 border-b border-sky-200 dark:border-sky-800">
+                            {dBox.monthYear}
+                          </div>
+                          <div className="text-xs font-semibold text-sky-950 dark:text-sky-200 pt-1.5">
+                            {dBox.time}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    <div className="flex-1 w-full space-y-2.5">
+                      <div className="flex items-center gap-2.5 pb-1">
+                        <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-700 dark:text-sky-300 shrink-0">
+                          <FileCheck className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-heading leading-tight">
+                            Finance & Accounting Department
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Level 2 Verification • {idNumberFormatter.format(claim.amount)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Verification Checklist Rows */}
+                      <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                        <div className="flex items-center gap-2 font-semibold text-heading">
+                          <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                          <span>Benefit Quota & Budget Verification</span>
+                        </div>
+                        {claim.status === 'Approved' || claim.status === 'Paid' ? (
+                          <CheckCircle2
+                            className="h-4 w-4 text-emerald-600 shrink-0"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <span className="text-amber-700 dark:text-amber-400 font-semibold">
+                            In Review
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                        <div className="flex items-center gap-2 font-semibold text-heading">
+                          <span className="h-2 w-2 rounded-full bg-sky-600" />
+                          <span>Payroll Disbursement Settlement</span>
+                        </div>
+                        {claim.status === 'Paid' ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold">
+                            <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Paid
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground font-medium">
+                            {claim.status === 'Approved'
+                              ? 'Awaiting Disbursement'
+                              : 'Pending Approval'}
+                          </span>
+                        )}
+                      </div>
+
+                      {level2Approval?.notes && (
+                        <div className="p-3.5 rounded-lg bg-muted/40 border border-border/60 space-y-1">
+                          <span className="text-xs text-muted-foreground block">
+                            Finance Reviewer Notes
+                          </span>
+                          <p className="text-xs font-medium text-heading leading-relaxed">
+                            {level2Approval.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION (Level 1) */}
+            <div className="relative">
+              <div
+                className={`absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                  level1Approval?.decision === 'Approved' ||
+                  claim.status === 'UnderReview' ||
+                  claim.status === 'Approved' ||
+                  claim.status === 'Paid'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-600 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-400'
+                    : claim.status === 'Rejected' ||
+                        claim.status === 'NeedsRevision'
+                      ? 'bg-rose-50 border-rose-300 text-rose-600 dark:bg-rose-950 dark:border-rose-700 dark:text-rose-400'
+                      : 'bg-amber-50 border-amber-300 text-amber-600 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-400'
+                }`}
+              >
+                {level1Approval?.decision === 'Approved' ||
+                claim.status === 'UnderReview' ||
+                claim.status === 'Approved' ||
+                claim.status === 'Paid' ? (
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Clock className="h-4 w-4" aria-hidden="true" />
+                )}
+              </div>
+
+              <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold text-heading">
+                    Document Collection & Manager Approval (Level 1)
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span
-                        className={`px-1.5 py-0.2 rounded font-semibold text-[10px] ${getClaimBadgeClass(
-                          h.decision,
-                        )}`}
+                        className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center"
+                        aria-hidden="true"
                       >
-                        {h.decision}
+                        {getInitials(
+                          level1Approval?.approverName || 'Manager',
+                        )}
+                      </span>
+                      <span>
+                        {level1Approval?.approverName || 'Direct Manager'}
                       </span>
                     </div>
-                    <p className="text-muted-foreground">
-                      Level {h.approvalLevel} •{' '}
-                      {h.decidedAt
-                        ? toDateTimeString(new Date(h.decidedAt))
-                        : '-'}
-                    </p>
-                    {h.notes && (
-                      <p className="p-2 rounded bg-muted/40 border border-border text-heading italic">
-                        "{h.notes}"
-                      </p>
+                    {claim.filePath && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewOpen(true)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-semibold text-heading hover:bg-muted transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5" aria-hidden="true" /> View
+                      </button>
                     )}
                   </div>
-                ))}
+                </div>
+
+                <div className="p-5 flex flex-col sm:flex-row gap-4 items-start">
+                  {(() => {
+                    const dBox = formatDateBox(
+                      level1Approval?.decidedAt || claim.submittedAt,
+                    )
+                    return (
+                      <div className="w-full sm:w-28 shrink-0 rounded-lg bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900 p-3 text-center">
+                        <div className="text-2xl font-extrabold text-sky-950 dark:text-sky-200 leading-none">
+                          {dBox.day}
+                          <sup className="text-xs font-bold">{dBox.suffix}</sup>
+                        </div>
+                        <div className="text-xs text-sky-800 dark:text-sky-300 mt-1 pb-2 border-b border-sky-200 dark:border-sky-800">
+                          {dBox.monthYear}
+                        </div>
+                        <div className="text-xs font-semibold text-sky-950 dark:text-sky-200 pt-1.5">
+                          {dBox.time}
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  <div className="flex-1 w-full space-y-2.5">
+                    <div className="flex items-center gap-2.5 pb-1">
+                      <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-700 dark:text-sky-300 shrink-0">
+                        <FileText className="h-4 w-4" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-heading leading-tight">
+                          {claim.departmentName || 'Department Review'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {claim.employeeNumber} • Level 1 Approval
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Receipt Document Item Row */}
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                      <div className="flex items-center gap-2 font-semibold text-heading min-w-0">
+                        <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+                        <span className="truncate">
+                          {receiptFileName || 'Supporting Receipt Document'}
+                        </span>
+                      </div>
+                      {claim.filePath ? (
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <a
+                            href={receiptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+                          >
+                            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                            Download
+                          </a>
+                          <CheckCircle2
+                            className="h-4 w-4 text-emerald-600"
+                            aria-hidden="true"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No file</span>
+                      )}
+                    </div>
+
+                    {/* Manager Approval Decision Row */}
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                      <div className="flex items-center gap-2 font-semibold text-heading">
+                        <span className="h-2 w-2 rounded-full bg-amber-500" />
+                        <span>Direct Manager Decision</span>
+                      </div>
+                      {level1Approval ? (
+                        <span className="font-bold text-heading flex items-center gap-1">
+                          {level1Approval.decision === 'Approved' && (
+                            <CheckCircle2
+                              className="h-4 w-4 text-emerald-600"
+                              aria-hidden="true"
+                            />
+                          )}
+                          {level1Approval.decision}
+                        </span>
+                      ) : (
+                        <span className="text-amber-700 dark:text-amber-400 font-semibold">
+                          Awaiting Manager Review
+                        </span>
+                      )}
+                    </div>
+
+                    {level1Approval?.notes && (
+                      <div className="p-3.5 rounded-lg bg-muted/40 border border-border/60 space-y-1">
+                        <span className="text-xs text-muted-foreground block">
+                          Manager Notes
+                        </span>
+                        <p className="text-xs font-medium text-heading leading-relaxed">
+                          {level1Approval.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* STAGE 1: CLAIM INTIMATION & SUBMISSION */}
+            <div className="relative">
+              <div className="absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 bg-emerald-50 border-emerald-300 text-emerald-600 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+              </div>
+
+              <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold text-heading">
+                    Claim Intimation
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <span
+                        className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        {getInitials(claim.employeeName)}
+                      </span>
+                      <span>{claim.employeeName}</span>
+                    </div>
+                    {claim.filePath && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewOpen(true)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-semibold text-heading hover:bg-muted transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5" aria-hidden="true" /> View
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-5 flex flex-col sm:flex-row gap-4 items-start">
+                  <div className="w-full sm:w-28 shrink-0 rounded-lg bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900 p-3 text-center">
+                    <div className="text-2xl font-extrabold text-sky-950 dark:text-sky-200 leading-none">
+                      {submittedDateInfo.day}
+                      <sup className="text-xs font-bold">
+                        {submittedDateInfo.suffix}
+                      </sup>
+                    </div>
+                    <div className="text-xs text-sky-800 dark:text-sky-300 mt-1 pb-2 border-b border-sky-200 dark:border-sky-800">
+                      {submittedDateInfo.monthYear}
+                    </div>
+                    <div className="text-xs font-semibold text-sky-950 dark:text-sky-200 pt-1.5">
+                      {submittedDateInfo.time}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 w-full space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-700 dark:text-sky-300 shrink-0">
+                          <FileText className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-heading leading-tight">
+                            {claim.benefitName ||
+                              claim.tripProposalDescription ||
+                              claimTypeLabel}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {claim.employeeNumber}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-muted/40 border border-border/60 space-y-1">
+                      <span className="text-xs text-muted-foreground block">
+                        Claim Description
+                      </span>
+                      <p className="text-xs font-medium text-heading leading-relaxed whitespace-pre-wrap">
+                        {descriptionText}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Receipt Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Receipt Attachment Preview</DialogTitle>
+            <DialogDescription>
+              {receiptFileName} • Uploaded by {claim.employeeName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 flex items-center justify-center bg-muted/20 rounded-lg border border-border overflow-hidden min-h-64 max-h-[75vh]">
+            {isImageReceipt ? (
+              <img
+                src={receiptUrl}
+                alt={`Full receipt uploaded by ${claim.employeeName}`}
+                width={800}
+                height={600}
+                className="max-h-[70vh] w-auto object-contain"
+              />
             ) : (
-              <div className="text-xs text-muted-foreground py-4 text-center">
-                <FileCheck className="h-6 w-6 mx-auto mb-1 text-muted-foreground/50" />
-                No approval actions recorded yet.
+              <div className="p-8 text-center space-y-3">
+                <FileText
+                  className="h-12 w-12 text-primary mx-auto"
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-semibold text-heading">
+                  {receiptFileName}
+                </p>
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" /> Open / Download Document
+                </a>
               </div>
             )}
           </div>
-        </div>
-      </div>
+          <DialogFooter>
+            {claim.filePath && (
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 gap-1.5"
+              >
+                <Download className="h-4 w-4" aria-hidden="true" /> Download Original
+              </a>
+            )}
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Action Dialog (Approve, Reject, Revision, Pay) */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -489,7 +1075,8 @@ function RouteComponent() {
 
           <div className="space-y-3 py-2">
             <Label htmlFor="notes" className="text-xs font-semibold">
-              Notes / Feedback {actionType === 'NeedsRevision' ? '(Required)' : '(Optional)'}
+              Notes / Feedback{' '}
+              {actionType === 'NeedsRevision' ? '(Required)' : '(Optional)'}
             </Label>
             <Textarea
               id="notes"
@@ -513,7 +1100,7 @@ function RouteComponent() {
                 actionType === 'Rejected'
                   ? 'bg-destructive hover:bg-destructive/90 text-white'
                   : actionType === 'NeedsRevision'
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
                     : 'bg-primary hover:bg-primary/90 text-white'
               }
               disabled={
