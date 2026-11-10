@@ -86,7 +86,9 @@ function RouteComponent() {
             </form.AppField>
 
             <form.AppField name="amount">
-              {(field) => <field.CurrencyField label="Amount" placeholder="0" />}
+              {(field) => (
+                <field.CurrencyField label="Amount" placeholder="0" />
+              )}
             </form.AppField>
 
             {currentClaimType === 'BusinessTripReimbursement' && (
@@ -139,7 +141,9 @@ function RouteComponent() {
 
             <div className="col-span-2">
               <form.AppField name="receiptFile">
-                {(field) => <field.FileInput label="Receipt File (Proof of Payment)" />}
+                {(field) => (
+                  <field.FileInput label="Receipt File (Proof of Payment)" />
+                )}
               </form.AppField>
             </div>
           </div>
@@ -199,13 +203,7 @@ function BenefitInfoBanner({
   )
 }
 
-function TripInfoBanner({
-  tripId,
-  trips,
-}: {
-  tripId: string
-  trips: any[]
-}) {
+function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
   const selectedTrip = trips.find((t) => t.id === tripId)
   if (!selectedTrip) return null
 
@@ -216,12 +214,12 @@ function TripInfoBanner({
         <span>Trip Proposal Information:</span>
       </div>
       <p>
-        Destination: <span className="font-semibold">{selectedTrip.destination}</span>
+        Destination:{' '}
+        <span className="font-semibold">{selectedTrip.destination}</span>
       </p>
       <p>
-        Dates:{' '}
-        <span className="font-semibold">{selectedTrip.startDate}</span> to{' '}
-        <span className="font-semibold">{selectedTrip.endDate}</span>
+        Dates: <span className="font-semibold">{selectedTrip.startDate}</span>{' '}
+        to <span className="font-semibold">{selectedTrip.endDate}</span>
       </p>
       <p>
         Approved Budget:{' '}
@@ -248,7 +246,9 @@ function ClaimTypeButton({
     <Button
       type="button"
       variant={current === value ? 'default' : 'outline'}
-      className={current === value ? 'bg-primary' : 'bg-transparent text-foreground'}
+      className={
+        current === value ? 'bg-primary' : 'bg-transparent text-foreground'
+      }
       onClick={() => setFunc(value)}
     >
       {label}

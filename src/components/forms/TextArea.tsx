@@ -7,9 +7,11 @@ import { Textarea as ShadcnTextarea } from '#/components/ui/textarea'
 export function TextArea({
   label,
   rows = 3,
+  placeholder,
 }: {
   label: string
   rows?: number
+  placeholder?: string
 }) {
   const field = useFieldContext<string>()
   const errors = useSelector(field.store, (state) => state.meta.errors)
@@ -29,6 +31,7 @@ export function TextArea({
         rows={rows}
         onChange={(e) => field.handleChange(e.target.value)}
         className="bg-input border-border border"
+        placeholder={placeholder}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>

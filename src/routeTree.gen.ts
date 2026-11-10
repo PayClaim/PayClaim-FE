@@ -20,12 +20,17 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
+<<<<<<< HEAD
+import { Route as AppApprovalsIndexRouteImport } from './routes/_app/approvals/index'
+=======
 import { Route as AppAdminResetPasswordRouteImport } from './routes/_app/admin/reset-password'
 import { Route as AppApprovalIndexRouteImport } from './routes/_app/approval/index'
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
 import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
 import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
 import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
 import { Route as AppClaimsCreateRouteImport } from './routes/_app/claims/create'
+import { Route as AppPlaygroundClaimIdRouteImport } from './routes/_app/playground/$claimId'
 import { Route as AppTripProposalsIndexRouteImport } from './routes/_app/trip-proposals/index'
 import { Route as AppTripProposalsIdRouteImport } from './routes/_app/trip-proposals/$id'
 import { Route as AppTripProposalsCreateRouteImport } from './routes/_app/trip-proposals/create'
@@ -102,6 +107,11 @@ const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+<<<<<<< HEAD
+const AppApprovalsIndexRoute = AppApprovalsIndexRouteImport.update({
+  id: '/approvals/',
+  path: '/approvals/',
+=======
 const AppAdminResetPasswordRoute = AppAdminResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -110,6 +120,7 @@ const AppAdminResetPasswordRoute = AppAdminResetPasswordRouteImport.update({
 const AppApprovalIndexRoute = AppApprovalIndexRouteImport.update({
   id: '/approval/',
   path: '/approval/',
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   getParentRoute: () => AppRoute,
 } as any)
 const AppBenefitsIndexRoute = AppBenefitsIndexRouteImport.update({
@@ -130,6 +141,11 @@ const AppClaimsClaimIdRoute = AppClaimsClaimIdRouteImport.update({
 const AppClaimsCreateRoute = AppClaimsCreateRouteImport.update({
   id: '/claims/create',
   path: '/claims/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlaygroundClaimIdRoute = AppPlaygroundClaimIdRouteImport.update({
+  id: '/playground/$claimId',
+  path: '/playground/$claimId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTripProposalsIndexRoute = AppTripProposalsIndexRouteImport.update({
@@ -262,12 +278,16 @@ export interface FileRoutesByFullPath {
   '/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
+<<<<<<< HEAD
+  '/playground/$claimId': typeof AppPlaygroundClaimIdRoute
+=======
   '/trip-proposals/$id': typeof AppTripProposalsIdRoute
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/': typeof AppAdminIndexRoute
-  '/approval/': typeof AppApprovalIndexRoute
+  '/approvals/': typeof AppApprovalsIndexRoute
   '/benefits/': typeof AppBenefitsIndexRoute
   '/claims/': typeof AppClaimsIndexRoute
   '/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -300,12 +320,16 @@ export interface FileRoutesByTo {
   '/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
+<<<<<<< HEAD
+  '/playground/$claimId': typeof AppPlaygroundClaimIdRoute
+=======
   '/trip-proposals/$id': typeof AppTripProposalsIdRoute
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   '/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin': typeof AppAdminIndexRoute
-  '/approval': typeof AppApprovalIndexRoute
+  '/approvals': typeof AppApprovalsIndexRoute
   '/benefits': typeof AppBenefitsIndexRoute
   '/claims': typeof AppClaimsIndexRoute
   '/trip-proposals': typeof AppTripProposalsIndexRoute
@@ -341,12 +365,16 @@ export interface FileRoutesById {
   '/_app/admin/reset-password': typeof AppAdminResetPasswordRoute
   '/_app/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/_app/claims/create': typeof AppClaimsCreateRoute
+<<<<<<< HEAD
+  '/_app/playground/$claimId': typeof AppPlaygroundClaimIdRoute
+=======
   '/_app/trip-proposals/$id': typeof AppTripProposalsIdRoute
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   '/_app/trip-proposals/create': typeof AppTripProposalsCreateRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/_app/admin/': typeof AppAdminIndexRoute
-  '/_app/approval/': typeof AppApprovalIndexRoute
+  '/_app/approvals/': typeof AppApprovalsIndexRoute
   '/_app/benefits/': typeof AppBenefitsIndexRoute
   '/_app/claims/': typeof AppClaimsIndexRoute
   '/_app/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -382,12 +410,16 @@ export interface FileRouteTypes {
     | '/admin/reset-password'
     | '/claims/$claimId'
     | '/claims/create'
+<<<<<<< HEAD
+    | '/playground/$claimId'
+=======
     | '/trip-proposals/$id'
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
     | '/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin/'
-    | '/approval/'
+    | '/approvals/'
     | '/benefits/'
     | '/claims/'
     | '/trip-proposals/'
@@ -420,12 +452,16 @@ export interface FileRouteTypes {
     | '/admin/reset-password'
     | '/claims/$claimId'
     | '/claims/create'
+<<<<<<< HEAD
+    | '/playground/$claimId'
+=======
     | '/trip-proposals/$id'
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
     | '/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin'
-    | '/approval'
+    | '/approvals'
     | '/benefits'
     | '/claims'
     | '/trip-proposals'
@@ -460,12 +496,16 @@ export interface FileRouteTypes {
     | '/_app/admin/reset-password'
     | '/_app/claims/$claimId'
     | '/_app/claims/create'
+<<<<<<< HEAD
+    | '/_app/playground/$claimId'
+=======
     | '/_app/trip-proposals/$id'
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
     | '/_app/trip-proposals/create'
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/_app/admin/'
-    | '/_app/approval/'
+    | '/_app/approvals/'
     | '/_app/benefits/'
     | '/_app/claims/'
     | '/_app/trip-proposals/'
@@ -579,6 +619,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminIndexRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+<<<<<<< HEAD
+    '/_app/approvals/': {
+      id: '/_app/approvals/'
+      path: '/approvals'
+      fullPath: '/approvals/'
+      preLoaderRoute: typeof AppApprovalsIndexRouteImport
+=======
     '/_app/admin/reset-password': {
       id: '/_app/admin/reset-password'
       path: '/reset-password'
@@ -591,6 +638,7 @@ declare module '@tanstack/react-router' {
       path: '/approval'
       fullPath: '/approval/'
       preLoaderRoute: typeof AppApprovalIndexRouteImport
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
       parentRoute: typeof AppRoute
     }
     '/_app/benefits/': {
@@ -619,6 +667,13 @@ declare module '@tanstack/react-router' {
       path: '/claims/create'
       fullPath: '/claims/create'
       preLoaderRoute: typeof AppClaimsCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/playground/$claimId': {
+      id: '/_app/playground/$claimId'
+      path: '/playground/$claimId'
+      fullPath: '/playground/$claimId'
+      preLoaderRoute: typeof AppPlaygroundClaimIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/trip-proposals/': {
@@ -833,9 +888,13 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRouteWithChildren
   AppClaimsCreateRoute: typeof AppClaimsCreateRoute
+<<<<<<< HEAD
+  AppPlaygroundClaimIdRoute: typeof AppPlaygroundClaimIdRoute
+=======
   AppTripProposalsIdRoute: typeof AppTripProposalsIdRoute
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   AppTripProposalsCreateRoute: typeof AppTripProposalsCreateRoute
-  AppApprovalIndexRoute: typeof AppApprovalIndexRoute
+  AppApprovalsIndexRoute: typeof AppApprovalsIndexRoute
   AppBenefitsIndexRoute: typeof AppBenefitsIndexRoute
   AppClaimsIndexRoute: typeof AppClaimsIndexRoute
   AppTripProposalsIndexRoute: typeof AppTripProposalsIndexRoute
@@ -846,9 +905,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppClaimsClaimIdRoute: AppClaimsClaimIdRouteWithChildren,
   AppClaimsCreateRoute: AppClaimsCreateRoute,
+<<<<<<< HEAD
+  AppPlaygroundClaimIdRoute: AppPlaygroundClaimIdRoute,
+=======
   AppTripProposalsIdRoute: AppTripProposalsIdRoute,
+>>>>>>> d882b06031e5b80d89aea21393c0f2e1e956b3b7
   AppTripProposalsCreateRoute: AppTripProposalsCreateRoute,
-  AppApprovalIndexRoute: AppApprovalIndexRoute,
+  AppApprovalsIndexRoute: AppApprovalsIndexRoute,
   AppBenefitsIndexRoute: AppBenefitsIndexRoute,
   AppClaimsIndexRoute: AppClaimsIndexRoute,
   AppTripProposalsIndexRoute: AppTripProposalsIndexRoute,
