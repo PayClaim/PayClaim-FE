@@ -65,13 +65,25 @@ function getOrdinalSuffix(day: number): string {
   }
 }
 
+function parseUtcDate(dateStr?: string | null): Date | null {
+  if (!dateStr) return null
+  const normalized =
+    dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('T')
+      ? dateStr.endsWith('Z') || dateStr.includes('+')
+        ? dateStr
+        : `${dateStr}Z`
+      : dateStr
+  const d = new Date(normalized)
+  return isNaN(d.getTime()) ? null : d
+}
+
 function formatDateBox(dateStr?: string | null) {
-  const d = dateStr ? new Date(dateStr) : new Date()
-  if (isNaN(d.getTime())) {
+  const d = parseUtcDate(dateStr)
+  if (!d) {
     return {
       day: '--',
       suffix: '',
-      monthYear: '-',
+      monthYear: 'Pending',
       time: '--:--',
       longDate: '-',
     }
@@ -206,6 +218,9 @@ function RouteComponent() {
   const isImageReceipt = Boolean(
     claim.filePath && claim.filePath.match(/\.(jpeg|jpg|png|webp|gif)$/i),
   )
+  const isPdfReceipt = Boolean(
+    claim.filePath && claim.filePath.match(/\.pdf$/i),
+  )
   const receiptFileName = claim.filePath
     ? claim.filePath.split('/').pop() || 'Receipt_Attachment'
     : null
@@ -221,6 +236,9 @@ function RouteComponent() {
   const level1Approval = sortedApprovalHistory.find(
     (h) => h.approvalLevel === 1,
   )
+
+  const managerDisplayName =
+    level1Approval?.approverName || claim.managerName || 'Direct Manager'
   const level2Approval = sortedApprovalHistory.find(
     (h) => h.approvalLevel === 2,
   )
@@ -459,6 +477,28 @@ function RouteComponent() {
                       {receiptFileName}
                     </p>
                   </div>
+                ) : isPdfReceipt ? (
+                  <div className="space-y-2">
+                    <div className="group relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
+                      <iframe
+                        src={`${receiptUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                        title="PDF Receipt Attachment Thumbnail"
+                        className="w-full h-full pointer-events-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewOpen(true)}
+                        className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5 cursor-pointer backdrop-blur-2xs"
+                        aria-label="Open full receipt PDF preview"
+                      >
+                        <Eye className="h-4 w-4" aria-hidden="true" /> View PDF Fullscreen
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="truncate">{receiptFileName}</span>
+                      <span className="shrink-0 text-2xs uppercase px-1.5 py-0.5 rounded-sm bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold ml-2">PDF</span>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -520,7 +560,7 @@ function RouteComponent() {
                 <span className="text-xs text-muted-foreground">
                   Submitted on{' '}
                   {claim.submittedAt
-                    ? toDateTimeString(new Date(claim.submittedAt))
+                    ? toDateTimeString(parseUtcDate(claim.submittedAt) || undefined)
                     : '-'}
                 </span>
               </div>
@@ -606,16 +646,21 @@ function RouteComponent() {
           </div>
 
           {/* Vertical Process Timeline Cards */}
-          <div className="relative pl-10 space-y-6 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-border">
+          <div className="relative pl-10 space-y-6 ">
             {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT (Level 2) */}
             {(claim.status === 'UnderReview' ||
               claim.status === 'Approved' ||
               claim.status === 'Paid' ||
               level2Approval) && (
               <div className="relative">
-                {/* Timeline Status Node */}
+                {/* Connecting line down to Stage 2 */}
                 <div
-                  className={`absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                  className="absolute -left-6 top-7 h-[calc(100%+1.5rem)] w-0.5 bg-border pointer-events-none"
+                  aria-hidden="true"
+                />
+                                {/* Timeline Status Node */}
+                <div
+                  className={`absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 ${
                     claim.status === 'Approved' || claim.status === 'Paid'
                       ? 'bg-emerald-50 border-emerald-300 text-emerald-600 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-400'
                       : claim.status === 'UnderReview'
@@ -663,7 +708,7 @@ function RouteComponent() {
                     {/* Signature Date Box */}
                     {(() => {
                       const dBox = formatDateBox(
-                        level2Approval?.decidedAt || claim.submittedAt,
+                        level2Approval?.decidedAt,
                       )
                       return (
                         <div className="w-full sm:w-28 shrink-0 rounded-lg bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900 p-3 text-center">
@@ -750,7 +795,12 @@ function RouteComponent() {
 
             {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION (Level 1) */}
             <div className="relative">
+              {/* Connecting line down to Stage 1 (Claim Intimation) */}
               <div
+                className="absolute -left-6 top-7 h-[calc(100%+1.5rem)] w-0.5 bg-border pointer-events-none"
+                aria-hidden="true"
+              />
+                            <div
                 className={`absolute -left-10 top-3 w-8 h-8 rounded-full flex items-center justify-center border-2 ${
                   level1Approval?.decision === 'Approved' ||
                   claim.status === 'UnderReview' ||
@@ -784,12 +834,10 @@ function RouteComponent() {
                         className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center"
                         aria-hidden="true"
                       >
-                        {getInitials(
-                          level1Approval?.approverName || 'Manager',
-                        )}
+                        {getInitials(managerDisplayName)}
                       </span>
                       <span>
-                        {level1Approval?.approverName || 'Direct Manager'}
+                        {managerDisplayName}
                       </span>
                     </div>
                     {claim.filePath && (
@@ -807,7 +855,7 @@ function RouteComponent() {
                 <div className="p-5 flex flex-col sm:flex-row gap-4 items-start">
                   {(() => {
                     const dBox = formatDateBox(
-                      level1Approval?.decidedAt || claim.submittedAt,
+                      level1Approval?.decidedAt,
                     )
                     return (
                       <div className="w-full sm:w-28 shrink-0 rounded-lg bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200/70 dark:border-sky-900 p-3 text-center">
@@ -1008,6 +1056,12 @@ function RouteComponent() {
                 width={800}
                 height={600}
                 className="max-h-[70vh] w-auto object-contain"
+              />
+            ) : isPdfReceipt ? (
+              <iframe
+                src={receiptUrl}
+                title="Full PDF Receipt"
+                className="w-full h-[70vh] rounded border border-border"
               />
             ) : (
               <div className="p-8 text-center space-y-3">

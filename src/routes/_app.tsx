@@ -40,6 +40,7 @@ const links: TLink[] = [
   {
     to: '/approvals',
     label: 'Approvals',
+    approverOnly: true,
   },
   {
     to: '/trip-proposals',
