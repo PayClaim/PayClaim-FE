@@ -11,7 +11,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -27,8 +26,7 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
-import { SearchFilter } from '#/components/SearchFilter'
-import { Pencil, Trash, Layers } from 'lucide-react'
+import { Layers, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/admin/benefit-plans/')({
   component: BenefitPlansIndexPage,
@@ -77,69 +75,143 @@ function BenefitPlansIndexPage() {
     return matchSearch && matchDept && matchPos
   })
 
+  const hasActiveFilters = Boolean(searchFilter || departmentFilter || positionFilter)
+
   if (isError) {
     return (
-      <div className="p-4 text-destructive font-semibold">
-        Terjadi kesalahan saat memuat data matriks plafon benefit.
-      </div>
+      <main className="p-6">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
+          Terjadi kesalahan saat memuat data matriks plafon benefit. Silakan coba kembali nanti.
+        </div>
+      </main>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="py-20 text-center space-y-3">
-        <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <main className="py-20 text-center space-y-3">
+        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-muted-foreground">Memuat data matriks plafon benefit...</p>
-      </div>
+      </main>
     )
   }
 
   return (
     <main className="space-y-6">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black tracking-tight">Benefit Plans</h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/60 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5" strokeWidth={1.75} />
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Matriks plafon batas klaim benefit berdasarkan kombinasi Departemen dan Jabatan.
-          </p>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-extrabold text-heading tracking-tight">
+                Benefit Plans
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {plans.length}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Matriks plafon batas klaim benefit berdasarkan kombinasi Departemen dan Jabatan.
+            </p>
+          </div>
         </div>
 
         <Link to="/admin/benefit-plans/create">
-          <Button className="bg-primary font-bold shadow-xs">
-            New Benefit Plan
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+            <Plus className="w-4 h-4" strokeWidth={2} />
+            <span>New Benefit Plan</span>
           </Button>
         </Link>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="bg-card p-6 rounded-2xl border border-border shadow-xs space-y-4">
-        <div className="flex flex-wrap items-center gap-4 border-b border-border pb-4">
-          <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
+      {/* Table Card Container */}
+      <div className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden">
+        {/* Filters Toolbar */}
+        <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search plan or benefit..."
+                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+              />
+            </div>
 
-          <FilterSelect
-            val={departmentFilter}
-            setValue={setDepartmentFilter}
-            options={departmentOptions}
-            filterLabel="Departemen"
-            nullLabel="Semua Departemen"
-            nullable
-          />
+            <FilterSelect
+              val={departmentFilter}
+              setValue={setDepartmentFilter}
+              options={departmentOptions}
+              filterLabel="Department"
+              nullLabel="All Departments"
+              nullable
+            />
 
-          <FilterSelect
-            val={positionFilter}
-            setValue={setPositionFilter}
-            options={positionOptions}
-            filterLabel="Jabatan"
-            nullLabel="Semua Jabatan"
-            nullable
-          />
+            <FilterSelect
+              val={positionFilter}
+              setValue={setPositionFilter}
+              options={positionOptions}
+              filterLabel="Position"
+              nullLabel="All Positions"
+              nullable
+            />
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchFilter('')
+                  setDepartmentFilter(null)
+                  setPositionFilter(null)
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground h-9"
+              >
+                Reset Filter
+              </Button>
+            )}
+          </div>
+
+          <div className="text-xs text-muted-foreground font-medium">
+            Showing {displayData.length} of {plans.length} plans
+          </div>
         </div>
 
         {/* Table Content */}
-        <BenefitPlansTable plans={displayData} />
+        {displayData.length > 0 ? (
+          <BenefitPlansTable plans={displayData} />
+        ) : (
+          <div className="py-16 text-center space-y-3">
+            <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-heading">Tidak ada data plafon ditemukan</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {hasActiveFilters
+                  ? 'Tidak ada aturan plafon yang cocok dengan filter yang dipilih.'
+                  : 'Belum ada data aturan plafon benefit yang terdaftar di sistem.'}
+              </p>
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchFilter('')
+                  setDepartmentFilter(null)
+                  setPositionFilter(null)
+                }}
+                className="text-xs font-semibold h-8"
+              >
+                Reset Filter
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </main>
   )
@@ -147,60 +219,67 @@ function BenefitPlansIndexPage() {
 
 function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
   const navigate = useNavigate()
+  const thClass = 'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
 
   return (
     <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-b border-border bg-muted/20">
-            <TableHead className="font-bold text-xs py-3.5">DEPARTEMEN</TableHead>
-            <TableHead className="font-bold text-xs py-3.5">JABATAN / POSISI</TableHead>
-            <TableHead className="font-bold text-xs py-3.5">JENIS BENEFIT</TableHead>
-            <TableHead className="font-bold text-xs py-3.5">PLAFON / LIMIT</TableHead>
-            <TableHead className="font-bold text-xs py-3.5 text-center w-28">AKSI</TableHead>
+      <Table className="w-full text-sm text-left">
+        <TableHeader className="bg-muted/30 border-b border-border/70">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className={thClass}>DEPARTMENT</TableHead>
+            <TableHead className={thClass}>POSITION / ROLE</TableHead>
+            <TableHead className={thClass}>BENEFIT TYPE</TableHead>
+            <TableHead className={thClass}>LIMIT AMOUNT</TableHead>
+            <TableHead className={`${thClass} text-right w-28`}>ACTION</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {plans.map((bp) => {
             const key = `${bp.departmentId}_${bp.benefitId}_${bp.positionId}`
             return (
               <TableRow
                 key={key}
-                className="hover:bg-muted/40 transition-colors border-b border-border text-sm"
+                className="hover:bg-muted/30 transition-colors border-b border-border/60"
               >
-                <TableCell className="font-semibold text-foreground">
+                <TableCell className="px-5 py-4">
                   <div>
-                    <p>{bp.departmentName || bp.departmentId}</p>
+                    <p className="font-semibold text-heading">{bp.departmentName || bp.departmentId}</p>
                     <span className="text-[11px] font-mono text-muted-foreground uppercase">
-                      ID: {bp.departmentId}
+                      Code: {bp.departmentId}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="font-medium text-foreground">
+
+                <TableCell className="px-5 py-4">
                   <div>
-                    <p>{bp.positionTitle || bp.positionId}</p>
+                    <p className="font-medium text-heading">{bp.positionTitle || bp.positionId}</p>
                     <span className="text-[11px] font-mono text-muted-foreground uppercase">
-                      ID: {bp.positionId}
+                      Code: {bp.positionId}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="font-semibold text-primary">
+
+                <TableCell className="px-5 py-4 font-semibold text-primary">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                       <Layers className="w-3.5 h-3.5" />
-                    </div>
+                    </span>
                     <span>{bp.benefitName || bp.benefitId}</span>
                   </div>
                 </TableCell>
-                <TableCell className="font-bold text-foreground">
+
+                <TableCell className="px-5 py-4 font-bold text-heading text-sm">
                   {formatCurrency(bp.limitAmount)}
                 </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-2">
+
+                <TableCell className="px-5 py-4 text-right">
+                  <div className="flex items-center justify-end gap-1.5">
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-muted"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:border-blue-300 dark:hover:text-blue-400 cursor-pointer"
+                      title="Edit Plan"
                       onClick={() =>
                         navigate({
                           to: '/admin/benefit-plans/edit',
@@ -213,16 +292,19 @@ function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
                         })
                       }
                     >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span className="sr-only">Edit</span>
                     </Button>
 
                     <DeletePlanDialog plan={bp}>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg text-slate-700 dark:text-slate-200 hover:text-rose-600 hover:border-rose-300 dark:hover:text-rose-400 cursor-pointer"
+                        title="Delete Plan"
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="sr-only">Delete</span>
                       </Button>
                     </DeletePlanDialog>
                   </div>
@@ -231,16 +313,6 @@ function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
             )
           })}
         </TableBody>
-
-        {plans.length === 0 && (
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                Tidak ada data aturan plafon benefit yang sesuai dengan filter.
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        )}
       </Table>
     </div>
   )
@@ -262,34 +334,16 @@ function DeletePlanDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Hapus Aturan Plafon Benefit</DialogTitle>
-          <DialogDescription className="space-y-2 pt-2 text-xs">
-            <span>Apakah Anda yakin ingin menghapus matriks plafon benefit berikut?</span>
-            <div className="p-3 bg-muted rounded-lg font-medium text-foreground space-y-1">
-              <p>
-                <span className="text-muted-foreground">Departemen:</span>{' '}
-                {plan.departmentName || plan.departmentId}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Jabatan:</span>{' '}
-                {plan.positionTitle || plan.positionId}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Benefit:</span>{' '}
-                {plan.benefitName || plan.benefitId}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Plafon:</span>{' '}
-                {formatCurrency(plan.limitAmount)}
-              </p>
-            </div>
+          <DialogDescription className="text-sm pt-1">
+            Apakah Anda yakin ingin menghapus aturan plafon untuk <strong>{plan.benefitName || plan.benefitId}</strong> pada departemen <strong>{plan.departmentName || plan.departmentId}</strong> ({plan.positionTitle || plan.positionId})?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline">Batal</Button>
+            <Button variant="outline" size="sm">Batal</Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -298,11 +352,9 @@ function DeletePlanDialog({
               form.handleSubmit()
             }}
           >
-            <form.AppForm>
-              <Button type="submit" variant="destructive">
-                Hapus
-              </Button>
-            </form.AppForm>
+            <Button variant="destructive" size="sm" type="submit">
+              Hapus Plafon
+            </Button>
           </form>
         </DialogFooter>
       </DialogContent>

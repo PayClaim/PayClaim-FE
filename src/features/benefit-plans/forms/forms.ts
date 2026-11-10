@@ -8,6 +8,7 @@ import {
 import { upsertBenefitPlanSchema } from './schemas'
 import type { UpsertBenefitPlanRequest } from '#/types/benefitPlans.type'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 
 export const createBenefitPlanForm = () => {
   const mutation = useCreateBenefitPlanMutation()
@@ -32,7 +33,7 @@ export const createBenefitPlanForm = () => {
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to create benefit plan')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal membuat rencana manfaat'))
       }
     },
   })
@@ -67,7 +68,7 @@ export const editBenefitPlanForm = (
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to update benefit plan')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal memperbarui rencana manfaat'))
       }
     },
   })
@@ -92,7 +93,7 @@ export const deleteBenefitPlanForm = (keys: {
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to delete benefit plan')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal menghapus rencana manfaat'))
       }
     },
   })

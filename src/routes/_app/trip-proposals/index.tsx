@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/_app/trip-proposals/')({
 
 function RouteComponent() {
   const navigate = useNavigate()
-  // Mengambil data Trip Proposals dari backend
+
   const {
     data: proposals = [],
     isError,
@@ -41,17 +42,14 @@ function RouteComponent() {
     error,
   } = useGetAllProposalsQuery()
 
-  // State untuk menyimpan nilai filter
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchFilter, setSearchFilter] = useState('')
-  
-  // Tampilan ketika data sedang dimuat
+
   if (isFetching && proposals.length === 0) {
     return <p>Loading trip proposals...</p>
   }
 
-  // Tampilan ketika gagal mengambil data
   if (isError) {
     return (
       <div className="space-y-2">
@@ -66,7 +64,6 @@ function RouteComponent() {
     )
   }
 
-  // Filter data berdasarkan pencarian, status, dan bulan
   const filteredProposals = proposals.filter((proposal) => {
     const search = searchFilter.toLowerCase()
 
@@ -190,6 +187,87 @@ function SummaryCard({
   )
 }
 
+// Filter Section Component
+function FilterSection({
+  search,
+  status,
+  month,
+  statuses,
+  setSearch,
+  setStatus,
+  setMonth,
+}: {
+  search: string
+  status: string
+  month: string
+  statuses: string[]
+  setSearch: (value: string) => void
+  setStatus: (value: string) => void
+  setMonth: (value: string) => void
+}) {
+  const months = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ]
+
+  return (
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row">
+      <Input
+        placeholder="Search destination or PIC..."
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        className="sm:flex-1"
+      />
+
+      <Select value={status} onValueChange={setStatus}>
+        <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="all">All Statuses</SelectItem>
+
+            {statuses.map((statusOption) => (
+              <SelectItem key={statusOption} value={statusOption}>
+                {statusOption}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
+      <Select value={month} onValueChange={setMonth}>
+        <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectValue placeholder="Filter by month" />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="all">All Months</SelectItem>
+
+            {months.map((monthOption) => (
+              <SelectItem key={monthOption.value} value={monthOption.value}>
+                {monthOption.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
 // Proposal Table Component
 function ProposalTable({
   proposals,
@@ -197,7 +275,7 @@ function ProposalTable({
   proposals: TripProposal[]
 }) {
   const navigate = useNavigate()
-  // Format angka menjadi mata uang Rupiah
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -206,7 +284,6 @@ function ProposalTable({
     }).format(amount)
   }
 
-  // Format tanggal
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
       day: '2-digit',
@@ -227,14 +304,24 @@ function ProposalTable({
             <TableHead className="px-4 py-3">TOTAL ESTIMATED</TableHead>
             <TableHead className="px-4 py-3">SUBMITTED</TableHead>
             <TableHead className="px-4 py-3">STATUS</TableHead>
-            <TableHead className="px-4 py-3 text-right">ACTIONS</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {proposals.map((proposal) => (
-            <TableRow key={proposal.id}>
-              <TableCell className="px-4 py-4 font-medium">
+            <TableRow
+              key={proposal.id}
+              className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
+              onClick={() =>
+                navigate({
+                  to: '/trip-proposals/$id',
+                  params: {
+                    id: proposal.id,
+                  },
+                })
+              }
+            >
+              <TableCell className="px-4 py-4 font-semibold">
                 {proposal.destination}
               </TableCell>
 
@@ -254,11 +341,11 @@ function ProposalTable({
                 {proposal.participantCount}
               </TableCell>
 
-              <TableCell className="whitespace-nowrap px-4 py-4">
+              <TableCell className="whitespace-nowrap px-4 py-4 font-semibold">
                 {formatCurrency(proposal.totalAmount)}
               </TableCell>
 
-              <TableCell className="whitespace-nowrap px-4 py-4">
+              <TableCell className="whitespace-nowrap px-4 py-4 text-muted-foreground">
                 {formatDate(proposal.submittedAt)}
               </TableCell>
 
@@ -270,110 +357,10 @@ function ProposalTable({
                   {proposal.status}
                 </Badge>
               </TableCell>
-
-              <TableCell className="px-4 py-4 text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    navigate({to: '/trip-proposals/$id',params: { id: proposal.id },})
-                  }
-                >
-                  Details
-                </Button>
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-    </div>
-  )
-}
-
-// Filter Section Component
-function FilterSection({
-  search,
-  status,
-  month,
-  statuses,
-  setSearch,
-  setStatus,
-  setMonth,
-}: {
-  search: string
-  status: string
-  month: string
-  statuses: string[]
-  setSearch: (value: string) => void
-  setStatus: (value: string) => void
-  setMonth: (value: string) => void
-}) {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
-
-  return (
-    <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
-      {/* Search */}
-      <input
-        type="text"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search destination or PIC..."
-        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring md:max-w-sm"
-      />
-
-      {/* Status Filter */}
-      <Select value={status} onValueChange={setStatus}>
-        <SelectTrigger className="w-full md:w-48">
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
-
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="all">All Status</SelectItem>
-
-            {statuses.map((item) => (
-              <SelectItem key={item} value={item}>
-                {item}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      {/* Month Filter */}
-      <Select value={month} onValueChange={setMonth}>
-        <SelectTrigger className="w-full md:w-48">
-          <SelectValue placeholder="Filter by month" />
-        </SelectTrigger>
-
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="all">All Months</SelectItem>
-
-            {months.map((item, index) => (
-              <SelectItem
-                key={item}
-                value={(index + 1).toString()}
-              >
-                {item}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
     </div>
   )
 }

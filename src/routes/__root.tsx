@@ -32,10 +32,24 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'PayClaim',
       },
     ],
     links: [
+      {
+        rel: 'icon',
+        type: 'image/png',
+        href: '/favicon.png',
+      },
+      {
+        rel: 'shortcut icon',
+        type: 'image/png',
+        href: '/favicon.png',
+      },
+      {
+        rel: 'apple-touch-icon',
+        href: '/favicon.png',
+      },
       {
         rel: 'stylesheet',
         href: appCss,

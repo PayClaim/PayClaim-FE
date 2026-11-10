@@ -28,22 +28,31 @@ export async function api<T>(
   const isFormData = body instanceof FormData
 
   const token = storage.get('token')
-  const res = await fetch(`${BASE_URL}${path}${qs}`, {
-    // credentials: 'include', // kirim cookie sesi HttpOnly
-    headers: {
-      ...(!isFormData && body !== undefined
-        ? { 'Content-Type': 'application/json' }
-        : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
-    // jika tidak memiliki body : undefined
-    // jika memiliki body dan form-data : body as form data
-    // jika regular json body : kirim as json
-    body:
-      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-    ...init,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}${qs}`, {
+      // credentials: 'include', // kirim cookie sesi HttpOnly
+      headers: {
+        ...(!isFormData && body !== undefined
+          ? { 'Content-Type': 'application/json' }
+          : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      // jika tidak memiliki body : undefined
+      // jika memiliki body dan form-data : body as form data
+      // jika regular json body : kirim as json
+      body:
+        body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+      ...init,
+    })
+  } catch (netErr: unknown) {
+    throw new ApiError(
+      0,
+      'Gagal terhubung ke server. Pastikan koneksi jaringan aktif dan server backend sedang berjalan.',
+      netErr,
+    )
+  }
 
   let data: any = null
   if (res.status !== 204) {
@@ -56,11 +65,19 @@ export async function api<T>(
   }
 
   if (!res.ok) {
-    let errorMessage: string = res.statusText
+    let errorMessage: string = res.statusText || 'Terjadi kesalahan pada permintaan data.'
     if (Array.isArray(data?.errors) && data.errors.length > 0) {
       errorMessage = data.errors.join('\n')
     } else if (data?.message) {
       errorMessage = data.message
+    } else if (res.status === 401) {
+      errorMessage = 'Sesi login Anda telah berakhir. Silakan login kembali.'
+    } else if (res.status === 403) {
+      errorMessage = 'Akses ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.'
+    } else if (res.status === 404) {
+      errorMessage = 'Data atau layanan yang diminta tidak ditemukan.'
+    } else if (res.status >= 500) {
+      errorMessage = 'Terjadi gangguan pada server internal. Silakan coba kembali beberapa saat lagi.'
     }
     throw new ApiError(res.status, errorMessage, data)
   }

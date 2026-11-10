@@ -11,6 +11,7 @@ import {
   resetPasswordSchema,
 } from './schemas'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 
 export const loginForm = () => {
   const mutation = loginMutation()
@@ -35,7 +36,7 @@ export const loginForm = () => {
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to login.')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal masuk. Periksa username dan password Anda.'))
       }
     },
   })
@@ -61,7 +62,7 @@ export const changePasswordForm = () => {
         await navigate({ to: '/dashboard' })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to change password')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal mengubah kata sandi'))
       }
     },
   })
@@ -86,7 +87,7 @@ export const resetPasswordForm = () => {
         form.reset()
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to reset password')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal mengatur ulang kata sandi'))
       }
     },
   })
