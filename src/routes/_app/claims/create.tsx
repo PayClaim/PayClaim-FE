@@ -7,6 +7,15 @@ import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/que
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { AlertCircle } from 'lucide-react'
+import { Label } from '#/components/ui/label'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+} from '#/components/ui/dialog'
 
 export const Route = createFileRoute('/_app/claims/create')({
   beforeLoad: ({ context }) => {
@@ -22,6 +31,7 @@ export const Route = createFileRoute('/_app/claims/create')({
 function RouteComponent() {
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
   const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const [currentClaimType, setClaimType] = useState('Benefit')
   const claimTypeSelect = [
@@ -54,33 +64,29 @@ function RouteComponent() {
     form.setFieldValue('tripProposalId', null)
   }
 
+  const handleReview = async () => {
+    await form.validateAllFields('submit')
+    console.log(form.state.isValid)
+    if (form.state.isValid) setDialogOpen(true)
+  }
+  const handleConfirm = async () => {
+    await form.handleSubmit()
+    setDialogOpen(false)
+  }
+
   return (
     <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto border border-border shadow-xs">
       <h1 className="text-3xl font-bold text-center mb-8">New Claim</h1>
-
-      <div className="flex justify-center mb-6">
-        <ButtonGroup>
-          {claimTypeSelect.map((t) => (
-            <ClaimTypeButton
-              key={t.value}
-              label={t.label}
-              value={t.value}
-              current={currentClaimType}
-              setFunc={handleClaimTypeClick}
-            />
-          ))}
-        </ButtonGroup>
-      </div>
 
       <div>
         <form
           onSubmit={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            form.handleSubmit()
+            handleReview()
           }}
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-x-4">
             <form.AppField name="transactionDate">
               {(field) => <field.DatePicker label="Transaction Date" />}
             </form.AppField>
@@ -90,6 +96,33 @@ function RouteComponent() {
                 <field.CurrencyField label="Amount" placeholder="0" />
               )}
             </form.AppField>
+
+            <div className="my-2">
+              <Label className="mb-2 text-sm font-semibold text-(--sea-ink)">
+                Claim Type
+              </Label>
+
+              <ButtonGroup className="w-full">
+                {claimTypeSelect.map((t) => (
+                  <ClaimTypeButton
+                    className="grow"
+                    key={t.value}
+                    label={t.label}
+                    value={t.value}
+                    current={currentClaimType}
+                    setFunc={handleClaimTypeClick}
+                  />
+                ))}
+              </ButtonGroup>
+            </div>
+
+            <div className="">
+              <form.AppField name="receiptFile">
+                {(field) => (
+                  <field.FileInput label="Receipt File (Proof of Payment)" />
+                )}
+              </form.AppField>
+            </div>
 
             {currentClaimType === 'BusinessTripReimbursement' && (
               <div className="col-span-2">
@@ -138,14 +171,6 @@ function RouteComponent() {
                 </form.AppField>
               </div>
             )}
-
-            <div className="col-span-2">
-              <form.AppField name="receiptFile">
-                {(field) => (
-                  <field.FileInput label="Receipt File (Proof of Payment)" />
-                )}
-              </form.AppField>
-            </div>
           </div>
 
           <form.AppField name="description">
@@ -158,11 +183,29 @@ function RouteComponent() {
             )}
           </form.AppField>
 
-          <div className="mt-6 flex justify-end">
+          <Button type="submit">Submit</Button>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogContent>
+              <DialogHeader>Submit this claim?</DialogHeader>
+              <DialogDescription>Form will be submitted</DialogDescription>
+              <DialogFooter>
+                <DialogClose>Close</DialogClose>
+                <Button
+                  disabled={form.state.isSubmitting}
+                  onClick={handleConfirm}
+                >
+                  Confirm
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* <div className="mt-6 flex justify-end">
             <form.AppForm>
               <form.FormButton label="Submit Claim" className="bg-primary" />
             </form.AppForm>
-          </div>
+          </div> */}
         </form>
       </div>
     </main>
@@ -236,18 +279,22 @@ function ClaimTypeButton({
   value,
   current,
   setFunc,
+  className,
 }: {
   label: string
   value: string
   current: string
   setFunc: (a: string) => void
+  className?: string
 }) {
   return (
     <Button
       type="button"
       variant={current === value ? 'default' : 'outline'}
       className={
-        current === value ? 'bg-primary' : 'bg-transparent text-foreground'
+        (current === value
+          ? 'bg-primary '
+          : 'bg-transparent text-foreground ') + className
       }
       onClick={() => setFunc(value)}
     >

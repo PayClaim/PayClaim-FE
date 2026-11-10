@@ -35,7 +35,7 @@ export default function Header() {
         <ThemeToggle />
       </nav>
       <UserDropDown logout={onClickLogout}>
-        <div className="flex justify-center items-center gap-2 pr-4 bg-background rounded-4xl p-1 h-fit">
+        <div className="flex justify-center items-center gap-2 pr-4 bg-background rounded-4xl p-1 h-fit cursor-pointer">
           <div className="bg-amber-300 rounded-full size-10 flex items-center justify-center">
             {user.username[0]}
           </div>
