@@ -9,7 +9,7 @@ import {
   type ProposalTimelineItem,
 } from '#/components/pages/tripProposals/TripProposalTimeline'
 
-import { TripProposalStatus } from '#/types/tripProposals.type'
+import { TripProposalStatus, isTripStatus } from '#/types/tripProposals.type'
 
 export const Route = createFileRoute('/_app/trip-proposals/$id')({
   component: RouteComponent,
@@ -204,6 +204,7 @@ function RouteComponent() {
             attachmentUrl={attachmentUrl}
             attachmentFileName={attachmentFileName}
             isPdf={isPdf}
+            status={proposal.status}
           />
         
       </div>

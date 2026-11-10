@@ -21,6 +21,7 @@ import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminResetPasswordRouteImport } from './routes/_app/admin/reset-password'
+import { Route as AppApprovalsIndexRouteImport } from './routes/_app/approvals/index'
 import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
 import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
 import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
@@ -110,6 +111,11 @@ const AppAdminResetPasswordRoute = AppAdminResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => AppAdminRouteRoute,
+} as any)
+const AppApprovalsIndexRoute = AppApprovalsIndexRouteImport.update({
+  id: '/approvals/',
+  path: '/approvals/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppBenefitsIndexRoute = AppBenefitsIndexRouteImport.update({
   id: '/benefits/',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin/': typeof AppAdminIndexRoute
+  '/approvals/': typeof AppApprovalsIndexRoute
   '/benefits/': typeof AppBenefitsIndexRoute
   '/claims/': typeof AppClaimsIndexRoute
   '/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/admin': typeof AppAdminIndexRoute
+  '/approvals': typeof AppApprovalsIndexRoute
   '/benefits': typeof AppBenefitsIndexRoute
   '/claims': typeof AppClaimsIndexRoute
   '/trip-proposals': typeof AppTripProposalsIndexRoute
@@ -382,6 +390,7 @@ export interface FileRoutesById {
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/approvals/': typeof AppApprovalsIndexRoute
   '/_app/benefits/': typeof AppBenefitsIndexRoute
   '/_app/claims/': typeof AppClaimsIndexRoute
   '/_app/trip-proposals/': typeof AppTripProposalsIndexRoute
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin/'
+    | '/approvals/'
     | '/benefits/'
     | '/claims/'
     | '/trip-proposals/'
@@ -469,6 +479,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/admin'
+    | '/approvals'
     | '/benefits'
     | '/claims'
     | '/trip-proposals'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/demo/form/address'
     | '/demo/form/simple'
     | '/_app/admin/'
+    | '/_app/approvals/'
     | '/_app/benefits/'
     | '/_app/claims/'
     | '/_app/trip-proposals/'
@@ -636,6 +648,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/reset-password'
       preLoaderRoute: typeof AppAdminResetPasswordRouteImport
       parentRoute: typeof AppAdminRouteRoute
+    }
+    '/_app/approvals/': {
+      id: '/_app/approvals/'
+      path: '/approvals'
+      fullPath: '/approvals/'
+      preLoaderRoute: typeof AppApprovalsIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/benefits/': {
       id: '/_app/benefits/'
@@ -904,6 +923,7 @@ interface AppRouteChildren {
   AppPlaygroundClaimIdRoute: typeof AppPlaygroundClaimIdRoute
   AppTripProposalsIdRoute: typeof AppTripProposalsIdRoute
   AppTripProposalsCreateRoute: typeof AppTripProposalsCreateRoute
+  AppApprovalsIndexRoute: typeof AppApprovalsIndexRoute
   AppBenefitsIndexRoute: typeof AppBenefitsIndexRoute
   AppClaimsIndexRoute: typeof AppClaimsIndexRoute
   AppTripProposalsIndexRoute: typeof AppTripProposalsIndexRoute
@@ -922,6 +942,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPlaygroundClaimIdRoute: AppPlaygroundClaimIdRoute,
   AppTripProposalsIdRoute: AppTripProposalsIdRoute,
   AppTripProposalsCreateRoute: AppTripProposalsCreateRoute,
+  AppApprovalsIndexRoute: AppApprovalsIndexRoute,
   AppBenefitsIndexRoute: AppBenefitsIndexRoute,
   AppClaimsIndexRoute: AppClaimsIndexRoute,
   AppTripProposalsIndexRoute: AppTripProposalsIndexRoute,

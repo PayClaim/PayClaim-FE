@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import { getProposalStatusConfig } from '#/types/tripProposals.type'
 import { Button } from '#/components/ui/button'
 import {
   Dialog,
@@ -38,6 +39,8 @@ type Props = {
   attachmentUrl: string
   attachmentFileName: string
   isPdf: boolean
+  status?: string
+  actions?: React.ReactNode
 }
 
 export function TripProposalTimeline({
@@ -45,7 +48,10 @@ export function TripProposalTimeline({
   attachmentUrl,
   attachmentFileName,
   isPdf,
+  status,
+  actions,
 }: Props) {
+  const statusConfig = getProposalStatusConfig(status)
   const [previewOpen, setPreviewOpen] = useState(false)
 
   const isImage = /\.(jpg|jpeg|png|webp|gif)(?:[?#].*)?$/i.test(
@@ -71,14 +77,28 @@ export function TripProposalTimeline({
   return (
     <>
       <section className="space-y-6 bg-muted/10 p-5 lg:col-span-8 lg:p-8 xl:col-span-9">
-        <div className="border-b border-border pb-5">
-          <h2 className="text-lg font-bold">
-            Trip Process
-          </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-extrabold text-heading">
+              Trip Process
+            </h2>
+            {status && (
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border ${statusConfig.className}`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`}
+                />
+                {statusConfig.label}
+              </span>
+            )}
+          </div>
 
-          <p className="mt-1 text-xs text-muted-foreground">
-            Track the submission and approval progress of this proposal.
-          </p>
+          {actions && (
+            <div className="flex flex-wrap items-center gap-2">
+              {actions}
+            </div>
+          )}
         </div>
 
         <div className="relative space-y-6 pl-10">

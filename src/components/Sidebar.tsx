@@ -13,7 +13,6 @@ import {
   Building2,
   Users,
   KeyRound,
-  Terminal,
   ChevronDown,
 } from 'lucide-react'
 
@@ -228,8 +227,6 @@ export function Sidebar({
     return !hasMoreSpecificMatch
   }
 
-  const isDemoActive = pathname.startsWith('/demo')
-
   return (
     <aside
       className={cn(
@@ -263,10 +260,8 @@ export function Sidebar({
             return true
           })
 
-          const isSystemCategory =
-            category.title.toUpperCase() === 'SYSTEM'
-
-          if (visibleItems.length === 0 && !isSystemCategory) {
+          // Sembunyikan kategori jika tidak ada menu yang dapat diakses oleh role saat ini
+          if (visibleItems.length === 0) {
             return null
           }
 
@@ -334,11 +329,6 @@ export function Sidebar({
                     </Link>
                   )
                 })}
-
-                {/* Demos & Debug */}
-                {isSystemCategory && (
-                  <DemoMenu isDemoActive={isDemoActive} />
-                )}
               </nav>
             </div>
           )
@@ -424,7 +414,7 @@ function ApprovalDropdown({
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  'block px-2.5 py-2 text-xs rounded-md transition-colors',
+                  'block px-2.5 py-1.5 text-xs rounded-md transition-colors',
                   active
                     ? 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60',
@@ -434,83 +424,6 @@ function ApprovalDropdown({
               </Link>
             )
           })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function DemoMenu({ isDemoActive }: { isDemoActive: boolean }) {
-  const [open, setOpen] = useState(isDemoActive)
-
-  return (
-    <div className="my-0.5">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={cn(
-          'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group cursor-pointer',
-          isDemoActive
-            ? 'bg-blue-50/90 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100',
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors',
-              isDemoActive
-                ? 'bg-blue-100/80 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200/80 dark:group-hover:bg-slate-700/80 group-hover:text-slate-700 dark:group-hover:text-slate-200',
-            )}
-          >
-            <Terminal
-              className="w-4 h-4"
-              strokeWidth={1.75}
-            />
-          </div>
-
-          <span className="truncate">Demos & Debug</span>
-        </div>
-
-        <ChevronDown
-          className={cn(
-            'w-4 h-4 text-slate-400 transition-transform duration-200',
-            open && 'rotate-180',
-          )}
-          strokeWidth={1.75}
-        />
-      </button>
-
-      {open && (
-        <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-5 pl-3 py-1 space-y-1 mt-1">
-          <a
-            href="/demo/tanstack-query"
-            className="block px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60 rounded-md transition-colors"
-          >
-            TanStack Query
-          </a>
-
-          <a
-            href="/demo/store"
-            className="block px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60 rounded-md transition-colors"
-          >
-            Store
-          </a>
-
-          <a
-            href="/demo/form/simple"
-            className="block px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60 rounded-md transition-colors"
-          >
-            Simple Form
-          </a>
-
-          <a
-            href="/demo/form/address"
-            className="block px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60 rounded-md transition-colors"
-          >
-            Address Form
-          </a>
         </div>
       )}
     </div>

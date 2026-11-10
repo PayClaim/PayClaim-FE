@@ -18,7 +18,7 @@ import {
   type ProposalTimelineItem,
 } from '#/components/pages/tripProposals/TripProposalTimeline'
 
-import { TripProposalStatus } from '#/types/tripProposals.type'
+import { TripProposalStatus, isTripStatus } from '#/types/tripProposals.type'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -326,7 +326,11 @@ function RouteComponent() {
   return (
     <main className="mx-auto w-full max-w-[1600px] space-y-4">
       {/* Header tetap sama seperti halaman detail employee. */}
-      <TripProposalHeader proposal={proposal} />
+      <TripProposalHeader
+        proposal={proposal}
+        backTo="/approvals/trip-proposals"
+        backLabel="Back to Approval Trip Proposals"
+      />
 
       {/* Approval Actions */}
       {canTakeAction && (
