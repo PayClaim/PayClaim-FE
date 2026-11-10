@@ -14,9 +14,7 @@ export interface ClaimResponse {
 }
 
 export type ClaimTypeEnum =
-  | 'Benefit'
-  | 'OperationalReimbursement'
-  | 'BusinessTripReimbursement'
+  'Benefit' | 'OperationalReimbursement' | 'BusinessTripReimbursement'
 
 export type ClaimStatusEnum =
   | 'Submitted'
@@ -27,9 +25,7 @@ export type ClaimStatusEnum =
   | 'Paid'
 
 export type ApprovalDecisionEnum =
-  | 'Approved'
-  | 'Rejected'
-  | 'NeedsRevision'
+  'Approved' | 'Rejected' | 'NeedsRevision' | 'Pay'
 
 export interface ClaimApprovalActionRequest {
   decision: ApprovalDecisionEnum

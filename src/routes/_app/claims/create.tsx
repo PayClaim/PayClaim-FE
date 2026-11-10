@@ -4,7 +4,6 @@ import { Button } from '#/components/ui/button'
 import { useState } from 'react'
 import { createClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
-import { useAuth } from '#/hooks/auth.hook'
 
 export const Route = createFileRoute('/_app/claims/create')({
   component: RouteComponent,
@@ -12,7 +11,6 @@ export const Route = createFileRoute('/_app/claims/create')({
 
 function RouteComponent() {
   const { data: empBenefits } = useGetAllEmployeeBenefitsQuery()
-  const { user } = useAuth()
 
   const [currentClaimType, setClaimType] = useState('Benefit')
   const claimTypeSelect = [
@@ -32,7 +30,7 @@ function RouteComponent() {
     }
   })
 
-  const form = createClaimForm(user.id)
+  const form = createClaimForm()
 
   const handleClaimTypeClick = (value: string) => {
     setClaimType(value)

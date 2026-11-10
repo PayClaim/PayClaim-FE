@@ -38,8 +38,8 @@ const links: TLink[] = [
     label: 'Claims',
   },
   {
-    to: '/approval',
-    label: 'Approval',
+    to: '/approvals',
+    label: 'Approvals',
   },
   {
     to: '/trip-proposals',

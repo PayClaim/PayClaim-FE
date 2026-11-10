@@ -9,7 +9,7 @@ export const createClaimSchema = z
     amount: z.number().positive('Amount must be greater than 0'),
     employeeBenefitId: z.string().nullable(),
     tripProposalId: z.string().nullable(),
-    receiptFile: z.instanceof(File).nullable().optional(),
+    receiptFile: z.instanceof(File).nullable(),
   })
   .refine(
     (data) => {
@@ -44,3 +44,18 @@ export const createClaimSchema = z
       path: ['tripProposalId'],
     },
   )
+
+export const approvalClaimSchema = z
+  .object({
+    decision: z.enum(['Approved', 'Rejected', 'NeedsRevision', 'Pay']),
+    notes: z.string(),
+  })
+  .refine((data) => {
+    if (data.decision === 'NeedsRevision' && data.notes.trim().length <= 2) {
+      return {
+        message:
+          'Notes must be at least 10 characters when requesting revision',
+        path: ['notes'],
+      }
+    }
+  })

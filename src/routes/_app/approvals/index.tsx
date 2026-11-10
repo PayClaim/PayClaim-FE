@@ -23,7 +23,7 @@ import { toDateTimeString } from '#/lib/utils'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { FileText } from 'lucide-react'
 
-export const Route = createFileRoute('/_app/approval/')({
+export const Route = createFileRoute('/_app/approvals/')({
   component: RouteComponent,
 })
 
