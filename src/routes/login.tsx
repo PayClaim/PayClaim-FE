@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import type React from 'react'
+import { cn } from 'cn'
 
 export const Route = createFileRoute('/login')({
   component: RouteComponent,
@@ -163,85 +164,115 @@ function RouteComponent() {
           >
             {/* Field: Username */}
             <form.Field name="username">
-              {(field) => (
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="login-username"
-                    className="block text-xs font-semibold text-slate-700"
-                  >
-                    Username
-                  </label>
-                  <input
-                    id="login-username"
-                    name={field.name}
-                    type="text"
-                    autoComplete="username"
-                    placeholder="Masukkan username Anda"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="w-full h-10 px-3.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]"
-                  />
-                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                    <ErrorMessages errors={field.state.meta.errors} />
-                  )}
-                </div>
-              )}
-            </form.Field>
-
-            {/* Field: Password */}
-            <form.Field name="password">
-              {(field) => (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
+              {(field) => {
+                const hasError =
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                return (
+                  <div className="space-y-1.5">
                     <label
-                      htmlFor="login-password"
-                      className="block text-xs font-semibold text-slate-700"
+                      htmlFor="login-username"
+                      className={cn(
+                        'block text-xs font-semibold transition-colors',
+                        hasError ? 'text-rose-600' : 'text-slate-700',
+                      )}
                     >
-                      Password
+                      Username
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setForgotDialogOpen(true)}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
-                    >
-                      Lupa password?
-                    </button>
-                  </div>
-                  <div className="relative">
                     <input
-                      id="login-password"
+                      id="login-username"
                       name={field.name}
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      placeholder="Masukkan password Anda"
+                      type="text"
+                      autoComplete="username"
+                      placeholder="Masukkan username Anda"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      className="w-full h-10 px-3.5 pe-10 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]"
-                    />
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      tabIndex={-1}
-                      className="absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none"
-                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" aria-hidden="true" />
-                      ) : (
-                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      className={cn(
+                        'w-full h-10 px-3.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]',
+                        hasError
+                          ? 'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20'
+                          : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15',
                       )}
-                    </button>
+                    />
+                    {hasError && (
+                      <ErrorMessages errors={field.state.meta.errors} />
+                    )}
                   </div>
-                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
-                    <ErrorMessages errors={field.state.meta.errors} />
-                  )}
-                </div>
-              )}
+                )
+              }}
+            </form.Field>
+
+            {/* Field: Password */}
+            <form.Field name="password">
+              {(field) => {
+                const hasError =
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="login-password"
+                        className={cn(
+                          'block text-xs font-semibold transition-colors',
+                          hasError ? 'text-rose-600' : 'text-slate-700',
+                        )}
+                      >
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setForgotDialogOpen(true)}
+                        className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+                      >
+                        Lupa password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        id="login-password"
+                        name={field.name}
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        placeholder="Masukkan password Anda"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className={cn(
+                          'w-full h-10 px-3.5 pe-10 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]',
+                          hasError
+                            ? 'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20'
+                            : 'border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15',
+                        )}
+                      />
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        tabIndex={-1}
+                        className="absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none"
+                        aria-label={
+                          showPassword
+                            ? 'Sembunyikan password'
+                            : 'Tampilkan password'
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" aria-hidden="true" />
+                        ) : (
+                          <Eye className="w-4 h-4" aria-hidden="true" />
+                        )}
+                      </button>
+                    </div>
+                    {hasError && (
+                      <ErrorMessages errors={field.state.meta.errors} />
+                    )}
+                  </div>
+                )
+              }}
             </form.Field>
 
             {/* Tombol Submit */}

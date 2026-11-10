@@ -1,18 +1,28 @@
+import { CircleAlert } from 'lucide-react'
+
 export function ErrorMessages({
   errors,
 }: {
   errors: Array<string | { message: string }>
 }) {
+  if (!errors || errors.length === 0) return null
+
   return (
-    <>
-      {errors.map((error) => (
-        <div
-          key={typeof error === 'string' ? error : error.message}
-          className="mt-1 text-sm font-semibold text-red-600"
-        >
-          {typeof error === 'string' ? error : error.message}
-        </div>
-      ))}
-    </>
+    <div className="mt-1.5 space-y-1">
+      {errors.map((error) => {
+        const message = typeof error === 'string' ? error : error.message
+        if (!message) return null
+
+        return (
+          <div
+            key={message}
+            className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400"
+          >
+            <CircleAlert className="w-3.5 h-3.5 shrink-0 text-rose-500" aria-hidden="true" />
+            <span>{message}</span>
+          </div>
+        )
+      })}
+    </div>
   )
 }

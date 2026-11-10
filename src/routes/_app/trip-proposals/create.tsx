@@ -1,6 +1,7 @@
-
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { CircleAlert } from 'lucide-react'
+import { cn } from 'cn'
 
 import { Button } from '#/components/ui/button'
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
@@ -115,7 +116,7 @@ function CreateTripProposalPage({
   )
 
   return (
-    <main className="mx-auto max-w-200 rounded-2xl bg-card p-6">
+    <main className="mx-auto max-w-200 rounded-2xl bg-card p-6 border border-border">
       <h1 className="mb-8 text-center text-3xl font-bold">
         New Trip Proposal
       </h1>
@@ -197,13 +198,25 @@ function CreateTripProposalPage({
                   ),
               )
 
+              const isEmployeeInvalid =
+                !participant.isPic &&
+                !participant.employeeId &&
+                form.state.submissionAttempts > 0
+              const isAmountInvalid =
+                participant.amount <= 0 && form.state.submissionAttempts > 0
+
               return (
                 <div
                   key={index}
                   className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-4 md:grid-cols-[1fr_1fr_auto]"
                 >
                   <div>
-                    <label className="mb-2 block text-sm font-semibold">
+                    <label
+                      className={cn(
+                        'mb-2 block text-sm font-semibold transition-colors',
+                        isEmployeeInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+                      )}
+                    >
                       Employee
                     </label>
 
@@ -212,33 +225,54 @@ function CreateTripProposalPage({
                         {currentEmployee.fullName} (PIC)
                       </div>
                     ) : (
-                      <select
-                        className="h-10 w-full rounded-md border border-border bg-input px-3 text-sm"
-                        value={participant.employeeId}
-                        onChange={(event) =>
-                          handleEmployeeChange(index, event.target.value)
-                        }
-                      >
-                        <option value="">Select employee</option>
+                      <>
+                        <select
+                          className={cn(
+                            'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
+                            isEmployeeInvalid &&
+                              'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20',
+                          )}
+                          value={participant.employeeId}
+                          onChange={(event) =>
+                            handleEmployeeChange(index, event.target.value)
+                          }
+                        >
+                          <option value="">Select employee</option>
 
-                        {availableEmployees.map((employee) => (
-                          <option key={employee.id} value={employee.id}>
-                            {employee.fullName} ({employee.number})
-                          </option>
-                        ))}
-                      </select>
+                          {availableEmployees.map((employee) => (
+                            <option key={employee.id} value={employee.id}>
+                              {employee.fullName} ({employee.number})
+                            </option>
+                          ))}
+                        </select>
+                        {isEmployeeInvalid && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                            <CircleAlert className="w-3.5 h-3.5 shrink-0" />
+                            <span>Pilih karyawan peserta</span>
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold">
+                    <label
+                      className={cn(
+                        'mb-2 block text-sm font-semibold transition-colors',
+                        isAmountInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+                      )}
+                    >
                       Amount
                     </label>
 
                     <input
                       type="number"
                       min="0"
-                      className="h-10 w-full rounded-md border border-border bg-input px-3 text-sm"
+                      className={cn(
+                        'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
+                        isAmountInvalid &&
+                          'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20',
+                      )}
                       value={participant.amount || ''}
                       placeholder="Enter amount"
                       onChange={(event) =>
@@ -250,6 +284,12 @@ function CreateTripProposalPage({
                         )
                       }
                     />
+                    {isAmountInvalid && (
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                        <CircleAlert className="w-3.5 h-3.5 shrink-0" />
+                        <span>Nominal harus lebih dari 0</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">

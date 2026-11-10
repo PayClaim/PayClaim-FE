@@ -1,10 +1,14 @@
 import { useFieldContext } from '#/hooks/demo.form-context'
-import { useSelector } from '@tanstack/react-store'
 import * as ShadcnSelect from '#/components/ui/select'
 import { ErrorMessages } from './ErrorMessage'
+import { useFieldStatus } from './TextField'
 import { Label } from '../ui/label'
+import { cn } from 'cn'
 
 const NULL_VALUE = '__null__'
+
+const errorSelectClasses =
+  'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20'
 
 export function FormSelect({
   label,
@@ -20,7 +24,7 @@ export function FormSelect({
   nullLabel?: string
 }) {
   const field = useFieldContext<string | null>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
 
   const radixValue =
     field.state.value === null
@@ -33,7 +37,10 @@ export function FormSelect({
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
@@ -45,7 +52,12 @@ export function FormSelect({
           field.handleBlur()
         }}
       >
-        <ShadcnSelect.SelectTrigger className="w-full bg-input border border-border">
+        <ShadcnSelect.SelectTrigger
+          className={cn(
+            'w-full bg-input border border-border transition-all',
+            hasError && errorSelectClasses,
+          )}
+        >
           <ShadcnSelect.SelectValue
             placeholder={placeholder ? placeholder : 'Select here'}
           />
@@ -74,7 +86,7 @@ export function FormSelect({
           </ShadcnSelect.SelectGroup>
         </ShadcnSelect.SelectContent>
       </ShadcnSelect.Select>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }
@@ -89,13 +101,16 @@ export function FormSelectNumber({
   placeholder?: string
 }) {
   const field = useFieldContext<number>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
 
   return (
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
@@ -104,7 +119,12 @@ export function FormSelectNumber({
         value={String(field.state.value)}
         onValueChange={(value) => field.handleChange(Number(value))}
       >
-        <ShadcnSelect.SelectTrigger className="w-full bg-input border border-border">
+        <ShadcnSelect.SelectTrigger
+          className={cn(
+            'w-full bg-input border border-border transition-all',
+            hasError && errorSelectClasses,
+          )}
+        >
           <ShadcnSelect.SelectValue
             placeholder={placeholder ? placeholder : 'Select here'}
           />
@@ -124,7 +144,7 @@ export function FormSelectNumber({
           </ShadcnSelect.SelectGroup>
         </ShadcnSelect.SelectContent>
       </ShadcnSelect.Select>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }

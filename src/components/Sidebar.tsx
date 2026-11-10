@@ -415,7 +415,7 @@ function ApprovalDropdown({
       </button>
 
       {open && (
-        <div className="pl-10 pr-2 py-1 space-y-1">
+        <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-5 pl-3 py-1 space-y-1 mt-1">
           {items.map((item) => {
             const active = matchesPath(pathname, item.to)
 
@@ -483,7 +483,7 @@ function DemoMenu({ isDemoActive }: { isDemoActive: boolean }) {
       </button>
 
       {open && (
-        <div className="pl-10 pr-2 py-1 space-y-1">
+        <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-5 pl-3 py-1 space-y-1 mt-1">
           <a
             href="/demo/tanstack-query"
             className="block px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60 rounded-md transition-colors"

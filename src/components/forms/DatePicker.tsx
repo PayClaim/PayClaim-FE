@@ -6,12 +6,14 @@ import { useFieldContext } from '#/hooks/demo.form-context'
 import { Label } from '../ui/label'
 import { useSelector } from '@tanstack/react-store'
 import { ErrorMessages } from './ErrorMessage'
+import { useFieldStatus } from './TextField'
 import { fromDateOnly, toDateOnly } from '#/lib/utils'
+import { cn } from 'cn'
 
 export function DatePicker({ label }: { label: string }) {
   const [open, setOpen] = useState(false)
   const field = useFieldContext<string | undefined>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
 
   const selected = field.state.value
     ? fromDateOnly(field.state.value)
@@ -21,7 +23,10 @@ export function DatePicker({ label }: { label: string }) {
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
@@ -36,8 +41,12 @@ export function DatePicker({ label }: { label: string }) {
           <Button
             variant="outline"
             id={label}
-            className="justify-start font-normal w-full bg-input"
-            aria-invalid={errors.length > 0}
+            className={cn(
+              'justify-start font-normal w-full bg-input transition-all',
+              hasError &&
+                'border-rose-500 focus-visible:border-rose-500 focus-visible:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20 text-rose-950 dark:text-rose-100',
+            )}
+            aria-invalid={hasError}
           >
             {field.state.value ? field.state.value : 'Select date'}
           </Button>
@@ -56,7 +65,7 @@ export function DatePicker({ label }: { label: string }) {
           />
         </PopoverContent>
       </Popover>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }

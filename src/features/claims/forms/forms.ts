@@ -12,6 +12,85 @@ import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import type { ApprovalDecisionEnum } from '#/types/claims.type'
 
+export function applyBackendErrorToForm(
+  formApi: any,
+  err: unknown,
+  fallbackMessage: string,
+) {
+  const errorMsg = getFriendlyErrorMessage(err, fallbackMessage)
+  toast.error(errorMsg)
+
+  const apiData = (err as any)?.data
+  if (
+    apiData?.errors &&
+    typeof apiData.errors === 'object' &&
+    !Array.isArray(apiData.errors)
+  ) {
+    let matchedAny = false
+    for (const [key, val] of Object.entries(apiData.errors)) {
+      const fieldKey = key.charAt(0).toLowerCase() + key.slice(1)
+      const fieldMessage = Array.isArray(val) ? val.join(', ') : String(val)
+      formApi.setFieldMeta(fieldKey, (prev: any) => ({
+        ...prev,
+        isTouched: true,
+        errorMap: {
+          ...prev?.errorMap,
+          onSubmit: fieldMessage,
+        },
+      }))
+      matchedAny = true
+    }
+    if (matchedAny) return
+  }
+
+  const lowerMsg = errorMsg.toLowerCase()
+  let targetField = 'amount'
+
+  if (
+    lowerMsg.includes('quota') ||
+    lowerMsg.includes('balance') ||
+    lowerMsg.includes('saldo') ||
+    lowerMsg.includes('amount') ||
+    lowerMsg.includes('budget') ||
+    lowerMsg.includes('nominal')
+  ) {
+    targetField = 'amount'
+  } else if (
+    lowerMsg.includes('date') ||
+    lowerMsg.includes('period') ||
+    lowerMsg.includes('tanggal') ||
+    lowerMsg.includes('periode')
+  ) {
+    targetField = 'transactionDate'
+  } else if (
+    lowerMsg.includes('receipt') ||
+    lowerMsg.includes('file') ||
+    lowerMsg.includes('bukti') ||
+    lowerMsg.includes('dokumen')
+  ) {
+    targetField = 'receiptFile'
+  } else if (lowerMsg.includes('benefit') || lowerMsg.includes('manfaat')) {
+    targetField = 'employeeBenefitId'
+  } else if (lowerMsg.includes('trip') || lowerMsg.includes('perjalanan')) {
+    targetField = 'tripProposalId'
+  } else if (
+    lowerMsg.includes('description') ||
+    lowerMsg.includes('deskripsi') ||
+    lowerMsg.includes('keterangan')
+  ) {
+    targetField = 'description'
+  }
+
+  formApi.setFieldMeta(targetField, (prev: any) => ({
+    ...prev,
+    isTouched: true,
+    errorMap: {
+      ...prev?.errorMap,
+      onSubmit: errorMsg,
+    },
+  }))
+}
+
 export const createClaimForm = () => {
   const mutation = useCreateClaimMutation()
   const navigate = useNavigate()
@@ -30,8 +109,9 @@ export const createClaimForm = () => {
     },
     validators: {
       onBlur: createClaimSchema,
+      onSubmit: createClaimSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const formData = new FormData()
       formData.append('claimType', value.claimType)
       formData.append('description', value.description)
@@ -58,8 +138,7 @@ export const createClaimForm = () => {
           to: '/claims',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan klaim'))
+        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan klaim')
       }
     },
   })
@@ -86,8 +165,9 @@ export const editClaimForm = (
     },
     validators: {
       onBlur: createClaimSchema,
+      onSubmit: createClaimSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const formData = new FormData()
       formData.append('claimType', value.claimType)
       formData.append('description', value.description)
@@ -115,8 +195,7 @@ export const editClaimForm = (
           params: { claimId },
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan ulang klaim'))
+        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan ulang klaim')
       }
     },
   })
