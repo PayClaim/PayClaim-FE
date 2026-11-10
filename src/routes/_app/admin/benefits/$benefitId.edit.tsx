@@ -1,26 +1,59 @@
 import { useGetAllCategoriesQuery } from '#/features/benefit-categories/queries/queries'
 import { editBenefitForm } from '#/features/benefits/forms/forms'
-import type { UpdateBenefitRequest } from '#/types/benefits.type'
+import { useGetBenefitQuery } from '#/features/benefits/queries/queries'
+import type { BenefitResponse } from '#/types/benefits.type'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/admin/benefits/$benefitId/edit')({
   component: RouteComponent,
-  validateSearch: (s): UpdateBenefitRequest => {
-    return {
-      name: s.name as string,
-      description: s.description as string,
-      periodType: s.periodType as string,
-      categoryId: Number(s.categoryId ?? 0),
-    }
-  },
+  validateSearch: (s: Record<string, unknown>) => s,
 })
 
 function RouteComponent() {
-  const { data: categories } = useGetAllCategoriesQuery()
-  const initialValue = Route.useSearch()
   const { benefitId } = Route.useParams()
+  const { data: benefit, isLoading, isError } = useGetBenefitQuery(benefitId)
+  const { data: categories = [] } = useGetAllCategoriesQuery()
 
-  const form = editBenefitForm(benefitId, initialValue)
+  if (isLoading) {
+    return (
+      <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto text-center text-muted-foreground">
+        Loading benefit...
+      </main>
+    )
+  }
+
+  if (isError || !benefit) {
+    return (
+      <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto text-center text-destructive">
+        Benefit not found.
+      </main>
+    )
+  }
+
+  return (
+    <EditBenefitFormContent
+      benefitId={benefitId}
+      benefit={benefit}
+      categories={categories}
+    />
+  )
+}
+
+function EditBenefitFormContent({
+  benefitId,
+  benefit,
+  categories,
+}: {
+  benefitId: string
+  benefit: BenefitResponse
+  categories: any[]
+}) {
+  const form = editBenefitForm(benefitId, {
+    name: benefit.name,
+    description: benefit.description,
+    periodType: benefit.periodType,
+    categoryId: benefit.categoryId,
+  })
 
   const periodTypeOption = [
     { label: 'Monthly', value: 'Monthly' },
@@ -31,9 +64,10 @@ function RouteComponent() {
   const categoryOptions = categories.map((c) => {
     return { label: c.name, value: c.id }
   })
+
   return (
-    <main className="bg-card max-w-200 rounded-2xl p-4 mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-8">New Benefit</h1>
+    <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto">
+      <h1 className="text-3xl font-bold text-center mb-8">Edit Benefit</h1>
 
       <div>
         <form

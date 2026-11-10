@@ -4,7 +4,7 @@ import { Button } from '#/components/ui/button'
 import { useState } from 'react'
 import { editClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
-import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/getAllProposals'
+import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
@@ -126,7 +126,7 @@ function EditClaimFormContent({
             </form.AppField>
 
             <form.AppField name="amount">
-              {(field) => <field.NumberField label="Amount" />}
+              {(field) => <field.CurrencyField label="Amount" placeholder="0" />}
             </form.AppField>
 
             {currentClaimType === 'BusinessTripReimbursement' && (

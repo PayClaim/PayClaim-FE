@@ -4,6 +4,7 @@ import { SearchFilter } from '#/components/SearchFilter'
 import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
 import {
   createFileRoute,
+  redirect,
   useNavigate,
   useRouteContext,
 } from '@tanstack/react-router'
@@ -24,22 +25,23 @@ import { getClaimBadgeClass } from '#/components/ui/badge'
 import { FileText } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/approvals/')({
+  beforeLoad: ({ context }) => {
+    const roles = context.user?.roles || []
+    const canView = roles.some((r) =>
+      ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
+        (role) => role.toLowerCase() === r.toLowerCase(),
+      ),
+    )
+    if (!canView) {
+      throw redirect({
+        to: '/dashboard',
+      })
+    }
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const navigate = useNavigate()
-  const { user } = useRouteContext({ from: '/_app' })
-  const canView = user.roles.some((r) =>
-    ['Admin', 'Manager', 'Finance', 'Finance Manager'].includes(r),
-  )
-
-  if (!canView) {
-    navigate({
-      to: '/dashboard',
-    })
-  }
-
   const {
     data: claimResponse,
     isError,

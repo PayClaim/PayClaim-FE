@@ -21,7 +21,7 @@ export const useGetEmployeeQuery = (id: string) =>
     queryFn: async () => {
       return api.get<EmployeeResponse>(`/employees/${id}`)
     },
-    initialData: null,
+    enabled: Boolean(id),
   })
 
 export const useCreateEmployeeMutation = () => {
@@ -49,6 +49,16 @@ export const useDeleteEmployeeMutation = () => {
   return useMutation({
     mutationFn: (id: string) => {
       return api.delete(`/employees/${id}`)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+  })
+}
+
+export const useActivateEmployeeMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => {
+      return api.patch(`/employees/${id}/activate`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
   })

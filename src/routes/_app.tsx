@@ -53,7 +53,7 @@ const links: TLink[] = [
   // Admin Only
   {
     to: '/admin/benefits',
-    label: 'Admin Benefits',
+    label: 'Benefits',
     adminOnly: true,
   },
   {
@@ -74,6 +74,11 @@ const links: TLink[] = [
   {
     to: '/admin/employees',
     label: 'Employees',
+    adminOnly: true,
+  },
+  {
+    to: '/admin/reset-password',
+    label: 'Reset Password',
     adminOnly: true,
   },
 ]

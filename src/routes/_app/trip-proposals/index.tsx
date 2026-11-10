@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -32,6 +32,7 @@ export const Route = createFileRoute('/_app/trip-proposals/')({
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   // Mengambil data Trip Proposals dari backend
   const {
     data: proposals = [],
@@ -44,7 +45,7 @@ function RouteComponent() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchFilter, setSearchFilter] = useState('')
-
+  
   // Tampilan ketika data sedang dimuat
   if (isFetching && proposals.length === 0) {
     return <p>Loading trip proposals...</p>
@@ -92,7 +93,7 @@ function RouteComponent() {
           <h1 className="text-xl font-bold">Trip Proposals</h1>
         </div>
 
-        <Button>
+        <Button onClick={() => navigate({ to: '/trip-proposals/create' })}>
           New Proposal
         </Button>
       </div>
@@ -135,10 +136,6 @@ function RouteComponent() {
           <h2 className="text-lg font-semibold text-foreground">
             All Proposals
           </h2>
-
-          <p className="text-sm text-muted-foreground">
-            View and manage your submitted business trips.
-          </p>
         </div>
 
         {/* Search and Filters */}
@@ -199,6 +196,7 @@ function ProposalTable({
 }: {
   proposals: TripProposal[]
 }) {
+  const navigate = useNavigate()
   // Format angka menjadi mata uang Rupiah
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -229,6 +227,7 @@ function ProposalTable({
             <TableHead className="px-4 py-3">TOTAL ESTIMATED</TableHead>
             <TableHead className="px-4 py-3">SUBMITTED</TableHead>
             <TableHead className="px-4 py-3">STATUS</TableHead>
+            <TableHead className="px-4 py-3 text-right">ACTIONS</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -270,6 +269,18 @@ function ProposalTable({
                 >
                   {proposal.status}
                 </Badge>
+              </TableCell>
+
+              <TableCell className="px-4 py-4 text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    navigate({to: '/trip-proposals/$id',params: { id: proposal.id },})
+                  }
+                >
+                  Details
+                </Button>
               </TableCell>
             </TableRow>
           ))}

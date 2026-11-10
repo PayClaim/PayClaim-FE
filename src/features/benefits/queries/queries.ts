@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { data } from './dummy'
 import { api } from '#/lib/api-client'
 import type {
   BenefitResponse,
@@ -18,11 +17,8 @@ export const useGetAllBenefitsQuery = () =>
 export const useGetBenefitQuery = (id: string) =>
   useQuery({
     queryKey: ['benefits', id],
-    queryFn: async () => {
-      await setTimeout(() => {}, 1000)
-      return Promise.resolve(data.find((d) => d.id === id))
-    },
-    initialData: null,
+    queryFn: () => api.get<BenefitResponse>(`/benefits/${id}`),
+    enabled: Boolean(id),
   })
 
 export const useCreateBenefitMutation = () => {

@@ -100,10 +100,7 @@ function BenefitPlansIndexPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black tracking-tight">Benefit Plans Matrix</h1>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary">
-              {plans.length} Aturan
-            </span>
+            <h1 className="text-2xl font-black tracking-tight">Benefit Plans</h1>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             Matriks plafon batas klaim benefit berdasarkan kombinasi Departemen dan Jabatan.
@@ -127,6 +124,7 @@ function BenefitPlansIndexPage() {
             setValue={setDepartmentFilter}
             options={departmentOptions}
             filterLabel="Departemen"
+            nullLabel="Semua Departemen"
             nullable
           />
 
@@ -135,6 +133,7 @@ function BenefitPlansIndexPage() {
             setValue={setPositionFilter}
             options={positionOptions}
             filterLabel="Jabatan"
+            nullLabel="Semua Jabatan"
             nullable
           />
         </div>

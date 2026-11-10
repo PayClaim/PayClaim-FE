@@ -15,7 +15,7 @@ import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateTimeString } from '#/lib/utils'
 import type { ClaimResponse } from '#/types/claims.type'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, useRouteContext } from '@tanstack/react-router'
 import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
@@ -25,6 +25,7 @@ export const Route = createFileRoute('/_app/claims/')({
 })
 
 function RouteComponent() {
+  const { isAdmin } = useRouteContext({ from: '/_app' })
   const { data: claimResponse, isError, isFetching } = useGetAllClaimsQuery()
 
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
@@ -91,28 +92,32 @@ function RouteComponent() {
       return timeB - timeA
     })
 
-  if (isError) return <ErrorComponent pageTitle="My Claims" />
+  if (isError) return <ErrorComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
 
   if (isFetching && !claimResponse)
-    return <LoadingComponent pageTitle="My Claims" />
+    return <LoadingComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
 
   return (
     <main>
       {/* Heading */}
       <div className="mb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">My Claims</h1>
+          <h1 className="text-xl font-bold">{isAdmin ? 'All Claims' : 'My Claims'}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Submit and track your benefit and reimbursement claims
+            {isAdmin
+              ? 'Monitor and review employee benefit and reimbursement claims'
+              : 'Submit and track your benefit and reimbursement claims'}
           </p>
         </div>
 
-        <Link to="/claims/create">
-          <Button className="bg-primary hover:bg-primary/90 flex items-center gap-1.5">
-            <Plus className="h-4 w-4" />
-            <span>New Claim</span>
-          </Button>
-        </Link>
+        {!isAdmin && (
+          <Link to="/claims/create">
+            <Button className="bg-primary hover:bg-primary/90 flex items-center gap-1.5">
+              <Plus className="h-4 w-4" />
+              <span>New Claim</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="bg-card p-8 rounded-2xl mb-8 border border-border">
