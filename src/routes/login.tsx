@@ -1,11 +1,24 @@
 import { loginForm } from '#/features/auth/forms/forms'
+import { ErrorMessages } from '#/components/forms/ErrorMessage'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
+import { Button } from '#/components/ui/button'
 import { createFileRoute } from '@tanstack/react-router'
 import {
-  CheckCircle2,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Loader2,
   Lock,
-  ReceiptText,
-  ShieldCheck,
 } from 'lucide-react'
+import { useState } from 'react'
 import type React from 'react'
 
 export const Route = createFileRoute('/login')({
@@ -19,6 +32,8 @@ export const Route = createFileRoute('/login')({
 
 function RouteComponent() {
   const form = loginForm()
+  const [showPassword, setShowPassword] = useState(false)
+  const [forgotDialogOpen, setForgotDialogOpen] = useState(false)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -33,187 +48,286 @@ function RouteComponent() {
   }
 
   return (
-    <main className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 bg-background">
-      {/* Left Column: Brand Identity & Enterprise Information (Desktop) */}
-      <section className="hidden lg:flex lg:col-span-5 xl:col-span-5 bg-slate-900 text-slate-100 flex-col justify-between p-10 xl:p-14 relative border-r border-slate-800">
-        {/* Subtle Decorative Ambient Layer with strict purpose (Brand Contrast) */}
-        <div
-          className="absolute inset-0 bg-radial from-blue-900/20 via-transparent to-transparent pointer-events-none"
-          aria-hidden="true"
+    <main className="min-h-screen w-full flex flex-col lg:grid lg:grid-cols-12 bg-white">
+      {/* Sisi Kiri: Brand Canvas dengan Foto Gedung MII (Desktop Only) */}
+      <section className="hidden lg:flex lg:col-span-5 xl:col-span-5 bg-slate-950 text-slate-100 flex-col justify-between p-10 xl:p-14 border-r border-slate-800 relative overflow-hidden select-none">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <img
+          src="/gedung.jpg"
+          alt="MII Building"
+          width={800}
+          height={1000}
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-100 brightness-100 contrast-100"
         />
 
-        {/* Brand Header */}
-        <header className="relative z-10 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/80" />
+      </div>
+
+      {/* Brand Header */}
+      <header className="relative z-10 flex items-center gap-3">
+        <div className="w-35 h-35 rounded-xl flex items-center justify-center shadow-xs shrink-0">
+          <img
+            src="/logo-mii.png"
+            alt="PT Mitra Integrasi Informatika"
+            width={50}
+            height={50}
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div>
+          <span className="text-3xl font-bold tracking-tight text-white block leading-none">
+            PayClaim
+          </span>
+          <span className="text-sm text-slate-400 font-medium">
+            PT Mitra Integrasi Informatika
+          </span>
+        </div>
+      </header>
+
+      {/* Headline & Subheadline */}
+      <div className="relative z-10 my-auto py-4 -translate-y-8 space-y-4 max-w-lg">
+        <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
+          Enterprise Claim &amp; Reimbursement Portal
+        </h1>
+        <p className="text-base text-slate-300 leading-relaxed">
+          Platform terintegrasi untuk pengajuan, verifikasi, dan penyelesaian klaim biaya operasional, perjalanan dinas, serta tunjangan karyawan.
+        </p>
+      </div>
+
+      {/* Corporate Legal & Security Footer */}
+      <footer className="relative z-10 pt-6 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-400">
+        <p className="flex items-center gap-1.5 font-medium text-slate-300">
+          <Lock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+          Akses Terbatas Internal Perusahaan
+        </p>
+        <p className="text-slate-500 leading-normal">
+          &copy; {new Date().getFullYear()} PT Mitra Integrasi Informatika. Member of Metrodata Group.
+        </p>
+      </footer>
+    </section>
+
+      {/* Sisi Kanan: Form Area (Clean, Focused, Accessible) */}
+      <section className="flex-1 lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 bg-white">
+        <div className="w-full max-w-[360px] mx-auto space-y-7">
+          {/* Mobile Header (Hanya tampil pada layar < lg) */}
+          <div className="lg:hidden flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-white p-1 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
               <img
                 src="/logo-mii.png"
-                alt="Mitra Integrasi Informatika"
-                width={36}
-                height={36}
+                alt="PT Mitra Integrasi Informatika"
+                width={28}
+                height={28}
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-white block leading-none">
+              <span className="text-base font-bold tracking-tight text-slate-900 block leading-none">
                 PayClaim
               </span>
-              <span className="text-xs text-slate-400 font-medium">
-                Mitra Integrasi Informatika
+              <span className="text-xs text-slate-500 font-medium">
+                PT Mitra Integrasi Informatika
               </span>
             </div>
           </div>
-        </header>
 
-        {/* Value Proposition & Workflow Architecture */}
-        <div className="relative z-10 my-auto py-10 space-y-8">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-blue-950/80 text-blue-300 border border-blue-800/60">
-              <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> Enterprise Governance
-            </span>
-            <h1 className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight leading-snug">
-              Employee Claim & Reimbursement Portal
+          {/* Form Header */}
+          <div className="space-y-1.5 text-left">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Sign In
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed max-w-md">
-              A unified platform to submit, verify, and settle operational expenses,
-              business travel proposals, and employee benefit claims.
+            <p className="text-sm text-slate-500">
+              Masuk dengan kredensial akun korporat Anda.
             </p>
           </div>
 
-          <div className="space-y-4 pt-2">
-            <div className="flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  Two-Tier Approval Workflow
-                </p>
-                <p className="text-xs text-slate-400 leading-normal">
-                  Structured authorization by Direct Manager (Level 1) and Finance Verification (Level 2).
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
-                <ReceiptText className="w-4 h-4" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  Transparent Digital Audit
-                </p>
-                <p className="text-xs text-slate-400 leading-normal">
-                  Real-time quota monitoring, receipt document attachment preview, and settlement history.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Legal & Corporate Footer */}
-        <footer className="relative z-10 pt-6 border-t border-slate-800/80 text-xs text-slate-400">
-          <p>&copy; {new Date().getFullYear()} PT Mitra Integrasi Informatika. All rights reserved.</p>
-        </footer>
-      </section>
-
-      {/* Right Column: Authentication Form */}
-      <section className="col-span-1 lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center p-6 sm:p-10 lg:p-16 bg-slate-50/50 dark:bg-background">
-        <div className="w-full max-w-md space-y-6">
-          {/* Mobile Header (Shown on screens < lg) */}
-          <div className="lg:hidden flex items-center gap-3 pb-2 border-b border-border/80">
-            <div className="w-10 h-10 rounded-xl bg-white p-1 border border-border shadow-2xs flex items-center justify-center shrink-0">
-              <img
-                src="/logo-mii.png"
-                alt="Mitra Integrasi Informatika"
-                width={32}
-                height={32}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <span className="text-lg font-bold tracking-tight text-heading block leading-none">
-                PayClaim
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                Mitra Integrasi Informatika
-              </span>
-            </div>
-          </div>
-
-          {/* Form Card */}
-          <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="space-y-1.5 text-left">
-              <h2 className="text-2xl font-bold tracking-tight text-heading">
-                Sign In
-              </h2>
-              <p className="text-sm text-muted-foreground leading-normal">
-                Enter your authorized username and password to continue.
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                if (document.activeElement instanceof HTMLElement) {
-                  document.activeElement.blur()
-                }
-                setTimeout(() => {
-                  form.handleSubmit()
-                }, 0)
-              }}
-              onKeyDown={handleKeyDown}
-              className="space-y-4"
-            >
-              <form.AppField name="username">
-                {(field) => (
-                  <field.TextField
-                    placeholder="Enter your username"
-                    label="Username"
+          {/* Form Controls */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur()
+              }
+              setTimeout(() => {
+                form.handleSubmit()
+              }, 0)
+            }}
+            onKeyDown={handleKeyDown}
+            className="space-y-4"
+          >
+            {/* Field: Username */}
+            <form.Field name="username">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="login-username"
+                    className="block text-xs font-semibold text-slate-700"
+                  >
+                    Username
+                  </label>
+                  <input
+                    id="login-username"
+                    name={field.name}
+                    type="text"
                     autoComplete="username"
+                    placeholder="Masukkan username Anda"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    className="w-full h-10 px-3.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]"
                   />
+                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                    <ErrorMessages errors={field.state.meta.errors} />
+                  )}
+                </div>
+              )}
+            </form.Field>
+
+            {/* Field: Password */}
+            <form.Field name="password">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="login-password"
+                      className="block text-xs font-semibold text-slate-700"
+                    >
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setForgotDialogOpen(true)}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer transition-colors"
+                    >
+                      Lupa password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      id="login-password"
+                      name={field.name}
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      placeholder="Masukkan password Anda"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="w-full h-10 px-3.5 pe-10 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition-all [&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset]"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      tabIndex={-1}
+                      className="absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none"
+                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                    <ErrorMessages errors={field.state.meta.errors} />
+                  )}
+                </div>
+              )}
+            </form.Field>
+
+            {/* Tombol Submit */}
+            <div className="pt-2">
+              <form.Subscribe selector={(state) => state.isSubmitting}>
+                {(isSubmitting) => (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-10 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed text-white shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/40"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                        <span>Memproses...</span>
+                      </>
+                    ) : (
+                      <span>Masuk ke PayClaim</span>
+                    )}
+                  </button>
                 )}
-              </form.AppField>
-
-              <form.AppField name="password">
-                {(field) => (
-                  <field.TextField
-                    type="password"
-                    placeholder="Enter your password"
-                    label="Password"
-                    autoComplete="current-password"
-                    onKeyDown={handleKeyDown}
-                  />
-                )}
-              </form.AppField>
-
-              <div className="pt-2">
-                <form.AppForm>
-                  <form.FormButton
-                    className="w-full h-11 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-hidden"
-                    label="Sign In to Portal"
-                  />
-                </form.AppForm>
-              </div>
-            </form>
-
-            {/* Security Notice Box */}
-            <div className="rounded-lg bg-muted/40 border border-border/80 p-3.5 flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed">
-              <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>
-                Authorized access only. By continuing, you agree to comply with PT Mitra Integrasi Informatika company security and data governance policies.
-              </span>
+              </form.Subscribe>
             </div>
+          </form>
+
+          {/* Help & Support Note */}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" /> Butuh bantuan?
+            </span>
+            <button
+              type="button"
+              onClick={() => setForgotDialogOpen(true)}
+              className="text-blue-600 hover:text-blue-700 font-medium hover:underline cursor-pointer"
+            >
+              Hubungi IT Service Desk
+            </button>
           </div>
 
           {/* Mobile Copyright */}
-          <p className="text-center text-xs text-muted-foreground lg:hidden">
-            &copy; {new Date().getFullYear()} PT Mitra Integrasi Informatika. All rights reserved.
+          <p className="text-center text-xs text-slate-400 lg:hidden pt-2">
+            &copy; {new Date().getFullYear()} PT Mitra Integrasi Informatika
           </p>
         </div>
       </section>
+
+      {/* Forgot Password / Corporate Account Support Dialog */}
+      <Dialog open={forgotDialogOpen} onOpenChange={setForgotDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bantuan Kredensial Akun</DialogTitle>
+            <DialogDescription>
+              Informasi pengaturan ulang kata sandi akun domain korporat PT Mitra Integrasi Informatika.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3.5 py-2 text-sm text-slate-600 leading-relaxed">
+            <p>
+              Akun PayClaim terhubung langsung dengan domain akun korporat Anda. Untuk alasan keamanan, pengaturan ulang kata sandi dikelola secara terpusat:
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600">
+              <li>
+                Jika Anda memiliki akses ke portal SSO, silakan lakukan reset melalui <strong>Self-Service Password Reset (SSPR)</strong>.
+              </li>
+              <li>
+                Atau hubungi <strong>IT Service Desk MII</strong> melalui email internal di{' '}
+                <a
+                  href="mailto:servicedesk@mii.co.id"
+                  className="text-blue-600 font-semibold hover:underline"
+                >
+                  servicedesk@mii.co.id
+                </a>{' '}
+                atau ekstensi telepon <strong>1500</strong>.
+              </li>
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Tutup
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }
