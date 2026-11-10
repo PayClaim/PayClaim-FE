@@ -13,6 +13,7 @@ interface TextFieldProps {
   type?: string
   autoComplete?: string
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
+  disabled?: boolean
 }
 
 export function TextField({
@@ -21,6 +22,7 @@ export function TextField({
   type = 'text',
   autoComplete,
   onKeyDown,
+  disabled = false,
 }: TextFieldProps) {
   const [showPassword, setShowPassword] = useState(false)
   const isPassword = type === 'password'
@@ -46,6 +48,7 @@ export function TextField({
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
           onKeyDown={onKeyDown}
+          disabled={disabled}
         />
         {isPassword && (
           <button
