@@ -164,10 +164,8 @@ function RouteComponent() {
 
 function ClaimTable({
   claims,
-  //   showEmployeeCol,
 }: {
   claims: ClaimResponse[]
-  //   showEmployeeCol: boolean
 }) {
   const navigate = useNavigate()
   const thClass = 'px-6 py-3 font-bold'
@@ -192,7 +190,7 @@ function ClaimTable({
             className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow) transition-colors"
             onClick={() => {
               navigate({
-                to: '/claims/$claimId',
+                to: '/approvals/$claimId',
                 params: {
                   claimId: claim.id,
                 },

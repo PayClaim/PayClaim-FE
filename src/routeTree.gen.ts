@@ -22,6 +22,7 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-qu
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminResetPasswordRouteImport } from './routes/_app/admin/reset-password'
 import { Route as AppApprovalsIndexRouteImport } from './routes/_app/approvals/index'
+import { Route as AppApprovalsClaimIdRouteImport } from './routes/_app/approvals/$claimId'
 import { Route as AppBenefitsIndexRouteImport } from './routes/_app/benefits/index'
 import { Route as AppClaimsIndexRouteImport } from './routes/_app/claims/index'
 import { Route as AppClaimsClaimIdRouteImport } from './routes/_app/claims/$claimId'
@@ -111,6 +112,11 @@ const AppAdminResetPasswordRoute = AppAdminResetPasswordRouteImport.update({
 const AppApprovalsIndexRoute = AppApprovalsIndexRouteImport.update({
   id: '/approvals/',
   path: '/approvals/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApprovalsClaimIdRoute = AppApprovalsClaimIdRouteImport.update({
+  id: '/approvals/$claimId',
+  path: '/approvals/$claimId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBenefitsIndexRoute = AppBenefitsIndexRouteImport.update({
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/reset-password': typeof AppAdminResetPasswordRoute
+  '/approvals/$claimId': typeof AppApprovalsClaimIdRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
   '/playground/$claimId': typeof AppPlaygroundClaimIdRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/admin/reset-password': typeof AppAdminResetPasswordRoute
+  '/approvals/$claimId': typeof AppApprovalsClaimIdRoute
   '/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/claims/create': typeof AppClaimsCreateRoute
   '/playground/$claimId': typeof AppPlaygroundClaimIdRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/_app/admin/reset-password': typeof AppAdminResetPasswordRoute
+  '/_app/approvals/$claimId': typeof AppApprovalsClaimIdRoute
   '/_app/claims/$claimId': typeof AppClaimsClaimIdRouteWithChildren
   '/_app/claims/create': typeof AppClaimsCreateRoute
   '/_app/playground/$claimId': typeof AppPlaygroundClaimIdRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/admin/reset-password'
+    | '/approvals/$claimId'
     | '/claims/$claimId'
     | '/claims/create'
     | '/playground/$claimId'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/admin/reset-password'
+    | '/approvals/$claimId'
     | '/claims/$claimId'
     | '/claims/create'
     | '/playground/$claimId'
@@ -469,6 +480,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/tanstack-query'
     | '/_app/admin/reset-password'
+    | '/_app/approvals/$claimId'
     | '/_app/claims/$claimId'
     | '/_app/claims/create'
     | '/_app/playground/$claimId'
@@ -603,6 +615,13 @@ declare module '@tanstack/react-router' {
       path: '/approvals'
       fullPath: '/approvals/'
       preLoaderRoute: typeof AppApprovalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/approvals/$claimId': {
+      id: '/_app/approvals/$claimId'
+      path: '/approvals/$claimId'
+      fullPath: '/approvals/$claimId'
+      preLoaderRoute: typeof AppApprovalsClaimIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/benefits/': {
@@ -850,6 +869,7 @@ const AppClaimsClaimIdRouteWithChildren =
 interface AppRouteChildren {
   AppAdminRouteRoute: typeof AppAdminRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppApprovalsClaimIdRoute: typeof AppApprovalsClaimIdRoute
   AppClaimsClaimIdRoute: typeof AppClaimsClaimIdRouteWithChildren
   AppClaimsCreateRoute: typeof AppClaimsCreateRoute
   AppPlaygroundClaimIdRoute: typeof AppPlaygroundClaimIdRoute
@@ -864,6 +884,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRouteRoute: AppAdminRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppApprovalsClaimIdRoute: AppApprovalsClaimIdRoute,
   AppClaimsClaimIdRoute: AppClaimsClaimIdRouteWithChildren,
   AppClaimsCreateRoute: AppClaimsCreateRoute,
   AppPlaygroundClaimIdRoute: AppPlaygroundClaimIdRoute,
