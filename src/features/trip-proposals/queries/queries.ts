@@ -87,3 +87,40 @@ export const useGetProposalByIdQuery = (id: string) =>
   })
 
 export const useGetTripProposalByIdQuery = useGetProposalByIdQuery
+
+type TripProposalApprovalBody = {
+  decision: 'Approved' | 'Rejected' | 'NeedsRevision'
+  notes?: string
+}
+
+// Approve Trip Proposal
+export const useApproveTripProposalMutation = (id: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (body: TripProposalApprovalBody) =>
+      api.post(`/trip-proposals/${id}/approve`, body),
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['trip-proposals'],
+      })
+    },
+  })
+}
+
+// Reject / Request Revision Trip Proposal
+export const useRejectTripProposalMutation = (id: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (body: TripProposalApprovalBody) =>
+      api.post(`/trip-proposals/${id}/reject`, body),
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['trip-proposals'],
+      })
+    },
+  })
+}

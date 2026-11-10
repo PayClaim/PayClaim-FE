@@ -1,11 +1,13 @@
-
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Download, FileText } from 'lucide-react'
-
-import { Button } from '#/components/ui/button'
-import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
+import { createFileRoute } from '@tanstack/react-router'
 
 import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queries'
+
+import { TripProposalHeader } from '#/components/pages/tripProposals/TripProposalHeader'
+import { TripProposalSidebar } from '#/components/pages/tripProposals/TripProposalSidebar'
+import {
+  TripProposalTimeline,
+  type ProposalTimelineItem,
+} from '#/components/pages/tripProposals/TripProposalTimeline'
 
 export const Route = createFileRoute('/_app/trip-proposals/$id')({
   component: RouteComponent,
@@ -13,7 +15,6 @@ export const Route = createFileRoute('/_app/trip-proposals/$id')({
 
 function RouteComponent() {
   const { id } = Route.useParams()
-  const navigate = useNavigate()
 
   const {
     data: proposal,
@@ -22,391 +23,107 @@ function RouteComponent() {
     error,
   } = useGetProposalByIdQuery(id)
 
-  // Loading
   if (isLoading) {
     return (
-      <main className="space-y-4">
-        <p className="text-muted-foreground">
+      <main className="mx-auto max-w-7xl">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
           Loading trip proposal details...
-        </p>
+        </div>
       </main>
     )
   }
 
-  // Error
-  if (isError) {
+  if (isError || !proposal) {
     return (
-      <main className="space-y-4">
-        <p className="font-semibold text-destructive">
-          Failed to load trip proposal.
-        </p>
-
-        <p className="text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </p>
-
-        <Button
-          variant="outline"
-          onClick={() => navigate({ to: '/trip-proposals' })}
-        >
-          Back to Proposals
-        </Button>
+      <main className="mx-auto max-w-7xl">
+        <div className="rounded-2xl border border-destructive bg-card p-8 text-destructive">
+          {error instanceof Error
+            ? error.message
+            : 'Trip proposal not found.'}
+        </div>
       </main>
     )
   }
 
-  if (!proposal) {
-    return (
-      <main className="space-y-4">
-        <p>Trip proposal not found.</p>
+  // Menyiapkan URL file dari backend.
+  const filePath = proposal.filePath || ''
 
-        <Button
-          variant="outline"
-          onClick={() => navigate({ to: '/trip-proposals' })}
-        >
-          Back to Proposals
-        </Button>
-      </main>
+  const backendBaseUrl = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+    : ''
+
+  const attachmentUrl = filePath
+    ? filePath.startsWith('http')
+      ? filePath
+      : `${backendBaseUrl}${filePath.startsWith('/') ? '' : '/'}${filePath}`
+    : ''
+
+  const attachmentFileName = getFileName(filePath)
+  const isPdf = /\.pdf(?:$|[?#])/i.test(filePath)
+
+  // Mengambil aktivitas approval dari backend.
+  const activities: ProposalTimelineItem[] = (
+    proposal.approvalHistory || []
+  ).map((history) => ({
+    id: `approval-${history.id}`,
+    approverName: history.approverName,
+    decision: history.decision,
+    approvalLevel: history.approvalLevel,
+    decidedAt: history.decidedAt,
+  }))
+
+  // Fallback sementara jika backend belum menyimpan Submitted.
+  const hasSubmittedActivity = activities.some(
+    (activity) => activity.decision.toLowerCase() === 'submitted',
+  )
+
+  if (!hasSubmittedActivity) {
+    const pic = proposal.participants.find(
+      (participant) => participant.isPic,
     )
+
+    activities.push({
+      id: 'submission',
+      approverName: pic?.employeeName || 'Proposal PIC',
+      decision: 'Submitted',
+      approvalLevel: null,
+      decidedAt: proposal.submittedAt,
+    })
   }
+
+  // Urutkan aktivitas dari yang pertama sampai terbaru.
+  activities.sort(
+    (a, b) =>
+      new Date(a.decidedAt).getTime() -
+      new Date(b.decidedAt).getTime(),
+  )
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6">
+    <main className="mx-auto max-w-7xl space-y-6">
+      <TripProposalHeader proposal={proposal} />
 
-      {/* Breadcrumb and Back Button */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <p className="text-sm text-muted-foreground">
-          Trip Proposals / {proposal.id}
-        </p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <TripProposalSidebar proposal={proposal} />
 
-        <Button
-          variant="outline"
-          onClick={() => navigate({ to: '/trip-proposals' })}
-        >
-          Back to Proposals
-        </Button>
+        <TripProposalTimeline
+          activities={activities}
+          attachmentUrl={attachmentUrl}
+          attachmentFileName={attachmentFileName}
+          isPdf={isPdf}
+        />
       </div>
-
-      {/* Page Header */}
-      <section className="space-y-4 rounded-xl border border-border bg-card p-6">
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge
-            variant="default"
-            color={getTripProposalBadgeColor(proposal.status)}
-          >
-            {proposal.status}
-          </Badge>
-
-          <span className="text-sm text-muted-foreground">
-            {proposal.id}
-          </span>
-        </div>
-
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Perjalanan dinas: {proposal.destination}
-          </h1>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Detail informasi pengajuan perjalanan dinas.
-          </p>
-        </div>
-
-        <div className="border-t border-border pt-5">
-          <p className="text-sm text-muted-foreground">
-            Total estimasi biaya
-          </p>
-
-          <p className="mt-1 text-3xl font-bold">
-            {formatCurrency(proposal.totalAmount)}
-          </p>
-        </div>
-      </section>
-
-      {/* Trip Information */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-6 text-lg font-semibold">
-          Informasi Perjalanan
-        </h2>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-
-          <DetailItem
-            label="Destinasi"
-            value={proposal.destination}
-          />
-
-          <DetailItem
-            label="Tanggal mulai"
-            value={formatDate(proposal.startDate)}
-          />
-
-          <DetailItem
-            label="Tanggal selesai"
-            value={formatDate(proposal.endDate)}
-          />
-
-          <DetailItem
-            label="Diajukan pada"
-            value={formatDateTime(proposal.submittedAt)}
-          />
-
-          <div className="sm:col-span-2">
-            <DetailItem
-              label="Deskripsi"
-              value={proposal.description}
-            />
-          </div>
-
-        </div>
-      </section>
-
-      {/* Participants */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">
-              PIC dan Peserta
-            </h2>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Daftar karyawan yang mengikuti perjalanan dinas.
-            </p>
-          </div>
-
-          <Badge variant="outline">
-            {proposal.participants.length} Participants
-          </Badge>
-        </div>
-
-        <div className="space-y-3">
-          {proposal.participants.map((participant) => (
-            <div
-              key={participant.employeeId}
-              className="flex flex-col justify-between gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center"
-            >
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold">
-                    {participant.employeeName || 'Unknown Employee'}
-                  </p>
-
-                  {participant.isPic && (
-                    <Badge color="info">
-                      PIC
-                    </Badge>
-                  )}
-                </div>
-
-                <p className="text-sm text-muted-foreground">
-                  {participant.employeeNumber || '-'}
-                </p>
-
-                <p className="text-xs text-muted-foreground">
-                  Employee ID: {participant.employeeId}
-                </p>
-              </div>
-
-              <div className="sm:text-right">
-                <p className="text-xs text-muted-foreground">
-                  Alokasi biaya
-                </p>
-
-                <p className="font-semibold">
-                  {formatCurrency(participant.amount)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Proposal Attachment */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            Lampiran Proposal
-          </h2>
-          {proposal.filePath && (
-            <a
-              href={
-                proposal.filePath.startsWith('http')
-                  ? proposal.filePath
-                  : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : ''}${proposal.filePath.startsWith('/') ? '' : '/'}${proposal.filePath}`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
-            >
-              <Download className="h-4 w-4" /> Buka / Unduh Berkas
-            </a>
-          )}
-        </div>
-
-        {proposal.filePath ? (
-          <a
-            href={
-              proposal.filePath.startsWith('http')
-                ? proposal.filePath
-                : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : ''}${proposal.filePath.startsWith('/') ? '' : '/'}${proposal.filePath}`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 rounded-lg border border-border p-4 hover:bg-muted/40 transition-colors"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="rounded-md bg-primary/10 p-3 text-primary">
-                <FileText className="h-6 w-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="break-all text-sm font-medium hover:underline">
-                  {getFileName(proposal.filePath)}
-                </p>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {proposal.filePath}
-                </p>
-              </div>
-            </div>
-
-            <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
-              <Download className="h-3.5 w-3.5" /> Buka
-            </Button>
-          </a>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No proposal attachment.
-          </p>
-        )}
-      </section>
-
-      {/* Approval History */}
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-2 text-lg font-semibold">
-          Riwayat Persetujuan
-        </h2>
-
-        <p className="mb-6 text-sm text-muted-foreground">
-          Riwayat proses persetujuan perjalanan dinas.
-        </p>
-
-        {proposal.approvalHistory.length > 0 ? (
-          <div className="space-y-6">
-            {[...proposal.approvalHistory]
-              .sort((a, b) => a.approvalLevel - b.approvalLevel)
-              .map((history, index) => (
-                <div
-                  key={history.id}
-                  className="relative flex gap-4"
-                >
-                  {/* Timeline Number */}
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {index + 1}
-                    </div>
-
-                    {index !== proposal.approvalHistory.length - 1 && (
-                      <div className="mt-2 h-full min-h-12 w-px bg-border" />
-                    )}
-                  </div>
-
-                  {/* Approval Information */}
-                  <div className="min-w-0 flex-1 space-y-2 pb-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold">
-                        {history.approverName}
-                      </p>
-
-                      <Badge variant="outline">
-                        {history.decision}
-                      </Badge>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      Approval Level {history.approvalLevel}
-                      {' · '}
-                      {formatDateTime(history.decidedAt)}
-                    </p>
-
-                    <div className="rounded-lg bg-muted p-3">
-                      <p className="text-sm text-muted-foreground">
-                        {history.notes || 'No notes provided.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="font-medium">
-              No approval history yet.
-            </p>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Approval records will appear here after the proposal is reviewed.
-            </p>
-          </div>
-        )}
-      </section>
-
     </main>
   )
 }
 
-// Reusable detail item
-function DetailItem({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">
-        {label}
-      </p>
-
-      <p className="text-sm font-medium whitespace-pre-wrap">
-        {value || '-'}
-      </p>
-    </div>
-  )
-}
-
-// Format Rupiah
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-// Format DateOnly
-function formatDate(date: string) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
-// Format DateTime
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-// Get file name from path
 function getFileName(path: string) {
-  return path.split(/[\\/]/).pop() || path
+  if (!path) return ''
+
+  const fileName = path.split(/[\\/]/).pop()?.split(/[?#]/)[0] || path
+
+  try {
+    return decodeURIComponent(fileName)
+  } catch {
+    return fileName
+  }
 }
