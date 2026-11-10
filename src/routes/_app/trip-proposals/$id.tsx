@@ -8,7 +8,7 @@ import {
   TripProposalTimeline,
   type ProposalTimelineItem,
 } from '#/components/pages/tripProposals/TripProposalTimeline'
-
+import { TripProposalStatus } from '#/types/tripProposals.type'
 export const Route = createFileRoute('/_app/trip-proposals/$id')({
   component: RouteComponent,
 })
@@ -62,41 +62,78 @@ function RouteComponent() {
   const isPdf = /\.pdf(?:$|[?#])/i.test(filePath)
 
   // Mengambil aktivitas approval dari backend.
-  const activities: ProposalTimelineItem[] = (
-    proposal.approvalHistory || []
-  ).map((history) => ({
-    id: `approval-${history.id}`,
-    approverName: history.approverName,
-    decision: history.decision,
-    approvalLevel: history.approvalLevel,
-    decidedAt: history.decidedAt,
-  }))
+// Mengambil aktivitas approval dari backend.
+const activities: ProposalTimelineItem[] = (
+  proposal.approvalHistory || []
+).map((history) => ({
+  id: `approval-${history.id}`,
+  approverName: history.approverName,
+  decision: history.decision,
+  approvalLevel: history.approvalLevel,
+  decidedAt: history.decidedAt,
+}))
 
-  // Fallback sementara jika backend belum menyimpan Submitted.
-  const hasSubmittedActivity = activities.some(
-    (activity) => activity.decision.toLowerCase() === 'submitted',
+// Menambahkan Submitted sementara jika belum ada dari backend.
+const hasSubmittedActivity = activities.some(
+  (activity) => activity.decision.toLowerCase() === 'submitted',
+)
+
+if (!hasSubmittedActivity) {
+  const pic = proposal.participants.find(
+    (participant) => participant.isPic,
   )
 
-  if (!hasSubmittedActivity) {
-    const pic = proposal.participants.find(
-      (participant) => participant.isPic,
-    )
+  activities.push({
+    id: 'submission',
+    approverName: pic?.employeeName || 'Proposal PIC',
+    decision: 'Submitted',
+    approvalLevel: null,
+    decidedAt: proposal.submittedAt,
+  })
+}
 
-    activities.push({
-      id: 'submission',
-      approverName: pic?.employeeName || 'Proposal PIC',
-      decision: 'Submitted',
-      approvalLevel: null,
-      decidedAt: proposal.submittedAt,
-    })
-  }
+// Menentukan siapa yang sedang menunggu untuk melakukan approval.
+let pendingApprover: string | null = null
 
-  // Urutkan aktivitas dari yang pertama sampai terbaru.
-  activities.sort(
-    (a, b) =>
-      new Date(a.decidedAt).getTime() -
-      new Date(b.decidedAt).getTime(),
-  )
+switch (proposal.status) {
+  case TripProposalStatus.Submitted:
+    pendingApprover = 'Manager'
+    break
+
+  case TripProposalStatus.UnderReview:
+    pendingApprover = 'Finance'
+    break
+
+  case TripProposalStatus.FinanceManagerReview:
+    pendingApprover = 'Finance Manager'
+    break
+}
+
+// Urutkan aktivitas terbaru dahulu.
+// Dengan demikian proses dibaca dari bawah ke atas.
+activities.sort(
+  (a, b) =>
+    new Date(b.decidedAt).getTime() -
+    new Date(a.decidedAt).getTime(),
+)
+
+// Pending selalu berada paling atas.
+const timelineActivities: ProposalTimelineItem[] = [
+  ...(pendingApprover
+    ? [
+        {
+          id: 'pending-current',
+          approverName: pendingApprover,
+          decision: 'Pending',
+          approvalLevel: null,
+          decidedAt: '',
+          isPending: true,
+        },
+      ]
+    : []),
+
+  ...activities,
+]
 
   return (
     <main className="mx-auto max-w-7xl space-y-6">
@@ -106,9 +143,9 @@ function RouteComponent() {
         <TripProposalSidebar proposal={proposal} />
 
         <TripProposalTimeline
-          activities={activities}
-          attachmentUrl={attachmentUrl}
-          attachmentFileName={attachmentFileName}
+            activities={timelineActivities}
+            attachmentUrl={attachmentUrl}
+            attachmentFileName={attachmentFileName}
           isPdf={isPdf}
         />
       </div>

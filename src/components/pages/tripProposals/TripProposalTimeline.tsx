@@ -3,6 +3,7 @@ import { useState } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
+  Clock3,
   Download,
   Eye,
   FileCheck,
@@ -26,12 +27,14 @@ export type ProposalTimelineItem = {
   decision: string
   approvalLevel: number | null
   decidedAt: string
+  isPending?: boolean
 }
 
 type Props = {
   activities: ProposalTimelineItem[]
   attachmentUrl: string
   attachmentFileName: string
+  isPdf: boolean
 }
 
 export function TripProposalTimeline({
@@ -69,6 +72,7 @@ export function TripProposalTimeline({
               const isApproved = decision === 'approved'
               const isRejected = decision === 'rejected'
               const isNeedsRevision = decision === 'needsrevision'
+              const isPending = activity.isPending === true
 
               const date = getDateParts(activity.decidedAt)
 
@@ -78,73 +82,98 @@ export function TripProposalTimeline({
                   className="relative grid grid-cols-[68px_24px_minmax(0,1fr)] gap-2"
                 >
                   {/* Tanggal aktivitas. */}
-                  <div className="h-fit rounded-lg border border-border bg-muted/30 p-2 text-center">
-                    <p className="text-lg font-bold text-primary">
-                      {date.day}
-                    </p>
+                {/* Pending menggunakan jam, aktivitas selesai menggunakan tanggal. */}
+<div className="h-fit overflow-hidden rounded-lg border border-border bg-card text-center">
+  {isPending ? (
+    <div className="flex flex-col items-center justify-center gap-1 px-2 py-4">
+      <Clock3 className="h-5 w-5 text-amber-600" />
+      <p className="text-[10px] font-bold text-amber-600">
+        Pending
+      </p>
+    </div>
+  ) : (
+    <>
+      <div className="bg-primary/10 px-2 py-1.5">
+        <p className="text-xs font-bold text-primary">
+          {date.day}
+        </p>
+      </div>
 
-                    <p className="text-xs font-semibold text-muted-foreground">
-                      {date.monthYear}
-                    </p>
+      <div className="px-2 py-2">
+        <p className="text-xs font-semibold text-muted-foreground">
+          {date.monthYear}
+        </p>
 
-                    <div className="mt-2 border-t border-border pt-2">
-                      <p className="text-[10px] font-semibold">
-                        {date.time}
-                      </p>
-                    </div>
+        <p className="mt-2 border-t border-border pt-2 text-[10px] font-semibold">
+          {date.time}
+        </p>
+      </div>
+    </>
+  )}
+</div>
+
+{/* Icon aktivitas. */}
+<div className="relative z-10 flex justify-center">
+  <div
+    className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-background ${
+      isPending
+        ? 'bg-amber-500/15 text-amber-600'
+        : isSubmitted
+          ? 'bg-primary/15 text-primary'
+          : isApproved
+            ? 'bg-emerald-500/15 text-emerald-600'
+            : isRejected
+              ? 'bg-destructive/15 text-destructive'
+              : isNeedsRevision
+                ? 'bg-purple-500/15 text-purple-600'
+                : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {isPending ? (
+                      <Clock3 className="h-4 w-4" />
+                    ) : isSubmitted ? (
+                      <FileCheck className="h-4 w-4" />
+                    ) : isApproved ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : isRejected ? (
+                      <XCircle className="h-4 w-4" />
+                    ) : isNeedsRevision ? (
+                      <AlertTriangle className="h-4 w-4" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
                   </div>
-
-                  {/* Icon timeline. */}
-                  <div className="relative z-10 flex justify-center">
-                    <div
-                      className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-background ${
-                        isSubmitted
-                          ? 'bg-primary/15 text-primary'
-                          : isApproved
-                            ? 'bg-emerald-500/15 text-emerald-600'
-                            : isRejected
-                              ? 'bg-destructive/15 text-destructive'
-                              : isNeedsRevision
-                                ? 'bg-purple-500/15 text-purple-600'
-                                : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {isSubmitted ? (
-                        <FileCheck className="h-4 w-4" />
-                      ) : isApproved ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : isRejected ? (
-                        <XCircle className="h-4 w-4" />
-                      ) : isNeedsRevision ? (
-                        <AlertTriangle className="h-4 w-4" />
-                      ) : (
-                        <FileText className="h-4 w-4" />
-                      )}
-                    </div>
-                  </div>
+                </div>
 
                   {/* Detail aktivitas. */}
                   <div className="min-w-0 rounded-xl border border-border p-3 sm:p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-bold">
-                          {isSubmitted
-                            ? 'Proposal Submitted'
-                            : activity.approverName || 'Approver'}
+                          {isPending
+                              ? `${activity.approverName} Approval`
+                              : isSubmitted
+                                ? 'Proposal Submitted'
+                                : activity.approverName || 'Approver'}
                         </p>
 
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {isSubmitted
-                            ? `Submitted by ${activity.approverName}`
-                            : activity.approvalLevel
-                              ? `Approval Level ${activity.approvalLevel}`
-                              : 'Proposal activity'}
+                          {isPending
+                                  ? 'Waiting for approval'
+                                  : isSubmitted
+                                    ? `Submitted by ${activity.approverName}`
+                                    : activity.approvalLevel
+                                      ? `Approval Level ${activity.approvalLevel}`
+                                      : 'Proposal activity'}
                         </p>
                       </div>
 
-                      <Badge variant="outline">
-                        {formatDecision(activity.decision)}
-                      </Badge>
+                      <Badge
+                                  variant="outline"
+                                  color={isPending ? 'warning' : undefined}
+                                >
+                                  {isPending ? 'Pending' : formatDecision(activity.decision)}
+                                </Badge>
                     </div>
 
                     {/* Attachment pada aktivitas Submitted. */}
