@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { Button } from '#/components/ui/button'
 import { useState } from 'react'
@@ -9,6 +9,13 @@ import { idNumberFormatter } from '#/lib/formatter'
 import { AlertCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/claims/create')({
+  beforeLoad: ({ context }) => {
+    if (context.isAdmin) {
+      throw redirect({
+        to: '/claims',
+      })
+    }
+  },
   component: RouteComponent,
 })
 
