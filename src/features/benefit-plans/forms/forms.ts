@@ -32,7 +32,6 @@ export const createBenefitPlanForm = () => {
           to: '/admin/benefit-plans',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal membuat rencana manfaat'))
       }
     },
@@ -67,7 +66,6 @@ export const editBenefitPlanForm = (
           to: '/admin/benefit-plans',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal memperbarui rencana manfaat'))
       }
     },
@@ -92,7 +90,6 @@ export const deleteBenefitPlanForm = (keys: {
           to: '/admin/benefit-plans',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal menghapus rencana manfaat'))
       }
     },

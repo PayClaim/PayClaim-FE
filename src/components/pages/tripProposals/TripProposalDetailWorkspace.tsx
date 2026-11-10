@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle2, FileText, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle } from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import {

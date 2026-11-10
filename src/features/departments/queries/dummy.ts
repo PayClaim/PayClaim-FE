@@ -4,6 +4,7 @@ export const data: DepartmentResponse[] = [
   {
     id: 'dept-001',
     name: 'Teknologi Informasi',
+    parentDeptId: null,
   },
   {
     id: 'dept-002',
@@ -20,6 +21,7 @@ export const data: DepartmentResponse[] = [
   {
     id: 'dept-004',
     name: 'Sumber Daya Manusia',
+    parentDeptId: null,
   },
   {
     id: 'dept-005',

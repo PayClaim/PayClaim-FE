@@ -7,7 +7,7 @@ export const data: BenefitResponse[] = [
     description:
       'Asuransi kesehatan untuk karyawan dan keluarga inti, mencakup rawat jalan dan rawat inap.',
     periodType: 'YEARLY',
-    categoryId: 'cat-001',
+    categoryId: 1,
     categoryName: 'Kesehatan',
   },
   {
@@ -15,7 +15,7 @@ export const data: BenefitResponse[] = [
     name: 'Tunjangan Transportasi',
     description: 'Penggantian biaya transportasi harian ke kantor.',
     periodType: 'MONTHLY',
-    categoryId: 'cat-002',
+    categoryId: 2,
     categoryName: 'Operasional',
   },
   {
@@ -23,7 +23,7 @@ export const data: BenefitResponse[] = [
     name: 'Tunjangan Makan',
     description: 'Uang makan harian untuk setiap hari kerja.',
     periodType: 'DAILY',
-    categoryId: 'cat-002',
+    categoryId: 2,
     categoryName: 'Operasional',
   },
   {
@@ -31,7 +31,7 @@ export const data: BenefitResponse[] = [
     name: 'Bonus Kinerja',
     description: 'Bonus berdasarkan pencapaian target kinerja per kuartal.',
     periodType: 'QUARTERLY',
-    categoryId: 'cat-003',
+    categoryId: 3,
     categoryName: 'Kompensasi',
   },
   {
@@ -40,7 +40,7 @@ export const data: BenefitResponse[] = [
     description:
       'Subsidi biaya pelatihan, sertifikasi, atau kursus untuk pengembangan karier.',
     periodType: 'YEARLY',
-    categoryId: 'cat-004',
+    categoryId: 4,
     categoryName: 'Pengembangan Diri',
   },
 ]

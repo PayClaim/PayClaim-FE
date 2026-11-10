@@ -3,13 +3,8 @@ import { ActionButtonList } from '#/components/pages/approvals/ActionButtonList'
 import { ActionDialog } from '#/components/pages/approvals/ActionDialog'
 import { HeaderSection } from '#/components/pages/approvals/Header'
 import { Button } from '#/components/ui/button'
-import {
-  useApproveClaimMutation,
-  useGetClaimsQuery,
-  usePayClaimMutation,
-  useRejectClaimMutation,
-} from '#/features/claims/queries/queries'
-import { createFileRoute, Link, useRouteContext } from '@tanstack/react-router'
+import { useGetClaimsQuery } from '#/features/claims/queries/queries'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,9 +15,7 @@ export const Route = createFileRoute('/_app/playground/$claimId')({
 function RouteComponent() {
   const { claimId } = Route.useParams()
   const { data: claim, isFetching, isError, error } = useGetClaimsQuery(claimId)
-  const { user } = useRouteContext({ from: '/_app' })
 
-  const [notes, setNotes] = useState('')
   const [actionType, setActionType] = useState<
     'Approved' | 'Rejected' | 'NeedsRevision' | 'Pay' | null
   >(null)

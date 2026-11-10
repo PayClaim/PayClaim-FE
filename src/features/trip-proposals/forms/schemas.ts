@@ -26,7 +26,7 @@ export const createTripProposalSchema = z
       )
       .min(1, 'At least one participant is required'),
 
-    file: z.instanceof(File).nullable().optional(),
+    file: z.instanceof(File).nullable(),
   })
   .refine((data) => data.endDate >= data.startDate, {
     message: 'End date cannot be before start date',
@@ -48,4 +48,4 @@ export const createTripProposalSchema = z
       message: 'Exactly one PIC is required',
       path: ['participants'],
     },
-  ) 
+  )

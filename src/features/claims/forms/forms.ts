@@ -2,12 +2,10 @@ import { useAppForm } from '#/hooks/app.form'
 import { toDateOnly } from '#/lib/utils'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  useApproveClaimMutation,
   useCreateClaimMutation,
-  useRejectClaimMutation,
   useUpdateClaimMutation,
 } from '../queries/queries'
-import { approvalClaimSchema, createClaimSchema } from './schemas'
+import { createClaimSchema } from './schemas'
 import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import type { ApprovalDecisionEnum } from '#/types/claims.type'
@@ -203,34 +201,13 @@ export const editClaimForm = (
 
 export const approvalForm = (id: string, decision: ApprovalDecisionEnum) => {
   console.log(id, decision)
-  const approveMutation = useApproveClaimMutation(id)
-  const rejectMutation = useRejectClaimMutation(id)
-
-  let mutation = useRejectClaimMutation(id)
-
-  switch (decision) {
-    case 'Approved':
-      mutation = approveMutation
-      break
-    case 'Rejected':
-      mutation = rejectMutation
-      break
-  }
 
   return useAppForm({
     defaultValues: {
       decision: decision,
       notes: '',
     },
-    // validators: { onBlur: approvalClaimSchema },
     onSubmit: async ({ value }) => {
-      // try {
-      //   await mutation.mutateAsync(value)
-      //   toast.success('Claim has been mutate successfully.')
-      // } catch (err: unknown) {
-      //   const e = err as { message?: string }
-      //   toast.error(e.message || 'Action failed to process.')
-      // }
       console.log(value)
     },
   })

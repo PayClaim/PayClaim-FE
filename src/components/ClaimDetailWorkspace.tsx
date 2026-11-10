@@ -6,7 +6,6 @@ import {
   useRejectClaimMutation,
 } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { toDateTimeString } from '#/lib/utils'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'

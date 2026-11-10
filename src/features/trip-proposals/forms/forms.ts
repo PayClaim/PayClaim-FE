@@ -26,20 +26,20 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
       file: null as File | null,
     },
 
-validators: {
-  onSubmit: createTripProposalSchema,
-},
+    validators: {
+      onSubmit: createTripProposalSchema,
+    },
 
     onSubmit: async ({ value }) => {
-        console.log('SUBMIT TERPANGGIL')
-        console.log('FORM VALUE:', value)
+      console.log('SUBMIT TERPANGGIL')
+      console.log('FORM VALUE:', value)
 
-        const pic = value.participants.find((p) => p.isPic)
+      const pic = value.participants.find((p) => p.isPic)
 
-        if (!pic || pic.employeeId !== currentEmployeeId) {
-            toast.error('You must be the PIC of this proposal.')
-            return
-        }
+      if (!pic || pic.employeeId !== currentEmployeeId) {
+        toast.error('You must be the PIC of this proposal.')
+        return
+      }
 
       const totalAmount = value.participants.reduce(
         (total, participant) => total + participant.amount,
@@ -69,7 +69,7 @@ validators: {
         formData.append('File', value.file)
       }
 
-        try {
+      try {
         console.log('MENGIRIM FORM DATA')
 
         await mutation.mutateAsync(formData)
@@ -79,14 +79,13 @@ validators: {
         toast.success('Trip proposal submitted successfully')
 
         await navigate({
-            to: '/trip-proposals',
+          to: '/trip-proposals',
         })
-       } catch (err: unknown) {
+      } catch (err: unknown) {
         console.error('CREATE TRIP PROPOSAL ERROR:', err)
 
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan proposal perjalanan'))
-        }
+      }
     },
   })
 }
