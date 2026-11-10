@@ -41,7 +41,8 @@ function RouteComponent() {
     isFetching,
     error,
   } = useGetAllProposalsQuery()
-
+  console.log('Trip Proposal Data:', proposals)
+  console.log('Trip Proposal Error:', error)
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchFilter, setSearchFilter] = useState('')
