@@ -17,7 +17,7 @@ export function TextArea({
   const errors = useSelector(field.store, (state) => state.meta.errors)
 
   return (
-    <div className="mb-4">
+    <div className="my-4">
       <Label
         htmlFor={label}
         className="mb-2 text-sm font-semibold text-(--sea-ink)"

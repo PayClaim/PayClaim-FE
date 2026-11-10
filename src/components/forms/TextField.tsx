@@ -181,7 +181,7 @@ export function FileInput({
   const field = useFieldContext<File | null>()
   const errors = useSelector(field.store, (state) => state.meta.errors)
   return (
-    <div className="my-4">
+    <div className="my-2">
       <Label
         htmlFor={label}
         className="mb-2 text-sm font-semibold text-(--sea-ink)"
@@ -189,7 +189,7 @@ export function FileInput({
         {label}
       </Label>
       <Input
-        className="bg-input border border-border"
+        className="bg-input border border-border py-1.5"
         type="file"
         accept={accept}
         placeholder={placeholder}

@@ -28,14 +28,17 @@ export default function Header() {
     }
   }
 
-  const primaryRole = user?.roles?.[0] || 'User'
-  const initial = user?.username ? user.username[0].toUpperCase() : 'U'
+  const primaryRole = user.roles[0] || 'User'
+  const initial = user.username ? user.username[0].toUpperCase() : 'U'
 
   return (
     <header className="h-16 flex items-center justify-between px-6 bg-card/80 backdrop-blur-sm border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40">
       <div className="flex items-center gap-3">
         <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline">
-          Welcome back, <strong className="font-semibold text-heading">{user.username}</strong>
+          Welcome back,{' '}
+          <strong className="font-semibold text-heading">
+            {user.username}
+          </strong>
         </span>
         <ThemeToggle />
       </div>
@@ -81,7 +84,9 @@ function UserDropDown({
 
       <DropdownMenuContent align="end" className="w-56 p-1.5">
         <div className="px-3 py-2 border-b border-border/60 mb-1">
-          <p className="text-sm font-bold text-heading truncate">{user.username}</p>
+          <p className="text-sm font-bold text-heading truncate">
+            {user.username}
+          </p>
           <p className="text-xs text-muted-foreground capitalize">
             {user.roles?.[0] || 'User'}
           </p>
