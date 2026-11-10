@@ -12,17 +12,20 @@ import { Button } from '#/components/ui/button'
 
 export const Route = createFileRoute('/_app/admin/employees/$employeeId/edit')({
   component: RouteComponent,
-  validateSearch: (s: Record<string, unknown>) => s,
 })
 
 function RouteComponent() {
   const { employeeId } = Route.useParams()
-  const { data: employee, isLoading, isError } = useGetEmployeeQuery(employeeId)
+  const {
+    data: employee,
+    isFetching,
+    isError,
+  } = useGetEmployeeQuery(employeeId)
   const { data: positions = [] } = useGetAllPositionsQuery()
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: employees = [] } = useGetAllEmployeeQuery()
 
-  if (isLoading) {
+  if (isFetching) {
     return (
       <main className="max-w-2xl mx-auto py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -35,7 +38,11 @@ function RouteComponent() {
     return (
       <main className="max-w-2xl mx-auto space-y-4">
         <Link to="/admin/employees">
-          <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-xs font-semibold"
+          >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Kembali ke Daftar Karyawan</span>
           </Button>
@@ -106,7 +113,11 @@ function EditEmployeeFormContent({
   return (
     <main className="max-w-2xl mx-auto space-y-6">
       <Link to="/admin/employees">
-        <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 text-xs font-semibold"
+        >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Kembali ke Daftar Karyawan</span>
         </Button>
@@ -122,7 +133,10 @@ function EditEmployeeFormContent({
               Edit Data Karyawan
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Nomor Karyawan: <span className="font-mono font-bold text-heading">{employee.number}</span>
+              Nomor Karyawan:{' '}
+              <span className="font-mono font-bold text-heading">
+                {employee.number}
+              </span>
             </p>
           </div>
         </div>
@@ -131,7 +145,9 @@ function EditEmployeeFormContent({
           <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm">
-              Karyawan ini berstatus <strong>Inactive</strong>. Data karyawan yang nonaktif tidak dapat diubah. Silakan aktifkan kembali karyawan terlebih dahulu melalui daftar karyawan.
+              Karyawan ini berstatus <strong>Inactive</strong>. Data karyawan
+              yang nonaktif tidak dapat diubah. Silakan aktifkan kembali
+              karyawan terlebih dahulu melalui daftar karyawan.
             </p>
           </div>
         )}
@@ -150,10 +166,7 @@ function EditEmployeeFormContent({
             <div className="sm:col-span-2">
               <form.AppField name="fullName">
                 {(field) => (
-                  <field.TextField
-                    label="Nama Lengkap"
-                    disabled={isInactive}
-                  />
+                  <field.TextField label="Nama Lengkap" disabled={isInactive} />
                 )}
               </form.AppField>
             </div>
@@ -202,7 +215,7 @@ function EditEmployeeFormContent({
               {(positionId) => {
                 const selectedPos = positions.find((p) => p.id === positionId)
                 const isManager =
-                  positionId?.toUpperCase() === 'MGR' ||
+                  positionId.toUpperCase() === 'MGR' ||
                   Boolean(selectedPos?.title.toLowerCase().includes('manager'))
 
                 if (isManager) return null

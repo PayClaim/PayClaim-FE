@@ -10,7 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { Pencil, Plus, Search, SearchX, Trash2, UserCheck, Users } from 'lucide-react'
+import {
+  Pencil,
+  Plus,
+  Search,
+  SearchX,
+  Trash2,
+  UserCheck,
+  Users,
+} from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -88,14 +96,18 @@ function RouteComponent() {
   })
 
   const hasActiveFilters = Boolean(
-    searchFilter || departmentFilter || positionFilter || statusFilter !== 'active',
+    searchFilter ||
+    departmentFilter ||
+    positionFilter ||
+    statusFilter !== 'active',
   )
 
   if (isError) {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data karyawan. Silakan coba kembali nanti.
+          Terjadi kesalahan saat memuat data karyawan. Silakan coba kembali
+          nanti.
         </div>
       </main>
     )
@@ -128,7 +140,8 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Kelola data master karyawan, jabatan, departemen, dan direct manager penilai klaim.
+              Kelola data master karyawan, jabatan, departemen, dan direct
+              manager penilai klaim.
             </p>
           </div>
         </div>
@@ -211,9 +224,14 @@ function RouteComponent() {
           <EmployeeTable employees={displayData} />
         ) : (
           <div className="py-16 text-center space-y-3">
-            <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
+            <SearchX
+              className="w-10 h-10 text-muted-foreground/50 mx-auto"
+              strokeWidth={1.5}
+            />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">Tidak ada data karyawan ditemukan</p>
+              <p className="text-sm font-semibold text-heading">
+                Tidak ada data karyawan ditemukan
+              </p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
                   ? 'Tidak ada data karyawan yang cocok dengan kriteria filter saat ini.'
@@ -244,7 +262,8 @@ function RouteComponent() {
 
 function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
   const navigate = useNavigate()
-  const thClass = 'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
+  const thClass =
+    'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
 
   return (
     <div className="overflow-x-auto">
@@ -257,7 +276,9 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
             <TableHead className={thClass}>DEPARTMENT</TableHead>
             <TableHead className={thClass}>DIRECT MANAGER</TableHead>
             <TableHead className={thClass}>STATUS</TableHead>
-            <TableHead className={`${thClass} text-right w-28`}>ACTION</TableHead>
+            <TableHead className={`${thClass} text-right w-28`}>
+              ACTION
+            </TableHead>
           </TableRow>
         </TableHeader>
 
@@ -277,8 +298,12 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
                     {getInitials(e.fullName)}
                   </div>
                   <div>
-                    <p className="font-semibold text-heading leading-tight">{e.fullName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{e.number}</p>
+                    <p className="font-semibold text-heading leading-tight">
+                      {e.fullName}
+                    </p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {e.number}
+                    </p>
                   </div>
                 </div>
               </TableCell>
@@ -336,18 +361,9 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
                       className="h-8 w-8 p-0 rounded-lg text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:border-blue-300 dark:hover:text-blue-400 cursor-pointer"
                       title="Edit Employee"
                       onClick={() => {
-                        const {
-                          id,
-                          number,
-                          positionTitle,
-                          departmentName,
-                          managerName,
-                          ...rest
-                        } = e
                         return navigate({
                           to: '/admin/employees/$employeeId/edit',
                           params: { employeeId: e.id },
-                          search: { ...rest },
                         })
                       }}
                     >
@@ -409,16 +425,21 @@ function DeleteDialog({
           <DialogTitle>Nonaktifkan Karyawan</DialogTitle>
           <DialogDescription className="text-sm pt-1 space-y-2">
             <p>
-              Apakah Anda yakin ingin menonaktifkan karyawan <strong>"{name}"</strong>?
+              Apakah Anda yakin ingin menonaktifkan karyawan{' '}
+              <strong>"{name}"</strong>?
             </p>
             <p className="text-xs text-muted-foreground">
-              Akun login akan dinonaktifkan sehingga karyawan tidak dapat login kembali. Seluruh data riwayat klaim dan audit tetap disimpan aman demi kepatuhan pembukuan.
+              Akun login akan dinonaktifkan sehingga karyawan tidak dapat login
+              kembali. Seluruh data riwayat klaim dan audit tetap disimpan aman
+              demi kepatuhan pembukuan.
             </p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Batal</Button>
+            <Button variant="outline" size="sm">
+              Batal
+            </Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -455,7 +476,9 @@ function ActivateDialog({
       toast.success(`Karyawan ${name} berhasil diaktifkan kembali.`)
       setOpen(false)
     } catch (err: unknown) {
-      toast.error(getFriendlyErrorMessage(err, 'Gagal mengaktifkan kembali karyawan'))
+      toast.error(
+        getFriendlyErrorMessage(err, 'Gagal mengaktifkan kembali karyawan'),
+      )
     }
   }
 
@@ -467,16 +490,22 @@ function ActivateDialog({
           <DialogTitle>Aktifkan Kembali Karyawan</DialogTitle>
           <DialogDescription className="text-sm pt-1 space-y-2">
             <p>
-              Apakah Anda yakin ingin mengaktifkan kembali karyawan <strong>"{name}"</strong>?
+              Apakah Anda yakin ingin mengaktifkan kembali karyawan{' '}
+              <strong>"{name}"</strong>?
             </p>
             <p className="text-xs text-muted-foreground">
-              Akun login akan dipulihkan dan kuota benefit tahun berjalan akan disinkronkan kembali sesuai jabatannya.
+              Akun login akan dipulihkan dan kuota benefit tahun berjalan akan
+              disinkronkan kembali sesuai jabatannya.
             </p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm" disabled={activateMutation.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={activateMutation.isPending}
+            >
               Batal
             </Button>
           </DialogClose>
@@ -487,7 +516,9 @@ function ActivateDialog({
             onClick={handleActivate}
             disabled={activateMutation.isPending}
           >
-            {activateMutation.isPending ? 'Mengaktifkan...' : 'Aktifkan Karyawan'}
+            {activateMutation.isPending
+              ? 'Mengaktifkan...'
+              : 'Aktifkan Karyawan'}
           </Button>
         </DialogFooter>
       </DialogContent>

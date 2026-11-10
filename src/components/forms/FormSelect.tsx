@@ -16,12 +16,14 @@ export function FormSelect({
   placeholder,
   nullable = false,
   nullLabel = 'NONE',
+  disabled = false,
 }: {
   label: string
   values: Array<{ label: string; value: string }>
   placeholder?: string
   nullable?: boolean
   nullLabel?: string
+  disabled?: boolean
 }) {
   const field = useFieldContext<string | null>()
   const { hasError, errors } = useFieldStatus(field)
@@ -45,6 +47,7 @@ export function FormSelect({
         {label}
       </Label>
       <ShadcnSelect.Select
+        disabled={disabled}
         name={field.name}
         value={radixValue}
         onValueChange={(raw) => {
