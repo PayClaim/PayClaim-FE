@@ -9,6 +9,7 @@ import { createEmployeeSchema, updateEmployeeSchema } from './schemas'
 import type { UpdateEmployeeRequest } from '#/types/employee.type'
 import { toDateOnly } from '#/lib/utils'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 
 export const createEmployeeForm = () => {
   const mutation = useCreateEmployeeMutation()
@@ -42,7 +43,7 @@ export const createEmployeeForm = () => {
         })
       } catch (e: unknown) {
         const error = e as { message?: string }
-        toast.error(error.message || 'Failed to create employee')
+        toast.error(getFriendlyErrorMessage(e, 'Gagal menambahkan karyawan'))
       }
     },
   })
@@ -75,7 +76,7 @@ export const editEmployeeForm = (
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to update employee')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal memperbarui data karyawan'))
       }
     },
   })
@@ -95,7 +96,7 @@ export const deleteEmployeeForm = (id: string) => {
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to delete employee')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal menonaktifkan karyawan'))
       }
     },
   })

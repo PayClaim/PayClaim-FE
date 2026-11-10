@@ -6,12 +6,11 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { Pencil, Trash, UserCheck } from 'lucide-react'
+import { Pencil, Plus, Search, SearchX, Trash2, UserCheck, Users } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -23,7 +22,6 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
-import { SearchFilter } from '#/components/SearchFilter'
 import {
   useGetAllEmployeeQuery,
   useActivateEmployeeMutation,
@@ -33,28 +31,39 @@ import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import type { EmployeeResponse } from '#/types/employee.type'
 import { deleteEmployeeForm } from '#/features/employees/forms/forms'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 
 export const Route = createFileRoute('/_app/admin/employees/')({
   component: RouteComponent,
 })
 
+function getInitials(name?: string | null): string {
+  if (!name) return 'U'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 function RouteComponent() {
-  const { data: employees, isError, isFetching } = useGetAllEmployeeQuery()
-  const { data: departments } = useGetAllDepartmentsQuery()
-  const { data: positions } = useGetAllPositionsQuery()
+  const { data: employees = [], isError, isFetching } = useGetAllEmployeeQuery()
+  const { data: departments = [] } = useGetAllDepartmentsQuery()
+  const { data: positions = [] } = useGetAllPositionsQuery()
 
   const [departmentFilter, setDepartmentFilter] = useState<string | null>(null)
   const [positionFilter, setPositionFilter] = useState<string | null>(null)
-  // Default filter: 'active' agar langsung menampilkan karyawan aktif
   const [statusFilter, setStatusFilter] = useState<string | null>('active')
   const [searchFilter, setSearchFilter] = useState<string>('')
 
-  const departmentOptions = departments.map((d) => {
-    return { label: d.name, optionValue: d.id }
-  })
-  const positionOptions = positions.map((p) => {
-    return { label: p.title, optionValue: p.id }
-  })
+  const departmentOptions = departments.map((d) => ({
+    label: d.name,
+    optionValue: d.id,
+  }))
+
+  const positionOptions = positions.map((p) => ({
+    label: p.title,
+    optionValue: p.id,
+  }))
+
   const statusOptions = [
     { label: 'Active', optionValue: 'active' },
     { label: 'Inactive', optionValue: 'inactive' },
@@ -78,53 +87,155 @@ function RouteComponent() {
     return matchSearch && matchDepartment && matchPosition && matchStatus
   })
 
-  if (isError) return <div>Terjadi Error</div>
-  if (isFetching) return <div>Loading...</div>
+  const hasActiveFilters = Boolean(
+    searchFilter || departmentFilter || positionFilter || statusFilter !== 'active',
+  )
+
+  if (isError) {
+    return (
+      <main className="p-6">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
+          Terjadi kesalahan saat memuat data karyawan. Silakan coba kembali nanti.
+        </div>
+      </main>
+    )
+  }
+
+  if (isFetching && employees.length === 0) {
+    return (
+      <main className="py-20 text-center space-y-3">
+        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">Memuat data karyawan...</p>
+      </main>
+    )
+  }
 
   return (
-    <main>
-      <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Employee List</h1>
+    <main className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/60 flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" strokeWidth={1.75} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-extrabold text-heading tracking-tight">
+                Employees
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {employees.length}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Kelola data master karyawan, jabatan, departemen, dan direct manager penilai klaim.
+            </p>
+          </div>
+        </div>
+
         <Link to="/admin/employees/create">
-          <Button className="bg-primary">New Employee</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+            <Plus className="w-4 h-4" strokeWidth={2} />
+            <span>New Employee</span>
+          </Button>
         </Link>
       </div>
 
-      <div className="bg-card p-8 rounded-2xl mb-8 border border-border">
-        <div className="flex flex-wrap justify-start items-center gap-6 border-b border-border pb-4">
-          <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
-          <FilterSelect
-            val={positionFilter}
-            setValue={setPositionFilter}
-            options={positionOptions}
-            filterLabel="Position"
-            nullable
-            nullLabel="Semua Posisi"
-          />
+      {/* Table Card Container */}
+      <div className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden">
+        {/* Filters Toolbar */}
+        <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                placeholder="Search name, email, or EMP#..."
+                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+              />
+            </div>
 
-          <FilterSelect
-            val={departmentFilter}
-            setValue={setDepartmentFilter}
-            options={departmentOptions}
-            filterLabel="Department"
-            nullable
-            nullLabel="Semua Departemen"
-          />
+            <FilterSelect
+              val={positionFilter}
+              setValue={setPositionFilter}
+              options={positionOptions}
+              filterLabel="Position"
+              nullable
+              nullLabel="All Positions"
+            />
 
-          <FilterSelect
-            val={statusFilter}
-            setValue={setStatusFilter}
-            options={statusOptions}
-            filterLabel="Status"
-            nullable
-            nullLabel="Semua Status"
-          />
+            <FilterSelect
+              val={departmentFilter}
+              setValue={setDepartmentFilter}
+              options={departmentOptions}
+              filterLabel="Department"
+              nullable
+              nullLabel="All Departments"
+            />
+
+            <FilterSelect
+              val={statusFilter}
+              setValue={setStatusFilter}
+              options={statusOptions}
+              filterLabel="Status"
+              nullable
+              nullLabel="All Statuses"
+            />
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchFilter('')
+                  setDepartmentFilter(null)
+                  setPositionFilter(null)
+                  setStatusFilter(null)
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground h-9"
+              >
+                Reset Filter
+              </Button>
+            )}
+          </div>
+
+          <div className="text-xs text-muted-foreground font-medium">
+            Showing {displayData.length} of {employees.length} employees
+          </div>
         </div>
 
-        {employees.length !== 0 ? (
+        {/* Table Content */}
+        {displayData.length > 0 ? (
           <EmployeeTable employees={displayData} />
         ) : (
-          <p className="mt-4">You have 0 Employees</p>
+          <div className="py-16 text-center space-y-3">
+            <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-heading">Tidak ada data karyawan ditemukan</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {hasActiveFilters
+                  ? 'Tidak ada data karyawan yang cocok dengan kriteria filter saat ini.'
+                  : 'Belum ada data karyawan yang terdaftar di sistem.'}
+              </p>
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchFilter('')
+                  setDepartmentFilter(null)
+                  setPositionFilter(null)
+                  setStatusFilter(null)
+                }}
+                className="text-xs font-semibold h-8"
+              >
+                Reset Filter
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </main>
@@ -133,111 +244,150 @@ function RouteComponent() {
 
 function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
   const navigate = useNavigate()
-  const thClass = 'px-6 py-3 font-bold'
+  const thClass = 'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
+
   return (
-    <Table className="w-full text-sm text-left rtl:text-right text-body max-w-full">
-      <TableHeader className="text-sm border-b border-border">
-        <TableRow>
-          <TableHead className={thClass}>NUMBER</TableHead>
-          <TableHead className={thClass}>NAME</TableHead>
-          <TableHead className={thClass}>EMAIL</TableHead>
-          <TableHead className={thClass}>POSITION</TableHead>
-          <TableHead className={thClass}>DEPARTMENT</TableHead>
-          <TableHead className={thClass}>MANAGER</TableHead>
-          <TableHead className={thClass}>STATUS</TableHead>
-          <TableHead className={thClass}>ACTION</TableHead>
-        </TableRow>
-      </TableHeader>
-
-      <TableBody>
-        {employees.map((e) => (
-          <TableRow
-            key={e.id}
-            className="cursor-pointer bg-neutral-primary-soft border-b border-default hover:bg-(--hover-shadow)"
-          >
-            <TableCell className="px-6 py-4">{e.number}</TableCell>
-            <TableCell className="px-6 py-4 font-medium text-heading whitespace-nowrap">
-              {e.fullName}
-            </TableCell>
-            <TableCell className="px-6 py-4">{e.email}</TableCell>
-            <TableCell className="px-6 py-4">{e.positionTitle}</TableCell>
-            <TableCell className="px-6 py-4">{e.departmentName}</TableCell>
-            <TableCell className="px-6 py-4">{e.managerName ?? '-'}</TableCell>
-            <TableCell className="px-6 py-4">
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                  e.isActive
-                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                }`}
-              >
-                {e.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </TableCell>
-            <TableCell className="px-6 py-4 flex gap-2">
-              {/* Tombol Edit: hanya bisa jika karyawan aktif */}
-              {e.isActive ? (
-                <Button
-                  className="bg-amber-400 text-slate-900 hover:bg-amber-500"
-                  title="Edit Karyawan"
-                  onClick={() => {
-                    const {
-                      id,
-                      number,
-                      positionTitle,
-                      departmentName,
-                      managerName,
-                      ...rest
-                    } = e
-                    return navigate({
-                      to: '/admin/employees/$employeeId/edit',
-                      params: { employeeId: e.id },
-                      search: { ...rest },
-                    })
-                  }}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  className="bg-amber-400/40 text-slate-900/40 cursor-not-allowed"
-                  title="Karyawan tidak aktif tidak dapat diedit"
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              )}
-
-              {/* Action Deactivate / Activate */}
-              {e.isActive ? (
-                <DeleteDialog id={e.id} name={e.fullName}>
-                  <Button variant={'destructive'} title="Nonaktifkan Karyawan">
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </DeleteDialog>
-              ) : (
-                <ActivateDialog id={e.id} name={e.fullName}>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    title="Aktifkan Kembali Karyawan"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                  </Button>
-                </ActivateDialog>
-              )}
-            </TableCell>
+    <div className="overflow-x-auto">
+      <Table className="w-full text-sm text-left">
+        <TableHeader className="bg-muted/30 border-b border-border/70">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className={thClass}>EMPLOYEE</TableHead>
+            <TableHead className={thClass}>EMAIL</TableHead>
+            <TableHead className={thClass}>POSITION</TableHead>
+            <TableHead className={thClass}>DEPARTMENT</TableHead>
+            <TableHead className={thClass}>DIRECT MANAGER</TableHead>
+            <TableHead className={thClass}>STATUS</TableHead>
+            <TableHead className={`${thClass} text-right w-28`}>ACTION</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
+        </TableHeader>
 
-      {employees.length <= 0 && (
-        <TableFooter>
-          <TableCell colSpan={8}>
-            <p className="text-center py-4 text-muted-foreground">Employee not found</p>
-          </TableCell>
-        </TableFooter>
-      )}
-    </Table>
+        <TableBody>
+          {employees.map((e) => (
+            <TableRow
+              key={e.id}
+              className="hover:bg-muted/30 transition-colors border-b border-border/60"
+            >
+              {/* Employee Name & Number with Avatar */}
+              <TableCell className="px-5 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full bg-blue-600/10 text-blue-700 dark:bg-blue-950 dark:text-blue-300 text-xs font-bold flex items-center justify-center shrink-0 border border-blue-500/20"
+                    aria-hidden="true"
+                  >
+                    {getInitials(e.fullName)}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-heading leading-tight">{e.fullName}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{e.number}</p>
+                  </div>
+                </div>
+              </TableCell>
+
+              <TableCell className="px-5 py-4 text-xs text-muted-foreground whitespace-nowrap">
+                {e.email}
+              </TableCell>
+
+              <TableCell className="px-5 py-4 whitespace-nowrap">
+                <span className="font-medium text-heading text-xs">
+                  {e.positionTitle || '-'}
+                </span>
+              </TableCell>
+
+              <TableCell className="px-5 py-4 whitespace-nowrap">
+                <span className="text-xs text-muted-foreground">
+                  {e.departmentName || '-'}
+                </span>
+              </TableCell>
+
+              <TableCell className="px-5 py-4 whitespace-nowrap">
+                {e.managerName ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-heading font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {e.managerName}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/60">-</span>
+                )}
+              </TableCell>
+
+              <TableCell className="px-5 py-4 whitespace-nowrap">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    e.isActive
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                      : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                      e.isActive ? 'bg-emerald-600' : 'bg-rose-600'
+                    }`}
+                  />
+                  {e.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </TableCell>
+
+              <TableCell className="px-5 py-4 text-right">
+                <div className="flex items-center justify-end gap-1.5">
+                  {e.isActive ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-lg text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:border-blue-300 dark:hover:text-blue-400 cursor-pointer"
+                      title="Edit Employee"
+                      onClick={() => {
+                        const {
+                          id,
+                          number,
+                          positionTitle,
+                          departmentName,
+                          managerName,
+                          ...rest
+                        } = e
+                        return navigate({
+                          to: '/admin/employees/$employeeId/edit',
+                          params: { employeeId: e.id },
+                          search: { ...rest },
+                        })
+                      }}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                  ) : null}
+
+                  {e.isActive ? (
+                    <DeleteDialog id={e.id} name={e.fullName}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg text-slate-700 dark:text-slate-200 hover:text-rose-600 hover:border-rose-300 dark:hover:text-rose-400 cursor-pointer"
+                        title="Deactivate Employee"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="sr-only">Deactivate</span>
+                      </Button>
+                    </DeleteDialog>
+                  ) : (
+                    <ActivateDialog id={e.id} name={e.fullName}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 cursor-pointer"
+                        title="Activate Employee"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span className="sr-only">Activate</span>
+                      </Button>
+                    </ActivateDialog>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
 
@@ -254,20 +404,21 @@ function DeleteDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Nonaktifkan Karyawan</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground pt-2">
-            Apakah Anda yakin ingin menonaktifkan karyawan{' '}
-            <strong className="text-foreground">{name}</strong>?
-            <br />
-            <br />
-            Akun login akan dihapus sehingga karyawan tidak dapat login kembali ke sistem, namun data profil dan seluruh riwayat transaksi (klaim reimbursement, proposal perjalanan, dan riwayat persetujuan) tetap disimpan demi integritas audit.
+          <DialogDescription className="text-sm pt-1 space-y-2">
+            <p>
+              Apakah Anda yakin ingin menonaktifkan karyawan <strong>"{name}"</strong>?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Akun login akan dinonaktifkan sehingga karyawan tidak dapat login kembali. Seluruh data riwayat klaim dan audit tetap disimpan aman demi kepatuhan pembukuan.
+            </p>
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="mt-4 flex gap-2 justify-end">
+        <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline">Batal</Button>
+            <Button variant="outline" size="sm">Batal</Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -276,11 +427,9 @@ function DeleteDialog({
               form.handleSubmit()
             }}
           >
-            <form.AppForm>
-              <Button type="submit" variant={'destructive'}>
-                Nonaktifkan
-              </Button>
-            </form.AppForm>
+            <Button variant="destructive" size="sm" type="submit">
+              Nonaktifkan
+            </Button>
           </form>
         </DialogFooter>
       </DialogContent>
@@ -303,41 +452,42 @@ function ActivateDialog({
   const handleActivate = async () => {
     try {
       await activateMutation.mutateAsync(id)
-      toast.success(`Karyawan ${name} berhasil diaktifkan kembali`)
+      toast.success(`Karyawan ${name} berhasil diaktifkan kembali.`)
       setOpen(false)
     } catch (err: unknown) {
-      const error = err as { message?: string }
-      toast.error(error.message || 'Gagal mengaktifkan karyawan')
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengaktifkan kembali karyawan'))
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Aktifkan Kembali Karyawan</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground pt-2">
-            Apakah Anda yakin ingin mengaktifkan kembali karyawan{' '}
-            <strong className="text-foreground">{name}</strong>?
-            <br />
-            <br />
-            Akun login baru akan otomatis dibuatkan dan jatah plafon benefit tahun berjalan akan dipulihkan sesuai posisi dan departemen karyawan.
+          <DialogDescription className="text-sm pt-1 space-y-2">
+            <p>
+              Apakah Anda yakin ingin mengaktifkan kembali karyawan <strong>"{name}"</strong>?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Akun login akan dipulihkan dan kuota benefit tahun berjalan akan disinkronkan kembali sesuai jabatannya.
+            </p>
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="mt-4 flex gap-2 justify-end">
+        <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" disabled={activateMutation.isPending}>
+            <Button variant="outline" size="sm" disabled={activateMutation.isPending}>
               Batal
             </Button>
           </DialogClose>
           <Button
             type="button"
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            size="sm"
             onClick={handleActivate}
             disabled={activateMutation.isPending}
           >
-            {activateMutation.isPending ? 'Mengaktifkan...' : 'Aktifkan'}
+            {activateMutation.isPending ? 'Mengaktifkan...' : 'Aktifkan Karyawan'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -9,6 +9,7 @@ import {
 } from '../queries/queries'
 import { approvalClaimSchema, createClaimSchema } from './schemas'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 import type { ApprovalDecisionEnum } from '#/types/claims.type'
 
 export const createClaimForm = () => {
@@ -58,7 +59,7 @@ export const createClaimForm = () => {
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to submit claim')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan klaim'))
       }
     },
   })
@@ -115,7 +116,7 @@ export const editClaimForm = (
         })
       } catch (err: unknown) {
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to resubmit claim')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan ulang klaim'))
       }
     },
   })

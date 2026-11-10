@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCreateTripProposalMutation } from '#/features/trip-proposals/queries/queries'
 import { createTripProposalSchema } from './schemas'
 import { toast } from 'sonner'
+import { getFriendlyErrorMessage } from '#/lib/error'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
 
 export const createTripProposalForm = (currentEmployeeId: string) => {
@@ -84,7 +85,7 @@ validators: {
         console.error('CREATE TRIP PROPOSAL ERROR:', err)
 
         const error = err as { message?: string }
-        toast.error(error.message || 'Failed to submit trip proposal')
+        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan proposal perjalanan'))
         }
     },
   })

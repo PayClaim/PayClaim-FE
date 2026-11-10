@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_app')({
         isAdmin,
       }
     } catch (err) {
-      toast.error('User session not found, please login')
+      toast.error('Sesi masuk telah berakhir, silakan login kembali')
       throw redirect({
         to: '/login',
         search: {

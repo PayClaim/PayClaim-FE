@@ -7,6 +7,7 @@ import {
 } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateTimeString } from '#/lib/utils'
+import { getFriendlyErrorMessage } from '#/lib/error'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -152,8 +153,7 @@ export function ClaimDetailWorkspace({
       setDialogOpen(false)
       setNotes('')
     } catch (err: unknown) {
-      const e = err as { message?: string }
-      toast.error(e.message || 'Action failed to process.')
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memproses aksi pada klaim ini.'))
     }
   }
 
@@ -231,13 +231,28 @@ export function ClaimDetailWorkspace({
     (h) => h.approvalLevel === 2,
   )
 
+  const isDecisionRejected = (dec?: unknown) => {
+    if (!dec) return false
+    const s = String(dec).toLowerCase()
+    return s === 'rejected' || s === '2'
+  }
+
+  const isDecisionApproved = (dec?: unknown) => {
+    if (!dec) return false
+    const s = String(dec).toLowerCase()
+    return s === 'approved' || s === '1'
+  }
+
+  const isClaimRejected = String(claim.status).toLowerCase() === 'rejected'
+
   const isLevel2Rejected =
-    level2Approval?.decision === 'Rejected' ||
-    (claim.status === 'Rejected' && level1Approval?.decision === 'Approved')
+    isDecisionRejected(level2Approval?.decision) ||
+    (isClaimRejected &&
+      (Boolean(level2Approval) || isDecisionApproved(level1Approval?.decision)))
 
   const isLevel1Rejected =
-    level1Approval?.decision === 'Rejected' ||
-    (claim.status === 'Rejected' && !level1Approval)
+    isDecisionRejected(level1Approval?.decision) ||
+    (isClaimRejected && !isLevel2Rejected)
 
   const submittedDateInfo = formatDateBox(claim.submittedAt)
   const txDateInfo = formatDateBox(claim.transactionDate)
@@ -283,9 +298,8 @@ export function ClaimDetailWorkspace({
       <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[720px]">
         {/* ================= LEFT PANE: CLAIM INFO & ATTACHMENT THUMBNAIL ================= */}
         <aside className="lg:col-span-4 xl:col-span-3 border-b lg:border-b-0 lg:border-r border-border flex flex-col justify-start bg-card">
-          <div>
-            {/* Top Summary Block */}
-            <div className="p-6 border-b border-border space-y-4">
+          {/* Top Summary Block */}
+          <div className="p-6 border-b border-border space-y-4">
               <div className="flex items-center justify-between">
                 <Link
                   to={backTo}
@@ -429,7 +443,6 @@ export function ClaimDetailWorkspace({
                 </div>
               </div>
             </div>
-          </div>
 
           {/* Bottom Block: Thumbnail Lampiran Nota Langsung */}
           <div className="p-6 space-y-3">
