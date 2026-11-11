@@ -4,9 +4,9 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 export const Route = createFileRoute('/_app/admin/')({
   component: RouteComponent,
   beforeLoad: async ({ context }) => {
-    const user = await context.queryClient.query(getCurrentUser())
+    const user = await context.queryClient.ensureQueryData(getCurrentUser())
 
-    if (user.roles.find((v) => v === 'Admin')) {
+    if (!user.roles.find((v) => v.toLowerCase() === 'admin')) {
       throw redirect({
         to: '/dashboard',
       })

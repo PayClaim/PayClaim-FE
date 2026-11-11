@@ -16,6 +16,34 @@ interface TextFieldProps {
   disabled?: boolean
 }
 
+const errorInputClasses =
+  'border-rose-500 focus-visible:border-rose-500 focus-visible:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20'
+
+export function useFieldStatus(field: any) {
+  const isTouched = useSelector(field.store, (state: any) => state.meta.isTouched)
+  const errors = useSelector(field.store, (state: any) => state.meta.errors)
+  const errorMap = useSelector(field.store, (state: any) => state.meta.errorMap)
+  const submissionAttempts = useSelector(
+    field.form?.store || field.store,
+    (state: any) => state.submissionAttempts ?? 0,
+  )
+
+  const rawErrors = errors || []
+  const uniqueErrors: string[] = []
+  for (const err of rawErrors) {
+    if (!err) continue
+    const msg = typeof err === 'string' ? err : err?.message
+    if (msg && !uniqueErrors.includes(msg)) {
+      uniqueErrors.push(msg)
+    }
+  }
+
+  const hasError =
+    uniqueErrors.length > 0 &&
+    Boolean(isTouched || submissionAttempts > 0 || errorMap?.onSubmit)
+  return { hasError, errors: uniqueErrors }
+}
+
 export function TextField({
   label,
   placeholder,
@@ -29,18 +57,26 @@ export function TextField({
   const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   const field = useFieldContext<string>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
+
   return (
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
       <div className="relative">
         <Input
-          className={cn('bg-input border border-border', isPassword && 'pe-10')}
+          className={cn(
+            'bg-input border border-border transition-all',
+            isPassword && 'pe-10',
+            hasError && errorInputClasses,
+          )}
           type={effectiveType}
           autoComplete={autoComplete}
           value={field.state.value}
@@ -67,31 +103,38 @@ export function TextField({
           </button>
         )}
       </div>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }
 
 export function NumberField({ label, placeholder }: TextFieldProps) {
   const field = useFieldContext<number>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
+
   return (
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
       <Input
         type="number"
-        className="bg-input border border-border"
+        className={cn(
+          'bg-input border border-border transition-all',
+          hasError && errorInputClasses,
+        )}
         value={field.state.value}
         placeholder={placeholder}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.valueAsNumber)}
       />
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }
@@ -110,7 +153,7 @@ export function CurrencyField({
   className,
 }: CurrencyFieldProps) {
   const field = useFieldContext<number>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
 
   const formatDots = (n: number | null | undefined): string => {
     if (n === null || n === undefined || n === 0 || isNaN(n)) return ''
@@ -149,17 +192,26 @@ export function CurrencyField({
     <div className="my-4">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
       <div className="relative">
-        <span className="absolute inset-y-0 start-0 flex items-center ps-3 text-muted-foreground font-semibold text-sm pointer-events-none select-none">
+        <span
+          className={cn(
+            'absolute inset-y-0 start-0 flex items-center ps-3 font-semibold text-sm pointer-events-none select-none transition-colors',
+            hasError ? 'text-rose-500' : 'text-muted-foreground',
+          )}
+        >
           Rp
         </span>
         <Input
           className={cn(
-            'bg-input border border-border ps-10 font-medium',
+            'bg-input border border-border ps-10 font-medium transition-all',
+            hasError && errorInputClasses,
             className,
           )}
           type="text"
@@ -171,7 +223,7 @@ export function CurrencyField({
           onChange={handleInputChange}
         />
       </div>
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }
@@ -182,17 +234,24 @@ export function FileInput({
   accept = 'image/*,.pdf,application/pdf',
 }: TextFieldProps & { accept?: string }) {
   const field = useFieldContext<File | null>()
-  const errors = useSelector(field.store, (state) => state.meta.errors)
+  const { hasError, errors } = useFieldStatus(field)
+
   return (
     <div className="my-2">
       <Label
         htmlFor={label}
-        className="mb-2 text-sm font-semibold text-(--sea-ink)"
+        className={cn(
+          'mb-2 text-sm font-semibold transition-colors',
+          hasError ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+        )}
       >
         {label}
       </Label>
       <Input
-        className="bg-input border border-border py-1.5"
+        className={cn(
+          'bg-input border border-border py-1.5 transition-all',
+          hasError && errorInputClasses,
+        )}
         type="file"
         accept={accept}
         placeholder={placeholder}
@@ -202,7 +261,7 @@ export function FileInput({
           field.handleChange(file)
         }}
       />
-      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+      {hasError && <ErrorMessages errors={errors} />}
     </div>
   )
 }

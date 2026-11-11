@@ -1,6 +1,6 @@
-
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 
 import { Badge, getTripProposalBadgeColor } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 
+import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import {
   TripProposalStatus,
@@ -34,21 +35,21 @@ export const Route = createFileRoute('/_app/trip-proposals/')({
 
 function RouteComponent() {
   const navigate = useNavigate()
+  const { data: user } = useQuery(getCurrentUser())
 
   const {
     data: proposals = [],
     isError,
     isFetching,
     error,
-  } = useGetAllProposalsQuery()
-  console.log('Trip Proposal Data:', proposals)
-  console.log('Trip Proposal Error:', error)
+  } = useGetAllProposalsQuery(user?.employeeId)
+
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('all')
   const [searchFilter, setSearchFilter] = useState('')
 
   if (isFetching && proposals.length === 0) {
-    return <p>Loading trip proposals...</p>
+    return <p className="text-muted-foreground">Loading trip proposals...</p>
   }
 
   if (isError) {
@@ -88,7 +89,10 @@ function RouteComponent() {
       {/* Page Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold">Trip Proposals</h1>
+          <h1 className="text-xl font-bold">My Trip Proposals</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Kelola dan lacak proposal perjalanan dinas Anda (sebagai PIC atau peserta).
+          </p>
         </div>
 
         <Button onClick={() => navigate({ to: '/trip-proposals/create' })}>
@@ -153,7 +157,7 @@ function RouteComponent() {
         ) : (
           <div className="py-12 text-center">
             <p className="font-medium text-foreground">
-              No trip proposals found.
+              No personal trip proposals found.
             </p>
           </div>
         )}

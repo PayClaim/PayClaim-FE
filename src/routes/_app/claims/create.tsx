@@ -1,11 +1,12 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { Button } from '#/components/ui/button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
+import { toast } from 'sonner'
 import { AlertCircle } from 'lucide-react'
 import { Label } from '#/components/ui/label'
 import {
@@ -17,7 +18,17 @@ import {
   DialogHeader,
 } from '#/components/ui/dialog'
 
+interface ClaimCreateSearchParams {
+  employeeBenefitId?: string
+}
+
 export const Route = createFileRoute('/_app/claims/create')({
+  validateSearch: (search: Record<string, unknown>): ClaimCreateSearchParams => ({
+    employeeBenefitId:
+      typeof search.employeeBenefitId === 'string'
+        ? search.employeeBenefitId
+        : undefined,
+  }),
   beforeLoad: ({ context }) => {
     if (context.isAdmin) {
       throw redirect({
@@ -29,6 +40,7 @@ export const Route = createFileRoute('/_app/claims/create')({
 })
 
 function RouteComponent() {
+  const { employeeBenefitId: searchBenefitId } = Route.useSearch()
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
   const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -55,7 +67,15 @@ function RouteComponent() {
     value: b.employeeBenefitId,
   }))
 
-  const form = createClaimForm()
+  const form = createClaimForm(searchBenefitId)
+
+  useEffect(() => {
+    if (searchBenefitId) {
+      setClaimType('Benefit')
+      form.setFieldValue('claimType', 'Benefit')
+      form.setFieldValue('employeeBenefitId', searchBenefitId)
+    }
+  }, [searchBenefitId])
 
   const handleClaimTypeClick = (value: string) => {
     setClaimType(value)
@@ -65,8 +85,53 @@ function RouteComponent() {
   }
 
   const handleReview = async () => {
+    const values = form.state.values
+
+    if (values.amount <= 0) {
+      const msg = 'Amount must be greater than 0'
+      form.setFieldMeta('amount', (prev) => ({
+        ...prev,
+        isTouched: true,
+        errorMap: { ...prev?.errorMap, onSubmit: msg },
+      }))
+      toast.error(msg)
+      return
+    }
+
+    if (values.claimType === 'Benefit' && values.employeeBenefitId) {
+      const selected = empBenefits.find(
+        (b) => b.employeeBenefitId === values.employeeBenefitId,
+      )
+      if (selected && values.amount > selected.balance) {
+        const msg = `Insufficient benefit quota balance. Current balance is ${idNumberFormatter.format(selected.balance)}, but claim amount requested is ${idNumberFormatter.format(values.amount)}.`
+        form.setFieldMeta('amount', (prev) => ({
+          ...prev,
+          isTouched: true,
+          errorMap: { ...prev?.errorMap, onSubmit: msg },
+        }))
+        toast.error(msg)
+        return
+      }
+    }
+
+    if (
+      values.claimType === 'BusinessTripReimbursement' &&
+      values.tripProposalId
+    ) {
+      const selected = approvedTrips.find((t) => t.id === values.tripProposalId)
+      if (selected && values.amount > selected.totalAmount) {
+        const msg = `Claim amount (${idNumberFormatter.format(values.amount)}) exceeds remaining trip budget (${idNumberFormatter.format(selected.totalAmount)}).`
+        form.setFieldMeta('amount', (prev) => ({
+          ...prev,
+          isTouched: true,
+          errorMap: { ...prev?.errorMap, onSubmit: msg },
+        }))
+        toast.error(msg)
+        return
+      }
+    }
+
     await form.validateAllFields('submit')
-    console.log(form.state.isValid)
     if (form.state.isValid) setDialogOpen(true)
   }
   const handleConfirm = async () => {
@@ -91,7 +156,44 @@ function RouteComponent() {
               {(field) => <field.DatePicker label="Transaction Date" />}
             </form.AppField>
 
-            <form.AppField name="amount">
+            <form.AppField
+              name="amount"
+              validators={{
+                onChange: ({ value }) => {
+                  if (
+                    currentClaimType === 'Benefit' &&
+                    form.state.values.employeeBenefitId
+                  ) {
+                    const selected = empBenefits.find(
+                      (b) =>
+                        b.employeeBenefitId ===
+                        form.state.values.employeeBenefitId,
+                    )
+                    if (selected && value > selected.balance) {
+                      return `Insufficient benefit quota balance. Current balance is ${idNumberFormatter.format(selected.balance)}.`
+                    }
+                  }
+                  if (
+                    currentClaimType === 'BusinessTripReimbursement' &&
+                    form.state.values.tripProposalId
+                  ) {
+                    const selected = approvedTrips.find(
+                      (t) => t.id === form.state.values.tripProposalId,
+                    )
+                    if (selected && value > selected.totalAmount) {
+                      return `Amount exceeds approved trip budget (${idNumberFormatter.format(selected.totalAmount)}).`
+                    }
+                  }
+                  return undefined
+                },
+                onSubmit: ({ value }) => {
+                  if (value <= 0) {
+                    return 'Amount must be greater than 0'
+                  }
+                  return undefined
+                },
+              }}
+            >
               {(field) => (
                 <field.CurrencyField label="Amount" placeholder="0" />
               )}

@@ -3,15 +3,20 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
 
 import {
   ArrowRight,
-  CalendarDays,
+  Calendar,
+  CheckCircle2,
+  Clock,
   Plane,
+  Search,
   Users,
+  X,
 } from 'lucide-react'
 
 export const Route = createFileRoute(
@@ -34,6 +39,7 @@ export const Route = createFileRoute(
 })
 
 function formatDate(date: string) {
+  if (!date) return '-'
   return new Date(date).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
@@ -50,51 +56,85 @@ function formatCurrency(amount: number) {
 }
 
 function normalizeStatus(status: string) {
-  return status.replace(/[\s_-]/g, '').toLowerCase()
+  return (status || '').replace(/[\s_-]/g, '').toLowerCase()
 }
 
-function getStatusStyle(status: string) {
-  switch (normalizeStatus(status)) {
+function getInitials(name?: string | null): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function getProposalStatusConfig(status: string) {
+  const norm = normalizeStatus(status)
+  switch (norm) {
     case 'submitted':
+      return {
+        label: 'Submitted',
+        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
+        dotColor: 'bg-amber-500',
+      }
     case 'underreview':
+      return {
+        label: 'Under Review',
+        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
+        dotColor: 'bg-amber-500',
+      }
     case 'financemanagerreview':
-      return 'bg-amber-100 text-amber-700'
-
+      return {
+        label: 'Finance Review',
+        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
+        dotColor: 'bg-amber-500',
+      }
     case 'approved':
+      return {
+        label: 'Approved',
+        className: 'bg-blue-50 text-blue-700 border-blue-200/60',
+        dotColor: 'bg-blue-600',
+      }
     case 'completed':
-      return 'bg-green-100 text-green-700'
-
+      return {
+        label: 'Completed',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+        dotColor: 'bg-emerald-600',
+      }
     case 'needsrevision':
-      return 'bg-orange-100 text-orange-700'
-
+      return {
+        label: 'Needs Revision',
+        className: 'bg-orange-50 text-orange-700 border-orange-200/60',
+        dotColor: 'bg-orange-500',
+      }
     case 'rejected':
+      return {
+        label: 'Rejected',
+        className: 'bg-rose-50 text-rose-700 border-rose-200/60',
+        dotColor: 'bg-rose-500',
+      }
     case 'cancelled':
-      return 'bg-red-100 text-red-700'
-
+      return {
+        label: 'Cancelled',
+        className: 'bg-rose-50 text-rose-700 border-rose-200/60',
+        dotColor: 'bg-rose-500',
+      }
     default:
-      return 'bg-gray-100 text-gray-700'
+      return {
+        label: status,
+        className: 'bg-slate-100 text-slate-700 border-slate-200',
+        dotColor: 'bg-slate-500',
+      }
   }
 }
 
-function getStatusLabel(status: string) {
-  switch (normalizeStatus(status)) {
-    case 'underreview':
-      return 'Under Review'
-    case 'financemanagerreview':
-      return 'Finance Manager Review'
-    case 'needsrevision':
-      return 'Needs Revision'
-    default:
-      return status
-  }
-}
+type TripStatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'REVISION_OR_REJECTED'
 
 function ProposalRow({ proposal }: { proposal: TripProposal }) {
   const navigate = useNavigate()
+  const statusConfig = getProposalStatusConfig(proposal.status)
 
   return (
     <tr
-      className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
+      className="cursor-pointer transition-colors hover:bg-muted/50 group"
       onClick={() =>
         navigate({
           to: '/approvals/trip-proposals/$id',
@@ -102,48 +142,71 @@ function ProposalRow({ proposal }: { proposal: TripProposal }) {
         })
       }
     >
+      {/* Destination & Proposal Code */}
       <td className="px-5 py-4">
-        <div className="font-semibold text-foreground">
+        <div className="font-semibold text-foreground text-sm">
           {proposal.destination}
         </div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          Proposal #{proposal.id.slice(0, 8).toUpperCase()}
+        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+          ID: TRIP-{proposal.id.slice(0, 8).toUpperCase()}
         </div>
       </td>
 
-      <td className="px-5 py-4 text-foreground">
-        {proposal.picName || '-'}
-      </td>
-
-      <td className="whitespace-nowrap px-5 py-4 text-foreground">
-        <div>{formatDate(proposal.startDate)}</div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          to {formatDate(proposal.endDate)}
+      {/* PIC with Initials Avatar */}
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-semibold text-xs flex items-center justify-center shrink-0">
+            {getInitials(proposal.picName)}
+          </div>
+          <div>
+            <p className="font-semibold text-foreground text-sm leading-tight">
+              {proposal.picName || '-'}
+            </p>
+          </div>
         </div>
       </td>
 
-      <td className="whitespace-nowrap px-5 py-4 font-semibold text-foreground">
+      {/* Trip Period Dates */}
+      <td className="whitespace-nowrap px-5 py-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-foreground font-medium">
+          <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span>{formatDate(proposal.startDate)} – {formatDate(proposal.endDate)}</span>
+        </div>
+      </td>
+
+      {/* Total Amount */}
+      <td className="whitespace-nowrap px-5 py-4 font-mono font-bold text-foreground">
         {formatCurrency(proposal.totalAmount)}
       </td>
 
-      <td className="px-5 py-4 text-foreground">
-        {proposal.participantCount} people
+      {/* Participants with Users Icon and Grammar Fix */}
+      <td className="px-5 py-4 text-foreground text-xs">
+        <div className="flex items-center gap-1.5 font-medium">
+          <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span>
+            {proposal.participantCount}{' '}
+            {proposal.participantCount === 1 ? 'person' : 'people'}
+          </span>
+        </div>
       </td>
 
+      {/* Status Badge with Dot */}
       <td className="px-5 py-4">
         <span
-          className={`inline-flex rounded-md px-3 py-1 text-xs font-semibold ${getStatusStyle(
-            proposal.status,
-          )}`}
+          className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${statusConfig.className}`}
         >
-          {getStatusLabel(proposal.status)}
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor} mr-1.5`}
+          />
+          {statusConfig.label}
         </span>
       </td>
 
+      {/* Arrow Navigation */}
       <td className="px-5 py-4 text-right">
         <ArrowRight
           size={18}
-          className="ml-auto text-muted-foreground"
+          className="ml-auto text-muted-foreground/60 group-hover:text-foreground transition-colors"
         />
       </td>
     </tr>
@@ -158,18 +221,77 @@ function RouteComponent() {
     error,
   } = useGetAllProposalsQuery()
 
-  const pendingCount = proposals.filter((proposal) =>
-    [
-      'submitted',
-      'underreview',
-      'financemanagerreview',
-    ].includes(normalizeStatus(proposal.status)),
-  ).length
+  // Filter & Search states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<TripStatusTab>('ALL')
 
-  const totalParticipants = proposals.reduce(
-    (total, proposal) => total + proposal.participantCount,
-    0,
-  )
+  // KPI Calculations
+  const metrics = useMemo(() => {
+    const totalCount = proposals.length
+    const totalBudget = proposals.reduce(
+      (acc, p) => acc + (p.totalAmount || 0),
+      0,
+    )
+
+    const waitingProposals = proposals.filter((p) =>
+      ['submitted', 'underreview', 'financemanagerreview'].includes(
+        normalizeStatus(p.status),
+      ),
+    )
+    const waitingCount = waitingProposals.length
+    const waitingBudget = waitingProposals.reduce(
+      (acc, p) => acc + (p.totalAmount || 0),
+      0,
+    )
+
+    const approvedProposals = proposals.filter((p) =>
+      ['approved', 'completed'].includes(normalizeStatus(p.status)),
+    )
+    const approvedCount = approvedProposals.length
+    const approvedBudget = approvedProposals.reduce(
+      (acc, p) => acc + (p.totalAmount || 0),
+      0,
+    )
+
+    return {
+      totalCount,
+      totalBudget,
+      waitingCount,
+      waitingBudget,
+      approvedCount,
+      approvedBudget,
+    }
+  }, [proposals])
+
+  // Filtered proposals based on search & active tab
+  const filteredProposals = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+
+    return proposals.filter((proposal) => {
+      const norm = normalizeStatus(proposal.status)
+
+      // Tab filter
+      if (activeTab === 'WAITING') {
+        if (!['submitted', 'underreview', 'financemanagerreview'].includes(norm))
+          return false
+      } else if (activeTab === 'APPROVED') {
+        if (!['approved', 'completed'].includes(norm)) return false
+      } else if (activeTab === 'REVISION_OR_REJECTED') {
+        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm))
+          return false
+      }
+
+      // Search query
+      if (q) {
+        const destMatch = (proposal.destination || '').toLowerCase().includes(q)
+        const picMatch = (proposal.picName || '').toLowerCase().includes(q)
+        const idMatch = proposal.id.toLowerCase().includes(q)
+        return destMatch || picMatch || idMatch
+      }
+
+      return true
+    })
+  }, [proposals, searchQuery, activeTab])
 
   return (
     <main className="min-w-0 space-y-6">
@@ -189,50 +311,150 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Summary */}
+      {/* 3 KPI Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Plane size={18} />
-            <span className="text-sm">Total Proposals</span>
+        {/* KPI 1: Total Proposals */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Total Proposals
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 flex items-center justify-center text-slate-600 dark:text-slate-300">
+              <Plane className="w-5 h-5" />
+            </div>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-foreground">
-            {proposals.length}
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
+            {metrics.totalCount}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            {formatCurrency(metrics.totalBudget)} total budget
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <CalendarDays size={18} />
-            <span className="text-sm">Waiting for Review</span>
+        {/* KPI 2: Waiting for Review */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Waiting for Review
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <Clock className="w-5 h-5" />
+            </div>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-amber-600">
-            {pendingCount}
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+            {metrics.waitingCount}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            {formatCurrency(metrics.waitingBudget)} pending review
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Users size={18} />
-            <span className="text-sm">Total Participants</span>
+        {/* KPI 3: Approved / Completed */}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Approved / Completed
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
           </div>
-          <p className="mt-3 text-2xl font-semibold text-foreground">
-            {totalParticipants}
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+            {metrics.approvedCount}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            {formatCurrency(metrics.approvedBudget)} approved budget
           </p>
         </div>
       </div>
 
-      {/* Proposal Table */}
-      <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-5 py-5">
-          <h2 className="font-semibold text-foreground">
-            Trip Proposal Requests
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Select a proposal to view its details and approval history.
-          </p>
+      {/* Proposal Table Container */}
+      <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
+        {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
+          <div>
+            <h2 className="font-semibold text-foreground text-base">
+              Trip Proposal Requests
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Select a proposal to view its details and approval history.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            {/* Segmented Status Tabs */}
+            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab('ALL')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'ALL'
+                    ? 'bg-card text-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('WAITING')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'WAITING'
+                    ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Waiting Review
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('APPROVED')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'APPROVED'
+                    ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Approved
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('REVISION_OR_REJECTED')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'REVISION_OR_REJECTED'
+                    ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Needs Revision / Rejected
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64 shrink-0">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search destination, PIC..."
+                className="w-full h-9 pl-9 pr-8 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-2xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Table Content */}
         {isLoading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             Loading trip proposals...
@@ -243,36 +465,35 @@ function RouteComponent() {
               ? error.message
               : 'Failed to load trip proposals.'}
           </div>
-        ) : proposals.length === 0 ? (
+        ) : filteredProposals.length === 0 ? (
           <div className="p-12 text-center">
-            <Plane
-              className="mx-auto text-muted-foreground/40"
-              size={36}
-            />
+            <Plane className="mx-auto text-muted-foreground/40" size={36} />
             <h3 className="mt-3 font-medium text-foreground">
               No trip proposals found
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              There are currently no trip proposals available for review.
+              {searchQuery || activeTab !== 'ALL'
+                ? 'No trip proposals match your filter criteria.'
+                : 'There are currently no trip proposals available for review.'}
             </p>
           </div>
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
             <table className="w-full min-w-[1050px] whitespace-nowrap text-left text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="px-5 py-4 font-medium">Destination</th>
-                  <th className="px-5 py-4 font-medium">PIC</th>
-                  <th className="px-5 py-4 font-medium">Trip Period</th>
-                  <th className="px-5 py-4 font-medium">Total Amount</th>
-                  <th className="px-5 py-4 font-medium">Participants</th>
-                  <th className="px-5 py-4 font-medium">Status</th>
-                  <th className="px-5 py-4" />
+                  <th className="px-5 py-3.5 font-medium">Destination</th>
+                  <th className="px-5 py-3.5 font-medium">PIC</th>
+                  <th className="px-5 py-3.5 font-medium">Trip Period</th>
+                  <th className="px-5 py-3.5 font-medium">Total Amount</th>
+                  <th className="px-5 py-3.5 font-medium">Participants</th>
+                  <th className="px-5 py-3.5 font-medium">Status</th>
+                  <th className="px-5 py-3.5" />
                 </tr>
               </thead>
 
-              <tbody>
-                {proposals.map((proposal) => (
+              <tbody className="divide-y divide-border">
+                {filteredProposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
                     proposal={proposal}

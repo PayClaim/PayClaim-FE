@@ -8,7 +8,7 @@ export const Route = createFileRoute('/change-password')({
   component: RouteComponent,
   beforeLoad: async ({ context, location }) => {
     try {
-      await context.queryClient.query(getCurrentUser())
+      await context.queryClient.ensureQueryData(getCurrentUser())
     } catch {
       // Belum login (mis. dari link email) -> login dulu, lalu kembali ke sini
       throw redirect({

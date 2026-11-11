@@ -2,17 +2,94 @@ import { useAppForm } from '#/hooks/app.form'
 import { toDateOnly } from '#/lib/utils'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  useApproveClaimMutation,
   useCreateClaimMutation,
-  useRejectClaimMutation,
   useUpdateClaimMutation,
 } from '../queries/queries'
-import { approvalClaimSchema, createClaimSchema } from './schemas'
+import { createClaimBlurSchema, createClaimSchema } from './schemas'
 import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import type { ApprovalDecisionEnum } from '#/types/claims.type'
 
-export const createClaimForm = () => {
+export function applyBackendErrorToForm(
+  formApi: any,
+  err: unknown,
+  fallbackMessage: string,
+) {
+  const errorMsg = getFriendlyErrorMessage(err, fallbackMessage)
+  toast.error(errorMsg)
+
+  const apiData = (err as any)?.data
+  if (
+    apiData?.errors &&
+    typeof apiData.errors === 'object' &&
+    !Array.isArray(apiData.errors)
+  ) {
+    let matchedAny = false
+    for (const [key, val] of Object.entries(apiData.errors)) {
+      const fieldKey = key.charAt(0).toLowerCase() + key.slice(1)
+      const fieldMessage = Array.isArray(val) ? val.join(', ') : String(val)
+      formApi.setFieldMeta(fieldKey, (prev: any) => ({
+        ...prev,
+        isTouched: true,
+        errorMap: {
+          ...prev?.errorMap,
+          onSubmit: fieldMessage,
+        },
+      }))
+      matchedAny = true
+    }
+    if (matchedAny) return
+  }
+
+  const lowerMsg = errorMsg.toLowerCase()
+  let targetField = 'amount'
+
+  if (
+    lowerMsg.includes('quota') ||
+    lowerMsg.includes('balance') ||
+    lowerMsg.includes('saldo') ||
+    lowerMsg.includes('amount') ||
+    lowerMsg.includes('budget') ||
+    lowerMsg.includes('nominal')
+  ) {
+    targetField = 'amount'
+  } else if (
+    lowerMsg.includes('date') ||
+    lowerMsg.includes('period') ||
+    lowerMsg.includes('tanggal') ||
+    lowerMsg.includes('periode')
+  ) {
+    targetField = 'transactionDate'
+  } else if (
+    lowerMsg.includes('receipt') ||
+    lowerMsg.includes('file') ||
+    lowerMsg.includes('bukti') ||
+    lowerMsg.includes('dokumen')
+  ) {
+    targetField = 'receiptFile'
+  } else if (lowerMsg.includes('benefit') || lowerMsg.includes('manfaat')) {
+    targetField = 'employeeBenefitId'
+  } else if (lowerMsg.includes('trip') || lowerMsg.includes('perjalanan')) {
+    targetField = 'tripProposalId'
+  } else if (
+    lowerMsg.includes('description') ||
+    lowerMsg.includes('deskripsi') ||
+    lowerMsg.includes('keterangan')
+  ) {
+    targetField = 'description'
+  }
+
+  formApi.setFieldMeta(targetField, (prev: any) => ({
+    ...prev,
+    isTouched: true,
+    errorMap: {
+      ...prev?.errorMap,
+      onSubmit: errorMsg,
+    },
+  }))
+}
+
+export const createClaimForm = (initialBenefitId?: string | null) => {
   const mutation = useCreateClaimMutation()
   const navigate = useNavigate()
   const today = new Date()
@@ -24,14 +101,15 @@ export const createClaimForm = () => {
       description: '',
       transactionDate: toDateOnly(new Date(today)),
       amount: 0,
-      employeeBenefitId: null as string | null,
+      employeeBenefitId: initialBenefitId ?? (null as string | null),
       tripProposalId: null as string | null,
       receiptFile: null as File | null,
     },
     validators: {
-      onBlur: createClaimSchema,
+      onBlur: createClaimBlurSchema,
+      onSubmit: createClaimSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const formData = new FormData()
       formData.append('claimType', value.claimType)
       formData.append('description', value.description)
@@ -58,8 +136,7 @@ export const createClaimForm = () => {
           to: '/claims',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan klaim'))
+        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan klaim')
       }
     },
   })
@@ -85,9 +162,10 @@ export const editClaimForm = (
       receiptFile: null as File | null,
     },
     validators: {
-      onBlur: createClaimSchema,
+      onBlur: createClaimBlurSchema,
+      onSubmit: createClaimSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const formData = new FormData()
       formData.append('claimType', value.claimType)
       formData.append('description', value.description)
@@ -115,8 +193,7 @@ export const editClaimForm = (
           params: { claimId },
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan ulang klaim'))
+        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan ulang klaim')
       }
     },
   })
@@ -124,34 +201,13 @@ export const editClaimForm = (
 
 export const approvalForm = (id: string, decision: ApprovalDecisionEnum) => {
   console.log(id, decision)
-  const approveMutation = useApproveClaimMutation(id)
-  const rejectMutation = useRejectClaimMutation(id)
-
-  let mutation = useRejectClaimMutation(id)
-
-  switch (decision) {
-    case 'Approved':
-      mutation = approveMutation
-      break
-    case 'Rejected':
-      mutation = rejectMutation
-      break
-  }
 
   return useAppForm({
     defaultValues: {
       decision: decision,
       notes: '',
     },
-    // validators: { onBlur: approvalClaimSchema },
     onSubmit: async ({ value }) => {
-      // try {
-      //   await mutation.mutateAsync(value)
-      //   toast.success('Claim has been mutate successfully.')
-      // } catch (err: unknown) {
-      //   const e = err as { message?: string }
-      //   toast.error(e.message || 'Action failed to process.')
-      // }
       console.log(value)
     },
   })

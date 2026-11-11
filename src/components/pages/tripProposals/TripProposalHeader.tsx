@@ -11,19 +11,26 @@ import { Button } from '#/components/ui/button'
 
 type Props = {
   proposal: TripProposalDetailResponse
+  backTo?: string
+  backLabel?: string
 }
 
-export function TripProposalHeader({ proposal }: Props) {
+export function TripProposalHeader({
+  proposal,
+  backTo = '/trip-proposals',
+  backLabel = 'Back',
+}: Props) {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {/* Judul, informasi submit, dan status. */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <Link to="/trip-proposals">
+          <Link to={backTo}>
             <Button
               variant="outline"
               size="icon"
               className="h-9 w-9 shrink-0"
+              title={backLabel}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -107,15 +114,24 @@ function SummaryItem({
 }
 
 function getStatusLabel(status: string) {
-  switch (status) {
-    case 'Submitted':
+  const norm = (status || '').replace(/[\s_-]/g, '').toLowerCase()
+  switch (norm) {
+    case 'submitted':
       return 'Pending Manager'
-    case 'Under Review':
+    case 'underreview':
       return 'Pending Finance'
-    case 'Review by Finance Manager':
+    case 'financemanagerreview':
       return 'Pending Finance Manager'
-    case 'Needs Revision':
+    case 'approved':
+      return 'Approved'
+    case 'completed':
+      return 'Completed'
+    case 'needsrevision':
       return 'Needs Revision'
+    case 'rejected':
+      return 'Rejected'
+    case 'cancelled':
+      return 'Cancelled'
     default:
       return status
   }

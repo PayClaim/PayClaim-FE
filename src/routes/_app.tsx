@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_app')({
   component: RouteComponent,
   beforeLoad: async ({ context, location }) => {
     try {
-      const user = await context.queryClient.query(getCurrentUser())
+      const user = await context.queryClient.ensureQueryData(getCurrentUser())
       const isAdmin = user.roles.includes('Admin')
       return {
         user,
@@ -38,13 +38,13 @@ const links: TLink[] = [
     label: 'Claims',
   },
   {
-    to: '/approvals',
+    to: '/approvals/claims',
     label: 'Approvals',
     approverOnly: true,
   },
   {
     to: '/trip-proposals',
-    label: 'Trip Proposals',
+    label: 'My Trip Proposals',
   },
   {
     to: '/benefits',

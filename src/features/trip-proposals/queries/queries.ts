@@ -21,7 +21,7 @@ type PagedResponse<T> = {
   hasNextPage: boolean
 }
 
-const getAllProposals = async (): Promise<TripProposal[]> => {
+const getAllProposals = async (employeeId?: string): Promise<TripProposal[]> => {
   const token = getToken()
 
   if (!token) {
@@ -29,8 +29,9 @@ const getAllProposals = async (): Promise<TripProposal[]> => {
   }
 
   const apiUrl = import.meta.env.VITE_API_URL
+  const queryParam = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : ''
 
-  const response = await fetch(`${apiUrl}/trip-proposals`, {
+  const response = await fetch(`${apiUrl}/trip-proposals${queryParam}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -55,10 +56,12 @@ const getAllProposals = async (): Promise<TripProposal[]> => {
   return result.data
 }
 
-export const useGetAllProposalsQuery = () =>
+export const useGetAllProposalsQuery = (employeeId?: string) =>
   useQuery({
-    queryKey: ['trip-proposals'],
-    queryFn: getAllProposals,
+    queryKey: employeeId
+      ? ['trip-proposals', { employeeId }]
+      : ['trip-proposals'],
+    queryFn: () => getAllProposals(employeeId),
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery

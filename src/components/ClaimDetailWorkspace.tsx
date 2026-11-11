@@ -6,7 +6,6 @@ import {
   useRejectClaimMutation,
 } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { toDateTimeString } from '#/lib/utils'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -212,6 +211,21 @@ export function ClaimDetailWorkspace({
   const receiptFileName = claim.filePath
     ? claim.filePath.split('/').pop() || 'Receipt_Attachment'
     : null
+
+  const receiptPreviewUrl = receiptUrl
+    ? `${receiptUrl}${receiptUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&scrollbar=0&view=FitH`
+    : ''
+
+  const handleDownload = async () => {
+    if (!receiptUrl) return
+
+    try {
+      await downloadAttachment(receiptUrl, receiptFileName || 'receipt-attachment')
+    } catch (error) {
+      console.error('Failed to download receipt attachment:', error)
+      window.open(receiptUrl, '_blank')
+    }
+  }
 
   const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort(
     (a, b) => {
@@ -452,15 +466,14 @@ export function ClaimDetailWorkspace({
                   <span className="text-xs font-bold text-heading">
                     Receipt Attachment
                   </span>
-                  <a
-                    href={receiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => void handleDownload()}
+                    className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline cursor-pointer"
                   >
                     <Download className="h-3.5 w-3.5" aria-hidden="true" />
                     Download
-                  </a>
+                  </button>
                 </div>
 
                 {isImageReceipt ? (
@@ -524,15 +537,14 @@ export function ClaimDetailWorkspace({
                         </p>
                       </div>
                     </div>
-                    <a
-                      href={receiptUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline shrink-0 ml-2"
+                    <button
+                      type="button"
+                      onClick={() => void handleDownload()}
+                      className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline shrink-0 ml-2 cursor-pointer"
                     >
                       <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                      Open
-                    </a>
+                      Download
+                    </button>
                   </div>
                 )}
               </div>
@@ -1072,63 +1084,62 @@ export function ClaimDetailWorkspace({
 
       {/* Receipt Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="flex h-[92vh] w-[96vw] !max-w-[1400px] flex-col gap-3">
           <DialogHeader>
-            <DialogTitle>Receipt Attachment Preview</DialogTitle>
+            <DialogTitle className="truncate">
+              {receiptFileName || 'Receipt Attachment'}
+            </DialogTitle>
             <DialogDescription>
-              {receiptFileName} • Uploaded by {claim.employeeName}
+              Receipt attachment preview • Uploaded by {claim.employeeName}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2 flex items-center justify-center bg-muted/20 rounded-lg border border-border overflow-hidden min-h-64 max-h-[75vh]">
-            {isImageReceipt ? (
-              <img
-                src={receiptUrl}
-                alt={`Full receipt uploaded by ${claim.employeeName}`}
-                width={800}
-                height={600}
-                className="max-h-[70vh] w-auto object-contain"
-              />
-            ) : isPdfReceipt ? (
-              <iframe
-                src={receiptUrl}
-                title="Full PDF Receipt"
-                className="w-full h-[70vh] rounded border border-border"
-              />
-            ) : (
-              <div className="p-8 text-center space-y-3">
-                <FileText
-                  className="h-12 w-12 text-primary mx-auto"
-                  aria-hidden="true"
+
+          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/20">
+            {previewOpen && receiptUrl && (
+              isPdfReceipt ? (
+                <iframe
+                  src={receiptPreviewUrl}
+                  title="Full PDF Receipt Preview"
+                  className="h-full w-full"
                 />
-                <p className="text-sm font-semibold text-heading">
-                  {receiptFileName}
-                </p>
-                <a
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
-                >
-                  <Download className="h-4 w-4" aria-hidden="true" /> Open / Download Document
-                </a>
-              </div>
+              ) : isImageReceipt ? (
+                <img
+                  src={receiptUrl}
+                  alt={`Full receipt uploaded by ${claim.employeeName}`}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center space-y-3">
+                  <FileText
+                    className="h-12 w-12 text-primary"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm font-semibold text-heading">
+                    {receiptFileName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    This file format does not support inline preview. Please download to view.
+                  </p>
+                </div>
+              )
             )}
           </div>
-          <DialogFooter>
-            {claim.filePath && (
-              <a
-                href={receiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 gap-1.5"
-              >
-                <Download className="h-4 w-4" aria-hidden="true" /> Download Original
-              </a>
-            )}
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              className="gap-2"
+              onClick={() => void handleDownload()}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
             <DialogClose asChild>
-              <Button variant="outline">Close</Button>
+              <Button type="button" variant="outline">
+                Close
+              </Button>
             </DialogClose>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1216,4 +1227,27 @@ export function ClaimDetailWorkspace({
       </Dialog>
     </main>
   )
+}
+
+async function downloadAttachment(url: string, fileName: string) {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const objectUrl = window.URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = fileName || 'receipt-attachment'
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(objectUrl)
+  }, 1000)
 }

@@ -35,7 +35,6 @@ export const loginForm = () => {
           to: search.redirect ?? '/dashboard',
         })
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal masuk. Periksa username dan password Anda.'))
       }
     },
@@ -61,7 +60,6 @@ export const changePasswordForm = () => {
         toast.success('Password changed successfully')
         await navigate({ to: '/dashboard' })
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal mengubah kata sandi'))
       }
     },
@@ -86,7 +84,6 @@ export const resetPasswordForm = () => {
         toast.success('Password has been reset successfully')
         form.reset()
       } catch (err: unknown) {
-        const error = err as { message?: string }
         toast.error(getFriendlyErrorMessage(err, 'Gagal mengatur ulang kata sandi'))
       }
     },

@@ -5,7 +5,7 @@ export const Route = createFileRoute('/_app/admin')({
   component: RouteComponent,
 
   beforeLoad: async ({ context }) => {
-    const user = await context.queryClient.query(getCurrentUser())
+    const user = await context.queryClient.ensureQueryData(getCurrentUser())
     console.log(user)
 
     if (!user.roles.includes('Admin')) {
