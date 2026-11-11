@@ -1,12 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { ClaimDetailWorkspace } from '#/components/ClaimDetailWorkspace'
+import { ClaimDetailWorkspace } from '#/components/pages/approvals/ClaimDetailWorkspace'
 
-export const Route = createFileRoute(
-  '/_app/approvals/claims/$claimId',
-)({
+export const Route = createFileRoute('/_app/approvals/claims/$claimId')({
   beforeLoad: ({ context }) => {
-    const roles = context.user?.roles || []
+    const roles = context.user.roles
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
@@ -28,7 +26,11 @@ function RouteComponent() {
     <ClaimDetailWorkspace
       claimId={claimId}
       backTo="/approvals/claims"
+<<<<<<< HEAD
+      backLabel="Back to Claim Approvals"
+=======
       backLabel="Back to Approval Claims"
+>>>>>>> e7bc20ec5cd7431b20b191f81469db52a81f1b5e
     />
   )
 }

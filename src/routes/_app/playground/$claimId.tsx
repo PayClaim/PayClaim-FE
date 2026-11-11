@@ -1,7 +1,5 @@
+import { ClaimDetailWorkspace } from '#/components/pages/approvals/ClaimDetailWorkspace'
 import { LoadingComponent } from '#/components/ErrorAndLoading'
-import { ActionButtonList } from '#/components/pages/approvals/ActionButtonList'
-import { ActionDialog } from '#/components/pages/approvals/ActionDialog'
-import { HeaderSection } from '#/components/pages/approvals/Header'
 import { Button } from '#/components/ui/button'
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -39,26 +37,12 @@ function RouteComponent() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto space-y-6">
-      {/* Header & Back Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <HeaderSection claim={claim} />
-
-        {/* Action Buttons Container */}
-        <ActionButtonList
-          claim={claim}
-          setActionType={setActionType}
-          setOpen={setDialogOpen}
-        />
-      </div>
-      <ActionDialog
-        key={actionType}
-        actionType={actionType}
+    <div>
+      <ClaimDetailWorkspace
         claimId={claimId}
-        claimStatus={claim.status}
-        open={dialogOpen}
-        setOpen={setDialogOpen}
+        backLabel="Back to Claim"
+        backTo="/claims"
       />
-    </main>
+    </div>
   )
 }
