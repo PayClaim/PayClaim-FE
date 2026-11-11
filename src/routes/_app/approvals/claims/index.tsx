@@ -413,7 +413,7 @@ function RouteComponent() {
                   <th className="px-5 py-3.5 font-medium">Employee</th>
                   <th className="px-5 py-3.5 font-medium">Claim Type</th>
                   <th className="px-5 py-3.5 font-medium">Benefit / Trip Details</th>
-                  <th className="px-5 py-3.5 font-medium">Transaction Date</th>
+                  <th className="px-5 py-3.5 font-medium">Invoice Date</th>
                   <th className="px-5 py-3.5 font-medium">Amount</th>
                   <th className="px-5 py-3.5 font-medium">Submitted</th>
                   <th className="px-5 py-3.5 font-medium">Status</th>

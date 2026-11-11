@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -6,6 +7,7 @@ import {
   XCircle,
   Users,
   AlertCircle,
+  Plus,
 } from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -509,6 +511,43 @@ const exceedsFinanceLimit =
     </>
   ) : null
 
+  const isApprovedOrCompleted = isTripStatus(proposal?.status, [
+    TripProposalStatus.Approved,
+    TripProposalStatus.Completed,
+  ])
+
+  const myParticipant = proposal?.participants.find(
+    (p) =>
+      (user?.employeeId &&
+        p.employeeId.toLowerCase() === user.employeeId.toLowerCase()) ||
+      (user?.fullName &&
+        p.employeeName?.trim().toLowerCase() ===
+          user.fullName.trim().toLowerCase()),
+  )
+
+  const canClaim =
+    isApprovedOrCompleted &&
+    Boolean(myParticipant) &&
+    (myParticipant?.amount ?? 0) > 0
+
+  const participantClaimAction = canClaim && proposal ? (
+    <Link
+      to="/claims/create"
+      search={{
+        tripProposalId: proposal.id,
+        claimType: 'BusinessTripReimbursement',
+      }}
+    >
+      <Button
+        size="sm"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1.5 shadow-2xs cursor-pointer"
+      >
+        <Plus className="h-4 w-4" />
+        Ajukan Klaim ({formatCurrency(myParticipant?.amount ?? 0)})
+      </Button>
+    </Link>
+  ) : null
+
   return (
     <main className="mx-auto w-full max-w-[1600px] space-y-4">
       <TripProposalHeader
@@ -531,7 +570,7 @@ const exceedsFinanceLimit =
           attachmentFileName={attachmentFileName}
           isPdf={isPdf}
           status={proposal.status}
-          actions={approvalActions}
+          actions={approvalActions || participantClaimAction}
         />
       </div>
 

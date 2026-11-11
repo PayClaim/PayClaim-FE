@@ -12,7 +12,6 @@ import {
   XCircle,
 } from 'lucide-react'
 
-import { Badge } from '#/components/ui/badge'
 import { getProposalStatusConfig } from '#/types/tripProposals.type'
 import { Button } from '#/components/ui/button'
 import { downloadFile } from '#/lib/download'

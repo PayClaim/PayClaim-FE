@@ -87,10 +87,11 @@ export function TripProposalHeader({
           label="Accommodation Amount (Hotel, Ticket)"
           value={
             isAccommodationPaid ? (
-              <span>
-                {formatCurrency(proposal.accommodationAmount)}{' '}
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  (PAID)
+              <span className="inline-flex items-center gap-2">
+                <span>{formatCurrency(proposal.accommodationAmount)}</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+                  PAID
                 </span>
               </span>
             ) : (

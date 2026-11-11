@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, FileText, XCircle } from 'lucide-react'
+import { CheckCircle2, Download, FileText } from 'lucide-react'
 import {
   ChecklistRow,
   NotesBox,
@@ -124,39 +124,5 @@ export function ManagerStage({
         )}
       </StageBody>
     </TimelineStage>
-  )
-}
-
-function DecisionLabel({ approval }: { approval?: ApprovalRecord }) {
-  if (!approval) {
-    return (
-      <span className="text-amber-700 dark:text-amber-400 font-semibold">
-        Awaiting Manager Review
-      </span>
-    )
-  }
-
-  if (approval.decision === 'Approved') {
-    return (
-      <span className="font-bold flex items-center gap-1">
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-        <span className="text-emerald-700 dark:text-emerald-400">Approved</span>
-      </span>
-    )
-  }
-
-  if (approval.decision === 'Rejected') {
-    return (
-      <span className="font-bold flex items-center gap-1">
-        <XCircle className="h-4 w-4 text-rose-600" aria-hidden="true" />
-        <span className="text-rose-700 dark:text-rose-400">Rejected</span>
-      </span>
-    )
-  }
-
-  return (
-    <span className="font-bold flex items-center gap-1">
-      <span className="text-amber-600">{approval.decision}</span>
-    </span>
   )
 }
