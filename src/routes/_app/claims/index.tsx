@@ -7,6 +7,7 @@ import {
 import { useMemo, useState } from 'react'
 
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { Button } from '#/components/ui/button'
@@ -35,6 +36,7 @@ export const Route = createFileRoute('/_app/claims/')({
     }
   },
   component: RouteComponent,
+  validateSearch: (s) => s as ClaimFilterParams,
 })
 
 function formatDate(date: string) {
@@ -138,8 +140,13 @@ type StatusTab =
   'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
+  const search = Route.useSearch()
   const navigate = useNavigate()
-  const { data: claimResponse, isError, isFetching } = useGetAllClaimsQuery()
+  const {
+    data: claimResponse,
+    isError,
+    isFetching,
+  } = useGetAllClaimsQuery(search)
 
   const claims = claimResponse?.data ?? []
 
@@ -521,8 +528,8 @@ function RouteComponent() {
         </div>
 
         {/* Footer info bar */}
-        <div className="flex justify-between items-center">
-          <div className="px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground flex items-center justify-between">
+        <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between">
             <span>
               Menampilkan {filteredClaims.length} dari {claims.length} total
               klaim
@@ -533,7 +540,9 @@ function RouteComponent() {
               </span>
             )}
           </div>
-          <PaginationSection pagination={paginationProp} />
+          <div className="w-fit grow-0">
+            <PaginationSection pagination={paginationProp} />
+          </div>
         </div>
       </section>
     </main>
