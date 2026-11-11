@@ -1,12 +1,12 @@
 import { toDateOnly } from '#/lib/utils'
 import z from 'zod'
 
-export const createClaimSchema = z
+export const createClaimBlurSchema = z
   .object({
     claimType: z.string(),
     description: z.string().min(5, 'Description must be at least 5 characters'),
     transactionDate: z.string().min(1, 'Transaction date is required'),
-    amount: z.number().positive('Amount must be greater than 0'),
+    amount: z.number(),
     employeeBenefitId: z.string().nullable(),
     tripProposalId: z.string().nullable(),
     receiptFile: z.instanceof(File).nullable(),
@@ -45,17 +45,28 @@ export const createClaimSchema = z
     },
   )
 
+export const createClaimSchema = createClaimBlurSchema.refine(
+  (data) => data.amount > 0,
+  {
+    message: 'Amount must be greater than 0',
+    path: ['amount'],
+  },
+)
+
 export const approvalClaimSchema = z
   .object({
     decision: z.enum(['Approved', 'Rejected', 'NeedsRevision', 'Pay']),
-    notes: z.string(),
+    notes: z.string().nullable(),
   })
-  .refine((data) => {
-    if (data.decision === 'NeedsRevision' && data.notes.trim().length <= 2) {
-      return {
-        message:
-          'Notes must be at least 10 characters when requesting revision',
-        path: ['notes'],
+  .refine(
+    (data) => {
+      if (data.decision === 'Rejected' || data.decision === 'NeedsRevision') {
+        return !!data.notes && data.notes.trim().length > 0
       }
-    }
-  })
+      return true
+    },
+    {
+      message: 'Notes are required for Reject and Request Revision',
+      path: ['notes'],
+    },
+  )

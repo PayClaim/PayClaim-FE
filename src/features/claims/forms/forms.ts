@@ -5,7 +5,7 @@ import {
   useCreateClaimMutation,
   useUpdateClaimMutation,
 } from '../queries/queries'
-import { createClaimSchema } from './schemas'
+import { createClaimBlurSchema, createClaimSchema } from './schemas'
 import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '#/lib/error'
 import type { ApprovalDecisionEnum } from '#/types/claims.type'
@@ -106,7 +106,7 @@ export const createClaimForm = () => {
       receiptFile: null as File | null,
     },
     validators: {
-      onBlur: createClaimSchema,
+      onBlur: createClaimBlurSchema,
       onSubmit: createClaimSchema,
     },
     onSubmit: async ({ value, formApi }) => {
@@ -162,7 +162,7 @@ export const editClaimForm = (
       receiptFile: null as File | null,
     },
     validators: {
-      onBlur: createClaimSchema,
+      onBlur: createClaimBlurSchema,
       onSubmit: createClaimSchema,
     },
     onSubmit: async ({ value, formApi }) => {

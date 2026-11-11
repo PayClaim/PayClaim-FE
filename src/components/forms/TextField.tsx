@@ -27,10 +27,21 @@ export function useFieldStatus(field: any) {
     field.form?.store || field.store,
     (state: any) => state.submissionAttempts ?? 0,
   )
+
+  const rawErrors = errors || []
+  const uniqueErrors: string[] = []
+  for (const err of rawErrors) {
+    if (!err) continue
+    const msg = typeof err === 'string' ? err : err?.message
+    if (msg && !uniqueErrors.includes(msg)) {
+      uniqueErrors.push(msg)
+    }
+  }
+
   const hasError =
-    Boolean(errors && errors.length > 0) &&
+    uniqueErrors.length > 0 &&
     Boolean(isTouched || submissionAttempts > 0 || errorMap?.onSubmit)
-  return { hasError, errors: errors || [] }
+  return { hasError, errors: uniqueErrors }
 }
 
 export function TextField({

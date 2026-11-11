@@ -67,6 +67,18 @@ function RouteComponent() {
 
   const handleReview = async () => {
     const values = form.state.values
+
+    if (values.amount <= 0) {
+      const msg = 'Amount must be greater than 0'
+      form.setFieldMeta('amount', (prev) => ({
+        ...prev,
+        isTouched: true,
+        errorMap: { ...prev?.errorMap, onSubmit: msg },
+      }))
+      toast.error(msg)
+      return
+    }
+
     if (values.claimType === 'Benefit' && values.employeeBenefitId) {
       const selected = empBenefits.find(
         (b) => b.employeeBenefitId === values.employeeBenefitId,
@@ -129,9 +141,6 @@ function RouteComponent() {
               name="amount"
               validators={{
                 onChange: ({ value }) => {
-                  if (value <= 0) {
-                    return 'Amount must be greater than 0'
-                  }
                   if (
                     currentClaimType === 'Benefit' &&
                     form.state.values.employeeBenefitId
@@ -155,6 +164,12 @@ function RouteComponent() {
                     if (selected && value > selected.totalAmount) {
                       return `Amount exceeds approved trip budget (${idNumberFormatter.format(selected.totalAmount)}).`
                     }
+                  }
+                  return undefined
+                },
+                onSubmit: ({ value }) => {
+                  if (value <= 0) {
+                    return 'Amount must be greater than 0'
                   }
                   return undefined
                 },
