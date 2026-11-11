@@ -18,13 +18,28 @@ type Options = Omit<RequestInit, 'body'> & {
   params?: Record<string, string | number>
 }
 
+function buildQuery(params?: Record<string, unknown>): string {
+  if (!params) return ''
+
+  const sp = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') continue
+    if (Array.isArray(value)) {
+      value.forEach((v) => sp.append(key, String(v)))
+    } else {
+      sp.append(key, String(value))
+    }
+  }
+
+  const qs = sp.toString()
+  return qs ? `?${qs}` : ''
+}
+
 export async function api<T>(
   path: string,
   { body, params, headers, ...init }: Options = {},
 ): Promise<T> {
-  const qs = params
-    ? '?' + new URLSearchParams(params as Record<string, string>)
-    : ''
+  const qs = buildQuery(params)
   const isFormData = body instanceof FormData
 
   const token = storage.get('token')
@@ -43,7 +58,11 @@ export async function api<T>(
       // jika memiliki body dan form-data : body as form data
       // jika regular json body : kirim as json
       body:
-        body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+        body === undefined
+          ? undefined
+          : isFormData
+            ? body
+            : JSON.stringify(body),
       ...init,
     })
   } catch (netErr: unknown) {
@@ -65,7 +84,8 @@ export async function api<T>(
   }
 
   if (!res.ok) {
-    let errorMessage: string = res.statusText || 'Terjadi kesalahan pada permintaan data.'
+    let errorMessage: string =
+      res.statusText || 'Terjadi kesalahan pada permintaan data.'
     if (Array.isArray(data?.errors) && data.errors.length > 0) {
       errorMessage = data.errors.join('\n')
     } else if (data?.message) {
@@ -73,11 +93,13 @@ export async function api<T>(
     } else if (res.status === 401) {
       errorMessage = 'Sesi login Anda telah berakhir. Silakan login kembali.'
     } else if (res.status === 403) {
-      errorMessage = 'Akses ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.'
+      errorMessage =
+        'Akses ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.'
     } else if (res.status === 404) {
       errorMessage = 'Data atau layanan yang diminta tidak ditemukan.'
     } else if (res.status >= 500) {
-      errorMessage = 'Terjadi gangguan pada server internal. Silakan coba kembali beberapa saat lagi.'
+      errorMessage =
+        'Terjadi gangguan pada server internal. Silakan coba kembali beberapa saat lagi.'
     }
     throw new ApiError(res.status, errorMessage, data)
   }

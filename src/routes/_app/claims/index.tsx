@@ -12,21 +12,42 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateTimeString } from '#/lib/utils'
 import type { ClaimResponse } from '#/types/claims.type'
-import { createFileRoute, Link, useNavigate, useRouteContext } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouteContext,
+} from '@tanstack/react-router'
 import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
+import { PaginationSection } from '#/components/PaginationSection'
+import z from 'zod'
+
+const claimFilterSchema = z.object({
+  pageNumber: z.number().int().min(1).catch(1).optional(),
+  pageSize: z.number().int().min(1).max(100).catch(10).optional(),
+  search: z.string().optional().catch(undefined),
+  status: z.string().optional().catch(undefined),
+})
 
 export const Route = createFileRoute('/_app/claims/')({
   component: RouteComponent,
+  validateSearch: (s) => s as ClaimFilterParams,
 })
 
 function RouteComponent() {
+  const params = Route.useSearch()
   const { isAdmin } = useRouteContext({ from: '/_app' })
-  const { data: claimResponse, isError, isFetching } = useGetAllClaimsQuery()
+  const {
+    data: claimResponse,
+    isError,
+    isFetching,
+  } = useGetAllClaimsQuery(params)
 
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
@@ -92,17 +113,23 @@ function RouteComponent() {
       return timeB - timeA
     })
 
-  if (isError) return <ErrorComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
+  if (isError)
+    return <ErrorComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
 
-  if (isFetching && !claimResponse)
+  if (isFetching || !claimResponse)
     return <LoadingComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
+
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    claimResponse
 
   return (
     <main>
       {/* Heading */}
       <div className="mb-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">{isAdmin ? 'All Claims' : 'My Claims'}</h1>
+          <h1 className="text-xl font-bold">
+            {isAdmin ? 'All Claims' : 'My Claims'}
+          </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {isAdmin
               ? 'Monitor and review employee benefit and reimbursement claims'
@@ -152,6 +179,9 @@ function RouteComponent() {
         {/* Table */}
         <div className="mt-6">
           <ClaimTable claims={displayData} />
+        </div>
+        <div>
+          <PaginationSection pagination={paginationProp} />
         </div>
       </div>
     </main>
