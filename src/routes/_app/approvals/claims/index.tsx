@@ -10,16 +10,18 @@ import { idNumberFormatter } from '#/lib/formatter'
 
 import {
   ArrowRight,
-  Briefcase,
   CheckCircle2,
   Clock,
-  Layers,
-  Plane,
   Receipt,
   Search,
-  Tag,
   X,
 } from 'lucide-react'
+import {
+  formatDate,
+  getClaimTypeBadge,
+  getInitials,
+  getStatusBadgeConfig,
+} from '#/features/claims/utils/claim-badges'
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
   beforeLoad: ({ context }) => {
@@ -37,99 +39,6 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
   },
   component: RouteComponent,
 })
-
-function formatDate(date: string) {
-  if (!date) return '-'
-
-  return new Date(date).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function getInitials(name?: string | null): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
-function getClaimTypeBadge(claimType: string) {
-  switch (claimType) {
-    case 'OperationalReimbursement':
-      return {
-        label: 'Operational',
-        icon: Briefcase,
-        className: 'bg-slate-100 text-slate-700 border-slate-200',
-      }
-    case 'BusinessTripReimbursement':
-      return {
-        label: 'Business Trip',
-        icon: Plane,
-        className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70',
-      }
-    case 'Benefit':
-      return {
-        label: 'Benefit',
-        icon: Tag,
-        className: 'bg-sky-50 text-sky-700 border-sky-200/70',
-      }
-    default:
-      return {
-        label: claimType,
-        icon: Layers,
-        className: 'bg-slate-100 text-slate-700 border-slate-200',
-      }
-  }
-}
-
-function getStatusBadgeConfig(status: string) {
-  switch (status) {
-    case 'Approved':
-      return {
-        label: 'Approved',
-        className: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-600',
-      }
-    case 'Paid':
-      return {
-        label: 'Paid',
-        className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-600',
-      }
-    case 'Submitted':
-      return {
-        label: 'Submitted',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      }
-    case 'UnderReview':
-      return {
-        label: 'Under Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      }
-    case 'NeedsRevision':
-      return {
-        label: 'Needs Revision',
-        className: 'bg-orange-50 text-orange-700 border-orange-200/60',
-        dotColor: 'bg-orange-500',
-      }
-    case 'Rejected':
-      return {
-        label: 'Rejected',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60',
-        dotColor: 'bg-rose-500',
-      }
-    default:
-      return {
-        label: status,
-        className: 'bg-slate-100 text-slate-700 border-slate-200',
-        dotColor: 'bg-slate-500',
-      }
-  }
-}
 
 type StatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
 

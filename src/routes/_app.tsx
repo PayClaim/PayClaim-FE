@@ -1,6 +1,5 @@
 import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
-import type { TLink } from '#/components/Sidebar'
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -33,66 +32,10 @@ export const Route = createFileRoute('/_app')({
   },
 })
 
-const links: TLink[] = [
-  {
-    to: '/dashboard',
-    label: 'Dashboard',
-  },
-  {
-    to: '/claims',
-    label: 'Claims',
-  },
-  {
-    to: '/approvals/claims',
-    label: 'Approvals',
-    approverOnly: true,
-  },
-  {
-    to: '/trip-proposals',
-    label: 'My Trip Proposals',
-  },
-  {
-    to: '/benefits',
-    label: 'My Benefits',
-    employeeOnly: true,
-  },
-  // Admin Only
-  {
-    to: '/admin/benefits',
-    label: 'Benefits',
-    adminOnly: true,
-  },
-  {
-    to: '/admin/benefit-plans',
-    label: 'Benefit Plans',
-    adminOnly: true,
-  },
-  {
-    to: '/admin/benefit-categories',
-    label: 'Benefits Categories',
-    adminOnly: true,
-  },
-  {
-    to: '/admin/departments',
-    label: 'Departments',
-    adminOnly: true,
-  },
-  {
-    to: '/admin/employees',
-    label: 'Employees',
-    adminOnly: true,
-  },
-  {
-    to: '/admin/reset-password',
-    label: 'Reset Password',
-    adminOnly: true,
-  },
-]
-
 function RouteComponent() {
   return (
     <div className="bg-background">
-      <Sidebar links={links} className="fixed" />
+      <Sidebar className="fixed" />
       <div className="grow ms-75 min-h-screen pb-16">
         <Header />
         <div className="p-7.5">

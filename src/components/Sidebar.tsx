@@ -174,7 +174,6 @@ export function Sidebar({
   className = '',
 }: {
   className?: string
-  links?: TLink[]
 }) {
   const { pathname } = useLocation()
   const { data: user } = useQuery(getCurrentUser())

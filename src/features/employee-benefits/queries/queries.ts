@@ -8,5 +8,4 @@ export const useGetAllEmployeeBenefitsQuery = () =>
     queryFn: () => {
       return api.get<EmployeeBenefitResponse[]>('/employeeBenefits/me')
     },
-    initialData: [],
   })

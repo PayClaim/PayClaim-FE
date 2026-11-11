@@ -35,10 +35,8 @@ export const useGetAllClaimsQuery = (params?: ClaimFilterParams) =>
     queryFn: async () => {
       return api.get<MyClaimResponse>('/claims/my-claims', {
         params: params as Record<string, string | number>,
-        // params: { test: 'hello' },
       })
     },
-    initialData: null,
   })
 
 // Digunakan untuk detail klaim & riwayat approval

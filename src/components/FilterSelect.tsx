@@ -25,7 +25,6 @@ interface FilterSelectProps<T extends string | number> {
 const NULL_VALUE = '__null__'
 
 export function FilterSelect({
-  className,
   filterLabel,
   val,
   options,

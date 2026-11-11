@@ -8,7 +8,6 @@ export const useGetAllPositionsQuery = () =>
     queryFn: () => {
       return api.get<PositionResponse[]>('/positions')
     },
-    initialData: [],
   })
 
 export const useGetPositionQuery = (id: string) =>

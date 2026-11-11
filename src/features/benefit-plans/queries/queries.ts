@@ -14,7 +14,6 @@ export const useGetAllBenefitPlansQuery = (params?: Record<string, any>) =>
       if (Array.isArray(res?.data)) return res.data as BenefitPlanResponse[]
       return [] as BenefitPlanResponse[]
     },
-    initialData: [],
   })
 
 export const useGetBenefitPlanByIdQuery = (
