@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { CircleAlert } from 'lucide-react'
 import { cn } from 'cn'
 
@@ -12,6 +12,13 @@ import type { EmployeeResponse } from '#/types/employee.type'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
 
 export const Route = createFileRoute('/_app/trip-proposals/create')({
+  beforeLoad: ({ context }) => {
+    if (context.isAdmin || context.isDirector) {
+      throw redirect({
+        to: '/dashboard',
+      })
+    }
+  },
   component: RouteComponent,
 })
 

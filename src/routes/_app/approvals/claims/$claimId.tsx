@@ -26,11 +26,7 @@ function RouteComponent() {
     <ClaimDetailWorkspace
       claimId={claimId}
       backTo="/approvals/claims"
-<<<<<<< HEAD
-      backLabel="Back to Claim Approvals"
-=======
       backLabel="Back to Approval Claims"
->>>>>>> e7bc20ec5cd7431b20b191f81469db52a81f1b5e
     />
   )
 }
