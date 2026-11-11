@@ -7,6 +7,7 @@ import {
 } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { getFriendlyErrorMessage } from '#/lib/error'
+import { downloadFile } from '#/lib/download'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -218,13 +219,7 @@ export function ClaimDetailWorkspace({
 
   const handleDownload = async () => {
     if (!receiptUrl) return
-
-    try {
-      await downloadAttachment(receiptUrl, receiptFileName || 'receipt-attachment')
-    } catch (error) {
-      console.error('Failed to download receipt attachment:', error)
-      window.open(receiptUrl, '_blank')
-    }
+    await downloadFile(receiptUrl, receiptFileName || 'receipt-attachment')
   }
 
   const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort(
@@ -653,7 +648,7 @@ export function ClaimDetailWorkspace({
 
           {/* Vertical Process Timeline Cards */}
           <div className="relative pl-10 space-y-6">
-            {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT (Level 2) */}
+            {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT */}
             {(claim.status === 'UnderReview' ||
               claim.status === 'Approved' ||
               claim.status === 'Paid' ||
@@ -687,7 +682,7 @@ export function ClaimDetailWorkspace({
                 <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-sm font-bold text-heading">
-                      Finance Verification & Disbursement (Level 2)
+                      Finance Verification & Disbursement
                     </h2>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -825,7 +820,7 @@ export function ClaimDetailWorkspace({
               </div>
             )}
 
-            {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION (Level 1) */}
+            {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION */}
             <div className="relative">
               {/* Connecting line down to Stage 1 (Claim Intimation) */}
               <div
@@ -859,7 +854,7 @@ export function ClaimDetailWorkspace({
               <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-sm font-bold text-heading">
-                    Document Collection & Manager Approval (Level 1)
+                    Document Collection & Manager Approval
                   </h2>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -925,15 +920,14 @@ export function ClaimDetailWorkspace({
                       </div>
                       {claim.filePath ? (
                         <div className="flex items-center gap-2.5 shrink-0">
-                          <a
-                            href={receiptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+                          <button
+                            type="button"
+                            onClick={() => void handleDownload()}
+                            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline cursor-pointer"
                           >
                             <Download className="h-3.5 w-3.5" aria-hidden="true" />
                             Download
-                          </a>
+                          </button>
                           <CheckCircle2
                             className="h-4 w-4 text-emerald-600"
                             aria-hidden="true"
@@ -1015,7 +1009,7 @@ export function ClaimDetailWorkspace({
               <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-sm font-bold text-heading">
-                    Claim Initialization & Submission
+                    Claim Submission
                   </h2>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -1227,27 +1221,4 @@ export function ClaimDetailWorkspace({
       </Dialog>
     </main>
   )
-}
-
-async function downloadAttachment(url: string, fileName: string) {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Download failed: ${response.status}`)
-  }
-
-  const blob = await response.blob()
-  const objectUrl = window.URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName || 'receipt-attachment'
-
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-
-  window.setTimeout(() => {
-    window.URL.revokeObjectURL(objectUrl)
-  }, 1000)
 }

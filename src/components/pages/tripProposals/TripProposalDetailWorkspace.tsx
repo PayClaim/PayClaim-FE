@@ -261,7 +261,7 @@ export function TripProposalDetailWorkspace({
     timelineStages.push(
       createApprovalStage(
         2,
-        'Finance Review (Level 2)',
+        'Finance Verification & Disbursement',
         'Finance Officer',
         financeApproval,
         isUnderReview,
@@ -272,7 +272,7 @@ export function TripProposalDetailWorkspace({
   timelineStages.push(
     createApprovalStage(
       1,
-      'Manager Approval (Level 1)',
+      'Document Collection & Manager Approval',
       'Project Manager',
       managerApproval,
       isSubmitted,

@@ -153,7 +153,10 @@ function RouteComponent() {
 
         {/* Table or Empty State */}
         {filteredProposals.length > 0 ? (
-          <ProposalTable proposals={filteredProposals} />
+          <ProposalTable
+            proposals={filteredProposals}
+            currentUser={user}
+          />
         ) : (
           <div className="py-12 text-center">
             <p className="font-medium text-foreground">
@@ -276,8 +279,10 @@ function FilterSection({
 // Proposal Table Component
 function ProposalTable({
   proposals,
+  currentUser,
 }: {
   proposals: TripProposal[]
+  currentUser?: { employeeId?: string; fullName?: string } | null
 }) {
   const navigate = useNavigate()
 
@@ -313,57 +318,83 @@ function ProposalTable({
         </TableHeader>
 
         <TableBody>
-          {proposals.map((proposal) => (
-            <TableRow
-              key={proposal.id}
-              className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
-              onClick={() =>
-                navigate({
-                  to: '/trip-proposals/$id',
-                  params: {
-                    id: proposal.id,
-                  },
-                })
-              }
-            >
-              <TableCell className="px-4 py-4 font-semibold">
-                {proposal.destination}
-              </TableCell>
+          {proposals.map((proposal) => {
+            const isCurrentUserPic = Boolean(
+              (proposal.picEmployeeId &&
+                currentUser?.employeeId &&
+                proposal.picEmployeeId.toLowerCase() ===
+                  currentUser.employeeId.toLowerCase()) ||
+              (currentUser?.fullName &&
+                proposal.picName &&
+                currentUser.fullName.trim().toLowerCase() ===
+                  proposal.picName.trim().toLowerCase()),
+            )
 
-              <TableCell className="whitespace-nowrap px-4 py-4">
-                <div>{formatDate(proposal.startDate)}</div>
+            return (
+              <TableRow
+                key={proposal.id}
+                className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
+                onClick={() =>
+                  navigate({
+                    to: '/trip-proposals/$id',
+                    params: {
+                      id: proposal.id,
+                    },
+                  })
+                }
+              >
+                <TableCell className="px-4 py-4 font-semibold">
+                  {proposal.destination}
+                </TableCell>
 
-                <div className="text-xs text-muted-foreground">
-                  to {formatDate(proposal.endDate)}
-                </div>
-              </TableCell>
+                <TableCell className="whitespace-nowrap px-4 py-4">
+                  <div>{formatDate(proposal.startDate)}</div>
 
-              <TableCell className="px-4 py-4">
-                {proposal.picName || '-'}
-              </TableCell>
+                  <div className="text-xs text-muted-foreground">
+                    to {formatDate(proposal.endDate)}
+                  </div>
+                </TableCell>
 
-              <TableCell className="px-4 py-4">
-                {proposal.participantCount}
-              </TableCell>
+                <TableCell className="px-4 py-4">
+                  {isCurrentUserPic ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-foreground">
+                        {proposal.picName || '-'}
+                      </span>
+                      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold bg-primary/10 text-primary">
+                        You
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">
+                      {proposal.picName || '-'}
+                    </span>
+                  )}
+                </TableCell>
 
-              <TableCell className="whitespace-nowrap px-4 py-4 font-semibold">
-                {formatCurrency(proposal.totalAmount)}
-              </TableCell>
+                <TableCell className="px-4 py-4">
+                  {proposal.participantCount}
+                </TableCell>
 
-              <TableCell className="whitespace-nowrap px-4 py-4 text-muted-foreground">
-                {formatDate(proposal.submittedAt)}
-              </TableCell>
+                <TableCell className="whitespace-nowrap px-4 py-4 font-semibold">
+                  {formatCurrency(proposal.totalAmount)}
+                </TableCell>
 
-              <TableCell className="px-4 py-4">
-                <Badge
-                  variant="default"
-                  color={getTripProposalBadgeColor(proposal.status)}
-                >
-                  {proposal.status}
-                </Badge>
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className="whitespace-nowrap px-4 py-4 text-muted-foreground">
+                  {formatDate(proposal.submittedAt)}
+                </TableCell>
+
+                <TableCell className="px-4 py-4">
+                  <Badge
+                    variant="default"
+                    color={getTripProposalBadgeColor(proposal.status)}
+                  >
+                    {proposal.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

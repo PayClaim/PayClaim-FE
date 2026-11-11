@@ -14,6 +14,7 @@ import {
 import { Badge } from '#/components/ui/badge'
 import { getProposalStatusConfig } from '#/types/tripProposals.type'
 import { Button } from '#/components/ui/button'
+import { downloadFile } from '#/lib/download'
 import {
   Dialog,
   DialogContent,
@@ -66,12 +67,7 @@ export function TripProposalTimeline({
 
   const handleDownload = async () => {
     if (!attachmentUrl) return
-
-    try {
-      await downloadAttachment(attachmentUrl, attachmentFileName)
-    } catch (error) {
-      console.error('Failed to download proposal attachment:', error)
-    }
+    await downloadFile(attachmentUrl, attachmentFileName || 'proposal-attachment')
   }
 
   return (
@@ -378,29 +374,6 @@ export function TripProposalTimeline({
       </Dialog>
     </>
   )
-}
-
-async function downloadAttachment(url: string, fileName: string) {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Download failed: ${response.status}`)
-  }
-
-  const blob = await response.blob()
-  const objectUrl = window.URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName || 'proposal-attachment'
-
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-
-  window.setTimeout(() => {
-    window.URL.revokeObjectURL(objectUrl)
-  }, 1000)
 }
 
 function getInitials(name?: string | null) {

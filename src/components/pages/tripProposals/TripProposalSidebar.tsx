@@ -11,6 +11,7 @@ import type { TripProposalDetailResponse } from '#/types/tripProposals.type'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { downloadFile } from '#/lib/download'
 import {
   Dialog,
   DialogContent,
@@ -46,12 +47,7 @@ export function TripProposalSidebar({
 
   const handleDownload = async () => {
     if (!attachmentUrl) return
-
-    try {
-      await downloadAttachment(attachmentUrl, attachmentFileName)
-    } catch (error) {
-      console.error('Failed to download proposal attachment:', error)
-    }
+    await downloadFile(attachmentUrl, attachmentFileName || 'proposal-attachment')
   }
 
   return (
@@ -261,29 +257,6 @@ export function TripProposalSidebar({
       </Dialog>
     </>
   )
-}
-
-async function downloadAttachment(url: string, fileName: string) {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Download failed: ${response.status}`)
-  }
-
-  const blob = await response.blob()
-  const objectUrl = window.URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName || 'proposal-attachment'
-
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-
-  window.setTimeout(() => {
-    window.URL.revokeObjectURL(objectUrl)
-  }, 1000)
 }
 
 function formatCurrency(amount: number) {
