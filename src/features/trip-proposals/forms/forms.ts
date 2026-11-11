@@ -15,6 +15,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
       destination: '',
       startDate: '',
       endDate: '',
+      accommodationAmount: 0,
       description: '',
       participants: [
         {
@@ -31,9 +32,6 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
     },
 
     onSubmit: async ({ value }) => {
-      console.log('SUBMIT TERPANGGIL')
-      console.log('FORM VALUE:', value)
-
       const pic = value.participants.find((p) => p.isPic)
 
       if (!pic || pic.employeeId !== currentEmployeeId) {
@@ -41,18 +39,20 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
         return
       }
 
-      const totalAmount = value.participants.reduce(
-        (total, participant) => total + participant.amount,
-        0,
-      )
-
       const formData = new FormData()
 
       formData.append('Destination', value.destination)
       formData.append('StartDate', value.startDate)
       formData.append('EndDate', value.endDate)
+
+      // TotalAmount backend masih digunakan untuk menyimpan
+      // Accommodation Amount pada tahap Create.
+      formData.append(
+        'TotalAmount',
+        value.accommodationAmount.toString(),
+      )
+
       formData.append('Description', value.description)
-      formData.append('TotalAmount', totalAmount.toString())
 
       formData.append(
         'Participants',
@@ -60,7 +60,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
           value.participants.map((participant) => ({
             EmployeeId: participant.employeeId,
             IsPic: participant.isPic,
-            Amount: participant.amount,
+            Amount: 0,
           })),
         ),
       )
@@ -70,11 +70,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
       }
 
       try {
-        console.log('MENGIRIM FORM DATA')
-
         await mutation.mutateAsync(formData)
-
-        console.log('BERHASIL MENGIRIM DATA')
 
         toast.success('Trip proposal submitted successfully')
 
@@ -84,7 +80,12 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
       } catch (err: unknown) {
         console.error('CREATE TRIP PROPOSAL ERROR:', err)
 
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengajukan proposal perjalanan'))
+        toast.error(
+          getFriendlyErrorMessage(
+            err,
+            'Gagal mengajukan proposal perjalanan',
+          ),
+        )
       }
     },
   })

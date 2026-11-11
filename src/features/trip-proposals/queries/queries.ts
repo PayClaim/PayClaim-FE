@@ -6,7 +6,11 @@ import {
 
 import { api } from '#/lib/api-client'
 import { getToken } from '#/hooks/auth.hook'
-import type { TripProposal, TripProposalDetailResponse } from '#/types/tripProposals.type'
+
+import type {
+  TripProposal,
+  TripProposalDetailResponse,
+} from '#/types/tripProposals.type'
 
 type PagedResponse<T> = {
   success: boolean
@@ -21,7 +25,9 @@ type PagedResponse<T> = {
   hasNextPage: boolean
 }
 
-const getAllProposals = async (employeeId?: string): Promise<TripProposal[]> => {
+const getAllProposals = async (
+  employeeId?: string,
+): Promise<TripProposal[]> => {
   const token = getToken()
 
   if (!token) {
@@ -29,7 +35,10 @@ const getAllProposals = async (employeeId?: string): Promise<TripProposal[]> => 
   }
 
   const apiUrl = import.meta.env.VITE_API_URL
-  const queryParam = employeeId ? `?employeeId=${encodeURIComponent(employeeId)}` : ''
+
+  const queryParam = employeeId
+    ? `?employeeId=${encodeURIComponent(employeeId)}`
+    : ''
 
   const response = await fetch(`${apiUrl}/trip-proposals${queryParam}`, {
     method: 'GET',
@@ -73,6 +82,7 @@ export const useCreateTripProposalMutation = () => {
     mutationFn: (formData: FormData) => {
       return api.post('/trip-proposals', formData)
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['trip-proposals'],
@@ -94,6 +104,10 @@ export const useGetTripProposalByIdQuery = useGetProposalByIdQuery
 type TripProposalApprovalBody = {
   decision: 'Approved' | 'Rejected' | 'NeedsRevision'
   notes?: string
+  participants?: {
+    employeeId: string
+    amount: number
+  }[]
 }
 
 // Approve Trip Proposal

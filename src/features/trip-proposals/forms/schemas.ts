@@ -11,6 +11,10 @@ export const createTripProposalSchema = z
 
     endDate: z.string().min(1, 'End date is required'),
 
+    accommodationAmount: z
+      .number()
+      .positive('Accommodation amount must be greater than 0'),
+
     description: z
       .string()
       .min(5, 'Description must be at least 5 characters')
@@ -21,12 +25,18 @@ export const createTripProposalSchema = z
         z.object({
           employeeId: z.string().min(1, 'Employee is required'),
           isPic: z.boolean(),
-          amount: z.number().positive('Amount must be greater than 0'),
+          amount: z.number().nonnegative('Amount cannot be negative'),
         }),
       )
       .min(1, 'At least one participant is required'),
 
-    file: z.instanceof(File).nullable(),
+    file: z
+      .instanceof(File)
+      .nullable()
+      .refine((file) => file !== null && file.size > 0, {
+        message: 'Proposal letter is required.',
+      }), 
+
   })
   .refine((data) => data.endDate >= data.startDate, {
     message: 'End date cannot be before start date',

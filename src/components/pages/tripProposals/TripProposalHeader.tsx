@@ -66,7 +66,7 @@ export function TripProposalHeader({
       </div>
 
       {/* Ringkasan perjalanan. */}
-      <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-5 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryItem
           label="Start Date"
           value={formatDate(proposal.startDate)}
@@ -78,7 +78,12 @@ export function TripProposalHeader({
         />
 
         <SummaryItem
-          label="Total Estimated Amount"
+          label="Accommodation Amount (Hotel, Ticket)"
+          value={formatCurrency(proposal.accommodationAmount)}
+        />
+
+        <SummaryItem
+          label="Total Amount"
           value={formatCurrency(proposal.totalAmount)}
           highlight
         />
@@ -115,6 +120,7 @@ function SummaryItem({
 
 function getStatusLabel(status: string) {
   const norm = (status || '').replace(/[\s_-]/g, '').toLowerCase()
+
   switch (norm) {
     case 'submitted':
       return 'Pending Manager'
@@ -145,7 +151,6 @@ function formatDate(date: string) {
   })
 }
 
-// Format menjadi: 09 November 2026 at 08.40
 function formatSubmittedAt(value: string) {
   const date = new Date(value)
 

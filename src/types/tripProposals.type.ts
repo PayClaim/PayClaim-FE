@@ -3,6 +3,7 @@ export type TripProposal = {
   destination: string
   startDate: string
   endDate: string
+  accommodationAmount: number
   totalAmount: number
   submittedAt: string
   status: string
@@ -31,15 +32,19 @@ export function isTripStatus(
   target: string | string[],
 ): boolean {
   if (!status) return false
+
   const norm = normalizeTripStatus(status)
+
   if (Array.isArray(target)) {
     return target.some((t) => normalizeTripStatus(t) === norm)
   }
+
   return norm === normalizeTripStatus(target)
 }
 
 export function getProposalStatusConfig(status?: string | null) {
   const norm = normalizeTripStatus(status)
+
   switch (norm) {
     case 'submitted':
       return {
@@ -48,6 +53,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
+
     case 'underreview':
       return {
         label: 'Under Review',
@@ -55,6 +61,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
+
     case 'financemanagerreview':
       return {
         label: 'Finance Review',
@@ -62,6 +69,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
+
     case 'approved':
       return {
         label: 'Approved',
@@ -69,6 +77,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60',
         dotColor: 'bg-blue-600',
       }
+
     case 'completed':
       return {
         label: 'Completed',
@@ -76,6 +85,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60',
         dotColor: 'bg-emerald-600',
       }
+
     case 'needsrevision':
       return {
         label: 'Needs Revision',
@@ -83,6 +93,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/60',
         dotColor: 'bg-orange-500',
       }
+
     case 'rejected':
       return {
         label: 'Rejected',
@@ -90,6 +101,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
         dotColor: 'bg-rose-500',
       }
+
     case 'cancelled':
       return {
         label: 'Cancelled',
@@ -97,6 +109,7 @@ export function getProposalStatusConfig(status?: string | null) {
           'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
         dotColor: 'bg-rose-500',
       }
+
     default:
       return {
         label: status || 'Pending',
@@ -117,6 +130,7 @@ export interface CreateTripProposalFormValues {
   destination: string
   startDate: string
   endDate: string
+  accommodationAmount: number
   description: string
   participants: TripProposalParticipantInput[]
   file: File | null
@@ -134,7 +148,7 @@ export interface TripApprovalHistory {
   id: number
   approverId: string
   approverName: string
-  decision: 'Approved' | 'Rejected' | 'NeedsRevision'
+  decision: string
   notes?: string
   approvalLevel: number
   decidedAt: string
@@ -145,6 +159,8 @@ export interface TripProposalDetail {
   destination: string
   startDate: string
   endDate: string
+  accommodationAmount: number
+  financeLimit: number
   totalAmount: number
   submittedAt: string
   description: string
@@ -159,7 +175,9 @@ export interface TripProposalDetailResponse {
   destination: string
   startDate: string
   endDate: string
+  accommodationAmount: number
   totalAmount: number
+  financeLimit: number
   submittedAt: string
   description: string
   status: TripProposalStatus
