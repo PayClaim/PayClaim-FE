@@ -23,7 +23,9 @@ interface ClaimCreateSearchParams {
 }
 
 export const Route = createFileRoute('/_app/claims/create')({
-  validateSearch: (search: Record<string, unknown>): ClaimCreateSearchParams => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): ClaimCreateSearchParams => ({
     employeeBenefitId:
       typeof search.employeeBenefitId === 'string'
         ? search.employeeBenefitId
@@ -92,7 +94,7 @@ function RouteComponent() {
       form.setFieldMeta('amount', (prev) => ({
         ...prev,
         isTouched: true,
-        errorMap: { ...prev?.errorMap, onSubmit: msg },
+        errorMap: { ...prev.errorMap, onSubmit: msg },
       }))
       toast.error(msg)
       return
@@ -107,7 +109,7 @@ function RouteComponent() {
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
-          errorMap: { ...prev?.errorMap, onSubmit: msg },
+          errorMap: { ...prev.errorMap, onSubmit: msg },
         }))
         toast.error(msg)
         return
@@ -124,7 +126,7 @@ function RouteComponent() {
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
-          errorMap: { ...prev?.errorMap, onSubmit: msg },
+          errorMap: { ...prev.errorMap, onSubmit: msg },
         }))
         toast.error(msg)
         return
@@ -227,7 +229,7 @@ function RouteComponent() {
             </div>
 
             {currentClaimType === 'BusinessTripReimbursement' && (
-              <div className="col-span-2">
+              <div className="col-span-2 my-2">
                 <form.AppField name="tripProposalId">
                   {(field) => (
                     <div>
@@ -253,7 +255,7 @@ function RouteComponent() {
             )}
 
             {currentClaimType === 'Benefit' && (
-              <div className="col-span-2">
+              <div className="col-span-2 my-2">
                 <form.AppField name="employeeBenefitId">
                   {(field) => (
                     <div>

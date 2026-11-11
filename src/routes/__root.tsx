@@ -14,6 +14,7 @@ import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
 import { Toaster } from '#/components/ui/sonner'
+import NotFoundPage from '#/components/pages/NotFoundPage'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -57,6 +58,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: () => <NotFoundPage />,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
