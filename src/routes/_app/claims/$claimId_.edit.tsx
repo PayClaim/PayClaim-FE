@@ -3,6 +3,7 @@ import { Button } from '#/components/ui/button'
 import { useState } from 'react'
 import { editClaimForm } from '#/features/claims/forms/forms'
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimResponseWithHistory } from '#/types/claims.type'
 import {
   Dialog,
   DialogClose,
@@ -29,18 +30,28 @@ function RouteComponent() {
   const { claimId } = Route.useParams()
   const { data: claim, isError, error, isFetching } = useGetClaimsQuery(claimId)
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-
   if (isError) return <ErrorComponent pageTitle="Revise Claim" error={error} />
   if (isFetching || !claim) return <LoadingComponent pageTitle="Revise Claim" />
 
+  return <EditClaimFormContent claimId={claimId} claim={claim} />
+}
+
+function EditClaimFormContent({
+  claimId,
+  claim,
+}: {
+  claimId: string
+  claim: ClaimResponseWithHistory
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   const initialValue = {
     claimType: claim.claimType,
-    transactionDate: claim.transactionDate,
-    description: claim.description,
-    amount: claim.amount,
-    tripProposalId: claim.tripProposalId,
-    employeeBenefitId: claim.employeeBenefitId,
+    transactionDate: claim.transactionDate?.slice(0, 10) || '',
+    description: claim.description || '',
+    amount: claim.amount || 0,
+    tripProposalId: claim.tripProposalId ?? null,
+    employeeBenefitId: claim.employeeBenefitId ?? null,
   }
 
   const form = editClaimForm(claimId, initialValue)
