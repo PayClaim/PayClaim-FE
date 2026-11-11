@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import {
+  CheckCircle2,
+  XCircle,
+  Users,
+  AlertCircle,
+} from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
+
 import {
   useApproveTripProposalMutation,
   useGetProposalByIdQuery,
@@ -17,8 +23,13 @@ import {
   type ProposalTimelineItem,
 } from '#/components/pages/tripProposals/TripProposalTimeline'
 
-import { TripProposalStatus, isTripStatus } from '#/types/tripProposals.type'
+import {
+  TripProposalStatus,
+  isTripStatus,
+} from '#/types/tripProposals.type'
+
 import { Button } from '#/components/ui/button'
+
 import {
   Dialog,
   DialogClose,
@@ -28,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
+
 import { Label } from '#/components/ui/label'
 import { Textarea } from '#/components/ui/textarea'
 
@@ -60,19 +72,51 @@ export function TripProposalDetailWorkspace({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [notes, setNotes] = useState('')
 
-  const roles = user?.roles || []
-  const roleLower = roles.map((r: string) => r.toLowerCase())
+  // Nominal yang diinput untuk masing-masing peserta.
+  const [participantAmounts, setParticipantAmounts] = useState<
+    Record<string, string>
+  >({})
 
-  const isAdmin = roleLower.includes('admin')
-  const isManager =
-    roleLower.includes('manager') || roleLower.includes('project manager')
-  const isFinance =
-    roleLower.includes('finance') || roleLower.includes('finance manager')
-  const isFinanceManager = roleLower.includes('finance manager')
+  // Opsi untuk menyamakan nominal seluruh peserta.
+  const [useSameAmount, setUseSameAmount] = useState(false)
+  const [sameAmount, setSameAmount] = useState('')
+
+  // Mengisi input dengan nominal yang sudah tersimpan dari backend.
+  useEffect(() => {
+    if (!proposal) return
+
+    const initialAmounts: Record<string, string> = {}
+
+    proposal.participants.forEach((participant) => {
+      initialAmounts[participant.employeeId] =
+        participant.amount > 0
+          ? String(participant.amount)
+          : ''
+    })
+
+    setParticipantAmounts(initialAmounts)
+  }, [proposal])
+
+const roles = user?.roles || []
+const roleLower = roles.map((role: string) => role.toLowerCase())
+
+const isAdmin = roleLower.includes('admin')
+
+const isFinanceManager = roleLower.includes('finance manager')
+
+const isFinance =
+  roleLower.includes('finance') && !isFinanceManager
+
+const isManager =
+  (roleLower.includes('manager') ||
+    roleLower.includes('project manager')) &&
+  !isFinanceManager
 
   const isPic = Boolean(
     proposal?.participants?.some(
-      (p) => p.isPic && p.employeeId === user?.employeeId,
+      (participant) =>
+        participant.isPic &&
+        participant.employeeId === user?.employeeId,
     ),
   )
 
@@ -80,38 +124,152 @@ export function TripProposalDetailWorkspace({
     proposal?.status,
     TripProposalStatus.Submitted,
   )
+
   const isUnderReview = isTripStatus(
     proposal?.status,
     TripProposalStatus.UnderReview,
   )
+
   const isFinanceManagerReview = isTripStatus(
     proposal?.status,
     TripProposalStatus.FinanceManagerReview,
   )
 
+  // Form limit hanya digunakan pada tahap Finance.
+  const isFinanceApprovalStage =
+    isUnderReview && (isFinance || isAdmin)
+
   const canTakeAction =
     Boolean(proposal) &&
     (!isPic || isAdmin) &&
-    ((isAdmin &&
-      (isSubmitted || isUnderReview || isFinanceManagerReview)) ||
+    (
+      (isAdmin &&
+        (isSubmitted || isUnderReview || isFinanceManagerReview)) ||
       (isManager && isSubmitted) ||
       (isFinance && isUnderReview) ||
-      (isFinanceManager && isFinanceManagerReview))
+      (isFinanceManager && isFinanceManagerReview)
+    )
 
   const isMutationPending =
     approveMutation.isPending || rejectMutation.isPending
 
+  // Format Rupiah.
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(amount)
+
+  // Mengubah nominal untuk satu peserta.
+  const handleParticipantAmountChange = (
+    employeeId: string,
+    amount: string,
+  ) => {
+    setParticipantAmounts((current) => ({
+      ...current,
+      [employeeId]: amount,
+    }))
+  }
+
+  // Menerapkan satu nominal ke seluruh peserta.
+  const handleApplySameAmount = () => {
+    if (!proposal) return
+
+    const amount = Number(sameAmount)
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Amount must be greater than zero.')
+      return
+    }
+
+    setParticipantAmounts((current) => {
+      const updatedAmounts = { ...current }
+
+      proposal.participants.forEach((participant) => {
+        updatedAmounts[participant.employeeId] = sameAmount
+      })
+
+      return updatedAmounts
+    })
+
+    toast.success('Amount applied to all participants.')
+  }
+
+  // Memastikan semua peserta sudah mendapatkan limit.
+  const hasValidParticipantAmounts = Boolean(
+    proposal &&
+      proposal.participants.length > 0 &&
+      proposal.participants.every((participant) => {
+        const amount = Number(
+          participantAmounts[participant.employeeId] ?? '',
+        )
+
+        return Number.isFinite(amount) && amount > 0
+      }),
+  )
+
+// Total reimbursement limit for all participants.
+const totalParticipantLimit = proposal
+  ? proposal.participants.reduce((total, participant) => {
+      const amount = Number(
+        participantAmounts[participant.employeeId] ?? '',
+      )
+
+      return total + (Number.isFinite(amount) ? amount : 0)
+    }, 0)
+  : 0
+
+// Projected proposal total = accommodation + participant limits.
+const projectedTotalAmount = proposal
+  ? proposal.accommodationAmount + totalParticipantLimit
+  : 0
+
+// Check the Finance approval limit provided by the backend.
+const exceedsFinanceLimit =
+  Boolean(proposal) &&
+  (proposal?.financeLimit ?? 0) > 0 &&
+  projectedTotalAmount > (proposal?.financeLimit ?? 0)
+
+
   const handleAction = async () => {
-    if (!actionType) return
+    if (!actionType || !proposal) return
 
     try {
       if (actionType === 'Approved') {
+        if (
+          isFinanceApprovalStage &&
+          !hasValidParticipantAmounts
+        ) {
+          toast.error(
+            'Please enter a reimbursement limit greater than zero for every participant.',
+          )
+          return
+        }
+
+        // Kirim limit per peserta hanya pada approval Finance.
+        const participants = isFinanceApprovalStage
+          ? proposal.participants.map((participant) => ({
+              employeeId: participant.employeeId,
+              amount: Number(
+                participantAmounts[participant.employeeId],
+              ),
+            }))
+          : undefined
+
         await approveMutation.mutateAsync({
           decision: 'Approved',
           notes: notes.trim() || undefined,
+          ...(participants ? { participants } : {}),
         })
 
-        toast.success('Trip proposal has been approved successfully.')
+        if (isFinanceApprovalStage && exceedsFinanceLimit) {
+          toast.success(
+            'Proposal forwarded to Finance Manager for final review.',
+          )
+        } else {
+          toast.success('Trip proposal has been approved successfully.')
+        }
       } else if (actionType === 'NeedsRevision') {
         await rejectMutation.mutateAsync({
           decision: 'NeedsRevision',
@@ -131,9 +289,13 @@ export function TripProposalDetailWorkspace({
       setDialogOpen(false)
       setActionType(null)
       setNotes('')
+      setSameAmount('')
+      setUseSameAmount(false)
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Action failed to process.'
+        err instanceof Error
+          ? err.message
+          : 'Action failed to process.'
 
       toast.error(message)
     }
@@ -207,7 +369,7 @@ export function TripProposalDetailWorkspace({
 
   const showFinanceManagerStage =
     Boolean(financeManagerApproval) ||
-    isTripStatus(proposal.status, TripProposalStatus.FinanceManagerReview)
+    isFinanceManagerReview
 
   const submittedActivity = approvalHistory.find(
     (history) => history.decision.toLowerCase() === 'submitted',
@@ -296,6 +458,14 @@ export function TripProposalDetailWorkspace({
       ? 'Approve (Finance)'
       : 'Approve (Finance Manager)'
 
+  const openApprovalDialog = () => {
+    setActionType('Approved')
+    setNotes('')
+    setSameAmount('')
+    setUseSameAmount(false)
+    setDialogOpen(true)
+  }
+
   const approvalActions = canTakeAction ? (
     <>
       <Button
@@ -331,11 +501,7 @@ export function TripProposalDetailWorkspace({
         type="button"
         size="sm"
         className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
-        onClick={() => {
-          setActionType('Approved')
-          setNotes('')
-          setDialogOpen(true)
-        }}
+        onClick={openApprovalDialog}
       >
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
         {approvalButtonLabel}
@@ -369,12 +535,21 @@ export function TripProposalDetailWorkspace({
         />
       </div>
 
+      {/* Approval / Rejection Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className={
+            actionType === 'Approved' && isFinanceApprovalStage
+              ? 'max-h-[90vh] overflow-y-auto sm:max-w-2xl'
+              : 'sm:max-w-md'
+          }
+        >
           <DialogHeader>
             <DialogTitle>
               {actionType === 'Approved'
-                ? 'Approve Trip Proposal'
+                ? isFinanceApprovalStage
+                  ? 'Approve Trip Proposal & Set Limits'
+                  : 'Approve Trip Proposal'
                 : actionType === 'NeedsRevision'
                   ? 'Request Trip Proposal Revision'
                   : 'Reject Trip Proposal'}
@@ -382,16 +557,209 @@ export function TripProposalDetailWorkspace({
 
             <DialogDescription>
               {actionType === 'Approved'
-                ? `Confirm approval for proposal "${proposal.destination}" (Total Amount: Rp ${Number(proposal.totalAmount || 0).toLocaleString('id-ID')}).`
+                ? isFinanceApprovalStage
+                  ? 'Set the reimbursement limit for each participant before approving this proposal.'
+                  : `Confirm approval for proposal "${proposal.destination}" (Total Amount: ${formatCurrency(Number(proposal.totalAmount || 0))}).`
                 : actionType === 'NeedsRevision'
                   ? 'Return this proposal to the employee with revision instructions.'
                   : 'Confirm that you want to reject this trip proposal.'}
             </DialogDescription>
           </DialogHeader>
 
+          {/* Form limit reimbursement Finance */}
+          {actionType === 'Approved' &&
+            isFinanceApprovalStage && (
+              <div className="space-y-5 py-2">
+                {/* Apply the same amount to all participants */}
+                  <div className="rounded-lg border border-border p-4">
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={useSameAmount}
+                        onChange={(event) => setUseSameAmount(event.target.checked)}
+                        className="h-4 w-4 accent-primary"
+                      />
+
+                      <span className="text-sm font-semibold">
+                        Apply the same amount to all participants
+                      </span>
+                    </label>
+
+                    {useSameAmount && (
+                      <div className="mt-4 space-y-3">
+                        <div>
+                          <Label htmlFor="same-participant-amount">
+                            Amount for all participants
+                          </Label>
+
+                          <input
+                            id="same-participant-amount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={sameAmount}
+                            onChange={(event) => setSameAmount(event.target.value)}
+                            placeholder="Enter amount"
+                            className="mt-2 h-10 w-full rounded-md border border-border bg-input px-3 text-sm"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          className="w-full bg-blue-600 font-semibold text-white hover:bg-blue-700"
+                          disabled={
+                            !sameAmount ||
+                            !Number.isFinite(Number(sameAmount)) ||
+                            Number(sameAmount) <= 0
+                          }
+                          onClick={handleApplySameAmount}
+                        >
+                          Apply to All Participants
+                        </Button>
+
+                        <p className="text-xs text-muted-foreground">
+                          The amount will be applied to all participants. You can still
+                          edit each participant's amount individually afterward.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                {/* Input nominal per peserta */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">
+                        Reimbursement Limit per Employee
+                      </h3>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Set the total reimbursement limit for each participant for the
+                        entire trip, not per day.
+                      </p>
+                    </div>
+
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      {proposal.participants.length} Participants
+                    </span>
+                  </div>
+
+                  {proposal.participants.map((participant) => {
+                    const amount =
+                      participantAmounts[participant.employeeId] ?? ''
+
+                    const isInvalid =
+                      amount !== '' &&
+                      (!Number.isFinite(Number(amount)) ||
+                        Number(amount) <= 0)
+
+                    return (
+                      <div
+                        key={participant.employeeId}
+                        className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_220px] sm:items-center"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {participant.employeeName ||
+                              participant.employeeNumber ||
+                              participant.employeeId}
+                          </p>
+
+                          {participant.employeeNumber && (
+                            <p className="text-xs text-muted-foreground">
+                              {participant.employeeNumber}
+                            </p>
+                          )}
+
+                          {participant.isPic && (
+                            <span className="mt-1 inline-block rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                              PIC
+                            </span>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label
+                            htmlFor={`amount-${participant.employeeId}`}
+                            className="sr-only"
+                          >
+                            Reimbursement limit for{' '}
+                            {participant.employeeName || 'participant'}
+                          </Label>
+
+                          <input
+                            id={`amount-${participant.employeeId}`}
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={amount}
+                            placeholder="Enter amount"
+                            onChange={(event) =>
+                              handleParticipantAmountChange(
+                                participant.employeeId,
+                                event.target.value,
+                              )
+                            }
+                            className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
+                              isInvalid
+                                ? 'border-destructive'
+                                : 'border-border'
+                            }`}
+                          />
+
+                          {isInvalid && (
+                            <p className="mt-1 text-xs text-destructive">
+                              Amount must be greater than zero.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                                    })}
+                </div>
+
+                {/* Finance approval limit warning */}
+                {exceedsFinanceLimit && (
+                  <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">
+                        Finance Approval Limit Exceeded
+                      </p>
+
+                      <p className="text-xs leading-relaxed">
+                        The projected proposal total is{' '}
+                        <strong>
+                          {formatCurrency(projectedTotalAmount)}
+                        </strong>
+                        , exceeding the Finance approval limit of{' '}
+                        <strong>
+                          {formatCurrency(proposal.financeLimit)}
+                        </strong>
+                        . This proposal will be automatically forwarded to
+                        the Finance Manager when you confirm.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Participant validation warning */}
+                {!hasValidParticipantAmounts && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Please enter a reimbursement limit greater than zero
+                    for every participant before approving.
+                  </p>
+                )}
+              </div>
+            )}
+
+          {/* Catatan approval */}
           <div className="space-y-2 py-2">
             <Label htmlFor="trip-approval-notes">
-              {actionType === 'Rejected' || actionType === 'NeedsRevision'
+              {actionType === 'Rejected' ||
+              actionType === 'NeedsRevision'
                 ? 'Reason / Instructions (Required)'
                 : 'Approval Notes (Optional)'}
             </Label>
@@ -429,7 +797,10 @@ export function TripProposalDetailWorkspace({
                 isMutationPending ||
                 ((actionType === 'Rejected' ||
                   actionType === 'NeedsRevision') &&
-                  !notes.trim())
+                  !notes.trim()) ||
+                (actionType === 'Approved' &&
+                  isFinanceApprovalStage &&
+                  !hasValidParticipantAmounts)
               }
               className={
                 actionType === 'Rejected'
