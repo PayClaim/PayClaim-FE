@@ -9,14 +9,49 @@ import { useFieldStatus } from './TextField'
 import { fromDateOnly, toDateOnly } from '#/lib/utils'
 import { cn } from 'cn'
 
-export function DatePicker({ label }: { label: string }) {
+export function DatePicker({
+  label,
+  minDate,
+  maxDate,
+  helperText,
+}: {
+  label: string
+  minDate?: Date | string
+  maxDate?: Date | string
+  helperText?: string
+}) {
   const [open, setOpen] = useState(false)
   const field = useFieldContext<string | undefined>()
   const { hasError, errors } = useFieldStatus(field)
 
+  const minStr = minDate
+    ? typeof minDate === 'string'
+      ? minDate.slice(0, 10)
+      : toDateOnly(minDate)
+    : undefined
+
+  const maxStr = maxDate
+    ? typeof maxDate === 'string'
+      ? maxDate.slice(0, 10)
+      : toDateOnly(maxDate)
+    : undefined
+
+  const min = minStr ? fromDateOnly(minStr) : undefined
+  const max = maxStr ? fromDateOnly(maxStr) : undefined
+
+  const isOutOfRange = (date: Date) => {
+    const s = toDateOnly(date)
+    if (minStr && s < minStr) return true
+    if (maxStr && s > maxStr) return true
+    return false
+  }
+
   const selected = field.state.value
     ? fromDateOnly(field.state.value)
     : undefined
+
+  const initialMonth =
+    selected && !isOutOfRange(selected) ? selected : min || new Date()
 
   return (
     <div className="my-4">
@@ -54,9 +89,14 @@ export function DatePicker({ label }: { label: string }) {
           <Calendar
             mode="single"
             selected={selected}
-            defaultMonth={selected}
+            defaultMonth={initialMonth}
+            startMonth={min}
+            endMonth={max}
             captionLayout="dropdown"
+            disabled={minStr || maxStr ? isOutOfRange : undefined}
             onSelect={(date) => {
+              if (!date) return
+              if (isOutOfRange(date)) return
               field.handleChange(toDateOnly(date))
               setOpen(false)
               field.handleBlur()
@@ -64,6 +104,9 @@ export function DatePicker({ label }: { label: string }) {
           />
         </PopoverContent>
       </Popover>
+      {helperText && !hasError && (
+        <p className="mt-1 text-[11px] text-muted-foreground">{helperText}</p>
+      )}
       {hasError && <ErrorMessages errors={errors} />}
     </div>
   )

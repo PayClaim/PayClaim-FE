@@ -41,10 +41,10 @@ export default function Header() {
     .join(' ')}!`
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-card/80 backdrop-blur-sm border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40">
+    <header className="h-16 flex items-center justify-between px-6 bg-card/90 dark:bg-[#0f0f0f]/90 backdrop-blur-sm border-b border-border sticky top-0 z-40">
       <div className="flex items-center gap-3 min-w-0 mr-4">
         <span
-          className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline truncate"
+          className="text-sm text-slate-500 dark:text-muted-foreground hidden sm:inline truncate"
           title={greetingTitle}
         >
           Welcome back,{' '}
@@ -62,21 +62,21 @@ export default function Header() {
         <UserDropDown user={user} logout={onClickLogout}>
           <button
             type="button"
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100/80 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 transition-colors cursor-pointer group bg-card"
+            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100/80 dark:hover:bg-secondary border border-border transition-colors cursor-pointer group bg-card"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
               {initial}
             </div>
             <div className="text-left leading-tight hidden sm:block">
-              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 max-w-[150px] truncate">
+              <div className="text-sm font-semibold text-slate-800 dark:text-foreground max-w-[150px] truncate">
                 {displayName}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 capitalize max-w-[150px] truncate">
+              <div className="text-xs text-slate-500 dark:text-muted-foreground capitalize max-w-[150px] truncate">
                 {position || primaryRole}
               </div>
             </div>
             <ChevronsUpDown
-              className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0"
+              className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-foreground transition-colors shrink-0"
               strokeWidth={1.75}
             />
           </button>

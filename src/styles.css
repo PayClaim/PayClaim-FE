@@ -74,64 +74,75 @@
 }
 
 .dark {
-  --sea-ink: #d7ece8;
-  --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
-  --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
+  --sea-ink: #f1f1f1;
+  --sea-ink-soft: #aaaaaa;
+  --lagoon: #60a5fa;
+  --lagoon-deep: #3b82f6;
+  --palm: #34d399;
+  --sand: #181818;
+  --foam: #121212;
+  --surface: #1f1f1f;
+  --surface-strong: #242424;
+  --line: #2e2e32;
+  --inset-glint: rgba(255, 255, 255, 0.05);
+  --kicker: #93c5fd;
+  --bg-base: #0f0f0f;
+  --header-bg: #0f0f0f;
+  --chip-bg: #272727;
+  --chip-line: #383838;
+  --link-bg-hover: #272727;
+  --hero-a: transparent;
+  --hero-b: transparent;
 
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.274 0.006 286.033);
-  --input: oklch(0.274 0.006 286.033);
-  --ring: oklch(0.442 0.017 285.786);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  /* --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.274 0.006 286.033);
-  --sidebar-ring: oklch(0.442 0.017 285.786); */
-  --sidebar-primary: #6b8cff;
---sidebar-primary-foreground: #ffffff;
---sidebar-accent: #26334f;
---sidebar-accent-foreground: #dbeafe;
---sidebar-border: #303b50;
---sidebar-ring: #6b8cff;
+  /* YouTube-inspired dark palette: warm dark charcoal (#0f0f0f) & clear elevation */
+  --background: #0f0f0f;
+  --foreground: #f1f1f1;
+
+  /* Elevated cards, containers, tables */
+  --card: #1f1f1f;
+  --card-foreground: #f1f1f1;
+
+  /* Dialogs, popovers, dropdowns */
+  --popover: #212121;
+  --popover-foreground: #f1f1f1;
+
+  /* Brand Primary */
+  --primary: #465fff;
+  --primary-foreground: #ffffff;
+
+  /* Secondary, muted, chip buttons */
+  --secondary: #272727;
+  --secondary-foreground: #f1f1f1;
+  --muted: #272727;
+  --muted-foreground: #aaaaaa;
+  --accent: #272727;
+  --accent-foreground: #f1f1f1;
+
+  /* Alerts */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Borders & Inputs */
+  --border: #2e2e32;
+  --input: #272727;
+  --ring: #465fff;
+
+  /* Charts */
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #f472b6;
+
+  /* Sidebar aligned with YouTube sidebar */
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #f1f1f1;
+  --sidebar-primary: #465fff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #272727;
+  --sidebar-accent-foreground: #f1f1f1;
+  --sidebar-border: #242428;
+  --sidebar-ring: #465fff;
 }
 
 @theme inline {
@@ -237,6 +248,16 @@ body::after {
     linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.dark body::before,
+.dark body::after {
+  display: none !important;
 }
 
 /* a {

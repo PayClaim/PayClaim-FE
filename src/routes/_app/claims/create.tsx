@@ -7,6 +7,7 @@ import { createClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
+import { toDateOnly } from '#/lib/utils'
 import { toast } from 'sonner'
 import { ArrowLeft, Send } from 'lucide-react'
 import {
@@ -82,6 +83,9 @@ function RouteComponent() {
     form.setFieldValue('tripProposalId', null)
     setSelectedBenefitId(null)
     setSelectedTripId(null)
+    if (value !== 'BusinessTripReimbursement') {
+      form.setFieldValue('transactionDate', toDateOnly(new Date()))
+    }
   }
 
   const approvedTrips = tripProposals.filter((t) => {
@@ -147,6 +151,23 @@ function RouteComponent() {
     }
   }, [searchBenefitId, searchTripId, searchClaimType])
 
+  const selectedTrip = approvedTrips.find(
+    (t) => t.id === (form.state.values.tripProposalId || selectedTripId),
+  )
+
+  useEffect(() => {
+    if (currentClaimType === 'BusinessTripReimbursement' && selectedTrip) {
+      const curDate = form.state.values.transactionDate
+      if (
+        !curDate ||
+        curDate < selectedTrip.startDate ||
+        curDate > selectedTrip.endDate
+      ) {
+        form.setFieldValue('transactionDate', selectedTrip.startDate)
+      }
+    }
+  }, [selectedTripId, currentClaimType, selectedTrip, form])
+
   const handleReview = async () => {
     const values = form.state.values
 
@@ -182,6 +203,32 @@ function RouteComponent() {
       values.tripProposalId
     ) {
       const selected = approvedTrips.find((t) => t.id === values.tripProposalId)
+      if (selected) {
+        if (!values.transactionDate) {
+          const msg = 'Tanggal invoice wajib diisi.'
+          form.setFieldMeta('transactionDate', (prev) => ({
+            ...prev,
+            isTouched: true,
+            errorMap: { ...prev?.errorMap, onSubmit: msg },
+          }))
+          toast.error(msg)
+          return
+        }
+        if (
+          values.transactionDate < selected.startDate ||
+          values.transactionDate > selected.endDate
+        ) {
+          const msg = `Tanggal invoice harus berada di dalam periode perjalanan dinas (${selected.startDate} s/d ${selected.endDate}).`
+          form.setFieldMeta('transactionDate', (prev) => ({
+            ...prev,
+            isTouched: true,
+            errorMap: { ...prev?.errorMap, onSubmit: msg },
+          }))
+          toast.error(msg)
+          return
+        }
+      }
+
       const maxBudget =
         selected?.myRemainingBudget ??
         selected?.myParticipantAmount ??
@@ -304,7 +351,13 @@ function RouteComponent() {
                         }
                         label="Trip Proposal"
                         values={tripSelect}
-                        onCustomChange={(val) => setSelectedTripId(val)}
+                        onCustomChange={(val) => {
+                          setSelectedTripId(val)
+                          const chosen = approvedTrips.find((t) => t.id === val)
+                          if (chosen) {
+                            form.setFieldValue('transactionDate', chosen.startDate)
+                          }
+                        }}
                       />
                     )}
                   </form.AppField>
@@ -344,8 +397,47 @@ function RouteComponent() {
           {/* SECTION 2: TRANSACTION DETAILS */}
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-              <form.AppField name="transactionDate">
-                {(field) => <field.DatePicker label="Invoice Date" />}
+              <form.AppField
+                name="transactionDate"
+                validators={{
+                  onChange: ({ value }) => {
+                    if (
+                      currentClaimType === 'BusinessTripReimbursement' &&
+                      selectedTrip
+                    ) {
+                      if (!value) return 'Tanggal invoice wajib diisi'
+                      if (value < selectedTrip.startDate) {
+                        return `Tanggal invoice tidak boleh sebelum tanggal mulai perjalanan (${selectedTrip.startDate}).`
+                      }
+                      if (value > selectedTrip.endDate) {
+                        return `Tanggal invoice tidak boleh setelah tanggal selesai perjalanan (${selectedTrip.endDate}).`
+                      }
+                    }
+                    return undefined
+                  },
+                }}
+              >
+                {(field) => (
+                  <field.DatePicker
+                    label="Invoice Date"
+                    minDate={
+                      currentClaimType === 'BusinessTripReimbursement'
+                        ? selectedTrip?.startDate
+                        : undefined
+                    }
+                    maxDate={
+                      currentClaimType === 'BusinessTripReimbursement'
+                        ? selectedTrip?.endDate
+                        : undefined
+                    }
+                    helperText={
+                      currentClaimType === 'BusinessTripReimbursement' &&
+                      selectedTrip
+                        ? `Periode perjalanan dinas: ${selectedTrip.startDate} s/d ${selectedTrip.endDate}`
+                        : undefined
+                    }
+                  />
+                )}
               </form.AppField>
 
               <form.AppField
