@@ -18,8 +18,14 @@ type Props = {
 export function TripProposalHeader({
   proposal,
   backTo = '/trip-proposals',
-  backLabel = 'Back',
+  backLabel = 'Back to My Trip Proposals',
 }: Props) {
+  const isAccommodationPaid = [
+    'financemanagerreview',
+    'approved',
+    'completed',
+  ].includes((proposal.status || '').replace(/[\s_-]/g, '').toLowerCase())
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {/* Judul, informasi submit, dan status. */}
@@ -66,7 +72,7 @@ export function TripProposalHeader({
       </div>
 
       {/* Ringkasan perjalanan. */}
-      <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-5 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryItem
           label="Start Date"
           value={formatDate(proposal.startDate)}
@@ -78,7 +84,24 @@ export function TripProposalHeader({
         />
 
         <SummaryItem
-          label="Total Estimated Amount"
+          label="Accommodation Amount (Hotel, Ticket)"
+          value={
+            isAccommodationPaid ? (
+              <span className="inline-flex items-center gap-2">
+                <span>{formatCurrency(proposal.accommodationAmount)}</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+                  PAID
+                </span>
+              </span>
+            ) : (
+              formatCurrency(proposal.accommodationAmount)
+            )
+          }
+        />
+
+        <SummaryItem
+          label="Total Amount"
           value={formatCurrency(proposal.totalAmount)}
           highlight
         />
@@ -93,7 +116,7 @@ function SummaryItem({
   highlight = false,
 }: {
   label: string
-  value: string
+  value: React.ReactNode
   highlight?: boolean
 }) {
   return (
@@ -115,6 +138,7 @@ function SummaryItem({
 
 function getStatusLabel(status: string) {
   const norm = (status || '').replace(/[\s_-]/g, '').toLowerCase()
+
   switch (norm) {
     case 'submitted':
       return 'Pending Manager'
@@ -145,21 +169,30 @@ function formatDate(date: string) {
   })
 }
 
-// Format menjadi: 09 November 2026 at 08.40
+function parseDateUtc(value: string): Date | null {
+  if (!value) return null
+  const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
+  const d = new Date(hasTz ? value : `${value}Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 function formatSubmittedAt(value: string) {
-  const date = new Date(value)
+  const date = parseDateUtc(value)
+  if (!date) return '-'
 
   const formattedDate = date.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'Asia/Jakarta',
   })
 
   const formattedTime = date.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  })
+    timeZone: 'Asia/Jakarta',
+  }).replace('.', ':')
 
   return `${formattedDate} at ${formattedTime}`
 }

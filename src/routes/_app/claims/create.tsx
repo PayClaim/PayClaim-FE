@@ -1,14 +1,14 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { ButtonGroup } from '#/components/ui/button-group'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
-import { useEffect, useState } from 'react'
+import { ButtonGroup } from '#/components/ui/button-group'
+import { Label } from '#/components/ui/label'
+import { useEffect, useMemo, useState } from 'react'
 import { createClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toast } from 'sonner'
-import { AlertCircle } from 'lucide-react'
-import { Label } from '#/components/ui/label'
+import { ArrowLeft, Send } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -16,10 +16,14 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
 } from '#/components/ui/dialog'
+import type { SelectOptionGroup } from '#/components/forms/FormSelect'
 
 interface ClaimCreateSearchParams {
   employeeBenefitId?: string
+  tripProposalId?: string
+  claimType?: string
 }
 
 export const Route = createFileRoute('/_app/claims/create')({
@@ -30,11 +34,17 @@ export const Route = createFileRoute('/_app/claims/create')({
       typeof search.employeeBenefitId === 'string'
         ? search.employeeBenefitId
         : undefined,
+    tripProposalId:
+      typeof search.tripProposalId === 'string'
+        ? search.tripProposalId
+        : undefined,
+    claimType:
+      typeof search.claimType === 'string' ? search.claimType : undefined,
   }),
   beforeLoad: ({ context }) => {
-    if (context.isAdmin) {
+    if (context.isAdmin || context.isDirector) {
       throw redirect({
-        to: '/claims',
+        to: '/dashboard',
       })
     }
   },
@@ -42,55 +52,105 @@ export const Route = createFileRoute('/_app/claims/create')({
 })
 
 function RouteComponent() {
-  const { employeeBenefitId: searchBenefitId } = Route.useSearch()
+  const {
+    employeeBenefitId: searchBenefitId,
+    tripProposalId: searchTripId,
+    claimType: searchClaimType,
+  } = Route.useSearch()
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
   const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const [currentClaimType, setClaimType] = useState('Benefit')
+  const [selectedBenefitId, setSelectedBenefitId] = useState<string | null>(
+    searchBenefitId ?? null,
+  )
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(
+    searchTripId ?? null,
+  )
+
   const claimTypeSelect = [
     { label: 'Benefit', value: 'Benefit' },
     { label: 'Operational', value: 'OperationalReimbursement' },
     { label: 'Trip', value: 'BusinessTripReimbursement' },
   ]
 
-  const approvedTrips = tripProposals.filter((t) => {
-    const s = String(t.status).toLowerCase()
-    return s === 'approved' || s === 'completed' || s === '4' || s === '6'
-  })
-
-  const tripSelect = approvedTrips.map((t) => ({
-    label: `${t.destination} (Budget: ${idNumberFormatter.format(t.totalAmount)})`,
-    value: t.id,
-  }))
-
-  const benefitSelect = empBenefits.map((b) => ({
-    label: `${b.benefitName} (Sisa: ${idNumberFormatter.format(b.balance)})`,
-    value: b.employeeBenefitId,
-  }))
-
-  const form = createClaimForm(searchBenefitId)
-
-  useEffect(() => {
-    if (searchBenefitId) {
-      setClaimType('Benefit')
-      form.setFieldValue('claimType', 'Benefit')
-      form.setFieldValue('employeeBenefitId', searchBenefitId)
-    }
-  }, [searchBenefitId])
-
   const handleClaimTypeClick = (value: string) => {
     setClaimType(value)
     form.setFieldValue('claimType', value)
     form.setFieldValue('employeeBenefitId', null)
     form.setFieldValue('tripProposalId', null)
+    setSelectedBenefitId(null)
+    setSelectedTripId(null)
   }
+
+  const approvedTrips = tripProposals.filter((t) => {
+    const s = String(t.status).toLowerCase()
+    const isApproved =
+      s === 'approved' || s === 'completed' || s === '4' || s === '6'
+    const hasParticipantBudget =
+      t.myParticipantAmount !== undefined && t.myParticipantAmount !== null
+        ? t.myParticipantAmount > 0
+        : true
+    return isApproved && hasParticipantBudget
+  })
+
+  const tripSelect = approvedTrips.map((t) => {
+    const budget = t.myRemainingBudget ?? t.myParticipantAmount ?? t.totalAmount
+    return {
+      label: `${t.destination} (Plafon: ${idNumberFormatter.format(budget)})`,
+      value: t.id,
+    }
+  })
+
+  // Kelompokkan Benefit berdasarkan Kategori
+  const benefitGroups: SelectOptionGroup[] = useMemo(() => {
+    const groupMap = new Map<string, Array<{ label: string; value: string }>>()
+    empBenefits.forEach((b) => {
+      const category = b.categoryName.trim() || 'General Benefits'
+      if (!groupMap.has(category)) {
+        groupMap.set(category, [])
+      }
+      groupMap.get(category)!.push({
+        label: `${b.benefitName} (Sisa: ${idNumberFormatter.format(b.balance)})`,
+        value: b.employeeBenefitId,
+      })
+    })
+
+    return Array.from(groupMap.entries()).map(([groupLabel, items]) => ({
+      groupLabel,
+      items,
+    }))
+  }, [empBenefits])
+
+  const form = createClaimForm(searchBenefitId)
+
+  useEffect(() => {
+    if (searchTripId) {
+      setClaimType('BusinessTripReimbursement')
+      form.setFieldValue('claimType', 'BusinessTripReimbursement')
+      form.setFieldValue('tripProposalId', searchTripId)
+      form.setFieldValue('employeeBenefitId', null)
+      setSelectedTripId(searchTripId)
+      setSelectedBenefitId(null)
+    } else if (searchBenefitId) {
+      setClaimType('Benefit')
+      form.setFieldValue('claimType', 'Benefit')
+      form.setFieldValue('employeeBenefitId', searchBenefitId)
+      form.setFieldValue('tripProposalId', null)
+      setSelectedBenefitId(searchBenefitId)
+      setSelectedTripId(null)
+    } else if (searchClaimType) {
+      setClaimType(searchClaimType)
+      form.setFieldValue('claimType', searchClaimType)
+    }
+  }, [searchBenefitId, searchTripId, searchClaimType])
 
   const handleReview = async () => {
     const values = form.state.values
 
     if (values.amount <= 0) {
-      const msg = 'Amount must be greater than 0'
+      const msg = 'Nominal klaim harus lebih besar dari 0'
       form.setFieldMeta('amount', (prev) => ({
         ...prev,
         isTouched: true,
@@ -105,7 +165,7 @@ function RouteComponent() {
         (b) => b.employeeBenefitId === values.employeeBenefitId,
       )
       if (selected && values.amount > selected.balance) {
-        const msg = `Insufficient benefit quota balance. Current balance is ${idNumberFormatter.format(selected.balance)}, but claim amount requested is ${idNumberFormatter.format(values.amount)}.`
+        const msg = `Saldo plafon benefit tidak mencukupi. Sisa saldo saat ini ${idNumberFormatter.format(selected.balance)}, namun permohonan klaim sebesar ${idNumberFormatter.format(values.amount)}.`
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
@@ -121,8 +181,13 @@ function RouteComponent() {
       values.tripProposalId
     ) {
       const selected = approvedTrips.find((t) => t.id === values.tripProposalId)
-      if (selected && values.amount > selected.totalAmount) {
-        const msg = `Claim amount (${idNumberFormatter.format(values.amount)}) exceeds remaining trip budget (${idNumberFormatter.format(selected.totalAmount)}).`
+      const maxBudget =
+        selected?.myRemainingBudget ??
+        selected?.myParticipantAmount ??
+        selected?.totalAmount ??
+        0
+      if (selected && values.amount > maxBudget) {
+        const msg = `Nominal klaim (${idNumberFormatter.format(values.amount)}) melebihi sisa alokasi perjalanan dinas Anda (${idNumberFormatter.format(maxBudget)}).`
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
@@ -136,180 +201,306 @@ function RouteComponent() {
     await form.validateAllFields('submit')
     if (form.state.isValid) setDialogOpen(true)
   }
+
   const handleConfirm = async () => {
     await form.handleSubmit()
     setDialogOpen(false)
   }
 
   return (
-    <main className="bg-card max-w-200 rounded-2xl p-6 mx-auto border border-border shadow-xs">
-      <h1 className="text-3xl font-bold text-center mb-8">New Claim</h1>
+    <main className="max-w-4xl mx-auto space-y-6">
+      {/* Header dengan tombol kembali & badge status */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+        <div className="flex items-center gap-3.5">
+          <Link
+            to="/claims"
+            className="w-10 h-10 rounded-xl bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs shrink-0"
+            title="Kembali ke My Claims"
+          >
+            <ArrowLeft className="w-5 h-5" strokeWidth={2} />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">
+                New Claim
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
+                Formulir Pengajuan
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Lengkapi rincian pengeluaran dan lampirkan bukti kuitansi sah
+              untuk diproses reviewer.
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <div>
+      {/* Main Form Card Container */}
+      <div className="bg-card rounded-2xl border border-border/80 shadow-xs p-6 sm:p-8">
         <form
           onSubmit={(e) => {
             e.preventDefault()
             e.stopPropagation()
             handleReview()
           }}
+          className="space-y-7"
         >
-          <div className="grid grid-cols-2 gap-x-4">
-            <form.AppField name="transactionDate">
-              {(field) => <field.DatePicker label="Transaction Date" />}
-            </form.AppField>
+          {/* SECTION 1: CLASSIFICATION & ALLOCATION */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+              <div className="my-2">
+                <Label className="mb-2 text-sm font-semibold text-(--sea-ink) block">
+                  Claim Type
+                </Label>
 
-            <form.AppField
-              name="amount"
-              validators={{
-                onChange: ({ value }) => {
-                  if (
-                    currentClaimType === 'Benefit' &&
-                    form.state.values.employeeBenefitId
-                  ) {
-                    const selected = empBenefits.find(
-                      (b) =>
-                        b.employeeBenefitId ===
-                        form.state.values.employeeBenefitId,
-                    )
-                    if (selected && value > selected.balance) {
-                      return `Insufficient benefit quota balance. Current balance is ${idNumberFormatter.format(selected.balance)}.`
-                    }
-                  }
-                  if (
-                    currentClaimType === 'BusinessTripReimbursement' &&
-                    form.state.values.tripProposalId
-                  ) {
-                    const selected = approvedTrips.find(
-                      (t) => t.id === form.state.values.tripProposalId,
-                    )
-                    if (selected && value > selected.totalAmount) {
-                      return `Amount exceeds approved trip budget (${idNumberFormatter.format(selected.totalAmount)}).`
-                    }
-                  }
-                  return undefined
-                },
-                onSubmit: ({ value }) => {
-                  if (value <= 0) {
-                    return 'Amount must be greater than 0'
-                  }
-                  return undefined
-                },
-              }}
-            >
-              {(field) => (
-                <field.CurrencyField label="Amount" placeholder="0" />
+                <ButtonGroup className="w-full">
+                  {claimTypeSelect.map((t) => (
+                    <Button
+                      key={t.value}
+                      type="button"
+                      variant={
+                        currentClaimType === t.value ? 'default' : 'outline'
+                      }
+                      className={`grow h-10 cursor-pointer font-semibold transition-all ${
+                        currentClaimType === t.value
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                          : 'bg-transparent text-foreground hover:bg-muted'
+                      }`}
+                      onClick={() => handleClaimTypeClick(t.value)}
+                    >
+                      {t.label}
+                    </Button>
+                  ))}
+                </ButtonGroup>
+              </div>
+
+              {currentClaimType === 'Benefit' && (
+                <div>
+                  <form.AppField name="employeeBenefitId">
+                    {(field) => (
+                      <field.FormSelect
+                        placeholder={
+                          benefitGroups.length > 0
+                            ? 'Pilih benefit...'
+                            : 'Belum ada benefit aktif'
+                        }
+                        label="Benefit"
+                        groups={benefitGroups}
+                        onCustomChange={(val) => setSelectedBenefitId(val)}
+                      />
+                    )}
+                  </form.AppField>
+                </div>
               )}
-            </form.AppField>
 
-            <div className="my-2">
-              <Label className="mb-2 text-sm font-semibold text-(--sea-ink)">
-                Claim Type
-              </Label>
+              {currentClaimType === 'BusinessTripReimbursement' && (
+                <div>
+                  <form.AppField name="tripProposalId">
+                    {(field) => (
+                      <field.FormSelect
+                        placeholder={
+                          tripSelect.length > 0
+                            ? 'Pilih proposal perjalanan...'
+                            : 'Tidak ada proposal disetujui'
+                        }
+                        label="Trip Proposal"
+                        values={tripSelect}
+                        onCustomChange={(val) => setSelectedTripId(val)}
+                      />
+                    )}
+                  </form.AppField>
+                </div>
+              )}
 
-              <ButtonGroup className="w-full">
-                {claimTypeSelect.map((t) => (
-                  <ClaimTypeButton
-                    className="grow"
-                    key={t.value}
-                    label={t.label}
-                    value={t.value}
-                    current={currentClaimType}
-                    setFunc={handleClaimTypeClick}
-                  />
-                ))}
-              </ButtonGroup>
+              {currentClaimType === 'OperationalReimbursement' && (
+                <div className="my-2">
+                  <label className="mb-2 text-sm font-semibold text-muted-foreground block">
+                    Benefit / Allocation
+                  </label>
+                  <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
+                    Penggantian operasional langsung diajukan tanpa penautan
+                    benefit atau trip.
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="">
-              <form.AppField name="receiptFile">
+            {/* BENEFIT / TRIP INFO SUMMARY CARD (BALANCED & INTEGRATED) */}
+            {currentClaimType === 'Benefit' && selectedBenefitId && (
+              <BenefitInfoBanner
+                benefitId={selectedBenefitId}
+                empBenefits={empBenefits}
+              />
+            )}
+
+            {currentClaimType === 'BusinessTripReimbursement' &&
+              selectedTripId && (
+                <TripInfoBanner tripId={selectedTripId} trips={approvedTrips} />
+              )}
+          </div>
+
+          <div className="h-px bg-border/70" />
+
+          {/* SECTION 2: TRANSACTION DETAILS */}
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+              <form.AppField name="transactionDate">
+                {(field) => <field.DatePicker label="Invoice Date" />}
+              </form.AppField>
+
+              <form.AppField
+                name="amount"
+                validators={{
+                  onChange: ({ value }) => {
+                    if (
+                      currentClaimType === 'Benefit' &&
+                      form.state.values.employeeBenefitId
+                    ) {
+                      const selected = empBenefits.find(
+                        (b) =>
+                          b.employeeBenefitId ===
+                          form.state.values.employeeBenefitId,
+                      )
+                      if (selected && value > selected.balance) {
+                        return `Saldo plafon tidak mencukupi (Sisa: ${idNumberFormatter.format(selected.balance)}).`
+                      }
+                    }
+                    if (
+                      currentClaimType === 'BusinessTripReimbursement' &&
+                      form.state.values.tripProposalId
+                    ) {
+                      const selected = approvedTrips.find(
+                        (t) => t.id === form.state.values.tripProposalId,
+                      )
+                      const maxBudget =
+                        selected?.myRemainingBudget ??
+                        selected?.myParticipantAmount ??
+                        selected?.totalAmount ??
+                        0
+                      if (selected && value > maxBudget) {
+                        return `Nominal melebihi plafon alokasi perjalanan (${idNumberFormatter.format(maxBudget)}).`
+                      }
+                    }
+                    return undefined
+                  },
+                  onSubmit: ({ value }) => {
+                    if (value <= 0) {
+                      return 'Nominal klaim harus lebih besar dari 0'
+                    }
+                    return undefined
+                  },
+                }}
+              >
                 {(field) => (
-                  <field.FileInput label="Receipt File (Proof of Payment)" />
+                  <field.CurrencyField label="Amount" placeholder="0" />
                 )}
               </form.AppField>
             </div>
 
-            {currentClaimType === 'BusinessTripReimbursement' && (
-              <div className="col-span-2 my-2">
-                <form.AppField name="tripProposalId">
-                  {(field) => (
-                    <div>
-                      <field.FormSelect
-                        values={tripSelect}
-                        placeholder={
-                          tripSelect.length > 0
-                            ? 'Select approved trip proposal'
-                            : 'No approved trip proposals found'
-                        }
-                        label="Trip Proposal"
-                      />
-                      {field.state.value && (
-                        <TripInfoBanner
-                          tripId={field.state.value}
-                          trips={approvedTrips}
-                        />
-                      )}
-                    </div>
-                  )}
-                </form.AppField>
-              </div>
-            )}
-
-            {currentClaimType === 'Benefit' && (
-              <div className="col-span-2 my-2">
-                <form.AppField name="employeeBenefitId">
-                  {(field) => (
-                    <div>
-                      <field.FormSelect
-                        placeholder="Pick benefit"
-                        values={benefitSelect}
-                        label="Benefit"
-                      />
-                      {field.state.value && (
-                        <BenefitInfoBanner
-                          benefitId={field.state.value}
-                          empBenefits={empBenefits}
-                        />
-                      )}
-                    </div>
-                  )}
-                </form.AppField>
-              </div>
-            )}
+            <form.AppField name="description">
+              {(field) => (
+                <field.TextArea
+                  label="Description"
+                  placeholder="Jelaskan secara ringkas tujuan pengeluaran klaim ini..."
+                  rows={4}
+                />
+              )}
+            </form.AppField>
           </div>
 
-          <form.AppField name="description">
+          <div className="h-px bg-border/70" />
+
+          {/* SECTION 3: PROOF OF PAYMENT DROPZONE */}
+          <form.AppField name="receiptFile">
             {(field) => (
-              <field.TextArea
-                label="Description"
-                placeholder="Explain the purpose of this claim..."
-                rows={5}
-              />
+              <field.FileInput label="Receipt File (Proof of Payment)" />
             )}
           </form.AppField>
 
-          <Button type="submit">Submit</Button>
+          {/* FORM FOOTER ACTIONS */}
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+            <Link to="/claims">
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+              >
+                Batal
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 cursor-pointer gap-2"
+              disabled={form.state.isSubmitting}
+            >
+              <Send className="w-4 h-4" />
+              <span>
+                {form.state.isSubmitting ? 'Mengirimkan...' : 'Submit Claim'}
+              </span>
+            </Button>
+          </div>
 
+          {/* CONFIRMATION DIALOG MODAL */}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent>
-              <DialogHeader>Submit this claim?</DialogHeader>
-              <DialogDescription>Form will be submitted</DialogDescription>
-              <DialogFooter>
-                <DialogClose>Close</DialogClose>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Konfirmasi Pengajuan Klaim</DialogTitle>
+                <DialogDescription className="text-sm pt-1">
+                  Pastikan rincian data pengajuan klaim Anda sudah benar sebelum
+                  diteruskan ke reviewer.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="p-4 bg-muted/30 border border-border rounded-xl text-xs space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Tipe Klaim:</span>
+                  <span className="font-semibold text-foreground">
+                    {claimTypeSelect.find((c) => c.value === currentClaimType)
+                      ?.label || currentClaimType}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">
+                    Tanggal Invoice:
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {form.state.values.transactionDate}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">
+                    Nominal Pengajuan:
+                  </span>
+                  <span className="font-bold text-base text-blue-600 dark:text-blue-400 font-mono">
+                    {idNumberFormatter.format(form.state.values.amount)}
+                  </span>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                  >
+                    Periksa Kembali
+                  </Button>
+                </DialogClose>
                 <Button
                   disabled={form.state.isSubmitting}
                   onClick={handleConfirm}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
                 >
-                  Confirm
+                  {form.state.isSubmitting
+                    ? 'Mengirimkan...'
+                    : 'Konfirmasi & Kirim'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* <div className="mt-6 flex justify-end">
-            <form.AppForm>
-              <form.FormButton label="Submit Claim" className="bg-primary" />
-            </form.AppForm>
-          </div> */}
         </form>
       </div>
     </main>
@@ -330,22 +521,36 @@ function BenefitInfoBanner({
   if (!selectedBenefit) return null
 
   return (
-    <div className="mt-2 p-3 bg-muted/40 border border-border rounded-xl text-xs space-y-1">
-      <div className="flex items-center gap-1.5 font-semibold text-primary">
-        <AlertCircle className="h-4 w-4" />
-        <span>Benefit Information:</span>
+    <div className="p-4 rounded-xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm text-heading">
+            {selectedBenefit.benefitName}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+            {selectedBenefit.categoryName || 'General'}
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Periode aktif:{' '}
+          <span className="font-medium text-foreground">
+            {selectedBenefit.startDate}
+          </span>{' '}
+          s/d{' '}
+          <span className="font-medium text-foreground">
+            {selectedBenefit.endDate}
+          </span>
+        </p>
       </div>
-      <p>
-        Active Period:{' '}
-        <span className="font-semibold">{selectedBenefit.startDate}</span> to{' '}
-        <span className="font-semibold">{selectedBenefit.endDate}</span>
-      </p>
-      <p>
-        Remaining Quota:{' '}
-        <span className="font-semibold text-primary">
+
+      <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
+        <span className="text-[11px] text-muted-foreground block">
+          Sisa Kuota Tersedia
+        </span>
+        <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
           {idNumberFormatter.format(selectedBenefit.balance)}
         </span>
-      </p>
+      </div>
     </div>
   )
 }
@@ -354,55 +559,42 @@ function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
   const selectedTrip = trips.find((t) => t.id === tripId)
   if (!selectedTrip) return null
 
-  return (
-    <div className="mt-2 p-3 bg-muted/40 border border-border rounded-xl text-xs space-y-1">
-      <div className="flex items-center gap-1.5 font-semibold text-primary">
-        <AlertCircle className="h-4 w-4" />
-        <span>Trip Proposal Information:</span>
-      </div>
-      <p>
-        Destination:{' '}
-        <span className="font-semibold">{selectedTrip.destination}</span>
-      </p>
-      <p>
-        Dates: <span className="font-semibold">{selectedTrip.startDate}</span>{' '}
-        to <span className="font-semibold">{selectedTrip.endDate}</span>
-      </p>
-      <p>
-        Approved Budget:{' '}
-        <span className="font-semibold text-primary">
-          {idNumberFormatter.format(selectedTrip.totalAmount)}
-        </span>
-      </p>
-    </div>
-  )
-}
+  const budget =
+    selectedTrip.myRemainingBudget ??
+    selectedTrip.myParticipantAmount ??
+    selectedTrip.totalAmount
 
-function ClaimTypeButton({
-  label,
-  value,
-  current,
-  setFunc,
-  className,
-}: {
-  label: string
-  value: string
-  current: string
-  setFunc: (a: string) => void
-  className?: string
-}) {
   return (
-    <Button
-      type="button"
-      variant={current === value ? 'default' : 'outline'}
-      className={
-        (current === value
-          ? 'bg-primary '
-          : 'bg-transparent text-foreground ') + className
-      }
-      onClick={() => setFunc(value)}
-    >
-      {label}
-    </Button>
+    <div className="p-4 rounded-xl border border-sky-200/80 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/20 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm text-heading">
+            Perjalanan Dinas: {selectedTrip.destination}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">
+            Trip Proposal
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Jadwal:{' '}
+          <span className="font-medium text-foreground">
+            {selectedTrip.startDate}
+          </span>{' '}
+          -{' '}
+          <span className="font-medium text-foreground">
+            {selectedTrip.endDate}
+          </span>
+        </p>
+      </div>
+
+      <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
+        <span className="text-[11px] text-muted-foreground block">
+          Plafon Alokasi Perjalanan
+        </span>
+        <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+          {idNumberFormatter.format(budget)}
+        </span>
+      </div>
+    </div>
   )
 }

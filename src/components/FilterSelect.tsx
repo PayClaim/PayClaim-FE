@@ -51,7 +51,7 @@ export function FilterSelect({
           setValue(raw === NULL_VALUE ? null : raw)
         }}
       >
-        <SelectTrigger className="flex-1 w-full">
+        <SelectTrigger className="">
           <SelectValue placeholder="No Filter" />
         </SelectTrigger>
         <SelectContent>

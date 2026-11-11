@@ -7,6 +7,7 @@ export const Route = createFileRoute('/_app/trip-proposals/$id')({
 
 function RouteComponent() {
   const { id } = Route.useParams()
+
   return (
     <TripProposalDetailWorkspace
       id={id}

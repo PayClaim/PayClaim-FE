@@ -24,6 +24,7 @@ const NODE_ICON: Record<StageTone, typeof Clock> = {
 
 interface TimelineStageProps {
   title: string
+  statusBadge?: ReactNode
   tone: StageTone
   /** Garis penghubung ke tahap di bawahnya. */
   connector?: boolean
@@ -36,6 +37,7 @@ interface TimelineStageProps {
 /** Kerangka satu tahap timeline: node status, garis, kartu, dan header. */
 export function TimelineStage({
   title,
+  statusBadge,
   tone,
   connector = true,
   approverName,
@@ -61,7 +63,10 @@ export function TimelineStage({
 
       <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
         <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-bold text-heading">{title}</h2>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-sm font-bold text-heading">{title}</h2>
+            {statusBadge}
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <span

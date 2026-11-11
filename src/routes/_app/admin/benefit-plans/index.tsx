@@ -120,7 +120,7 @@ function BenefitPlansIndexPage() {
         </div>
 
         <Link to="/admin/benefit-plans/create">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg cursor-pointer">
             <Plus className="w-4 h-4" strokeWidth={2} />
             <span>New Benefit Plan</span>
           </Button>

@@ -7,6 +7,7 @@ import {
 } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { getFriendlyErrorMessage } from '#/lib/error'
+import { downloadFile } from '#/lib/download'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import {
@@ -218,13 +219,7 @@ export function ClaimDetailWorkspace({
 
   const handleDownload = async () => {
     if (!receiptUrl) return
-
-    try {
-      await downloadAttachment(receiptUrl, receiptFileName || 'receipt-attachment')
-    } catch (error) {
-      console.error('Failed to download receipt attachment:', error)
-      window.open(receiptUrl, '_blank')
-    }
+    await downloadFile(receiptUrl, receiptFileName || 'receipt-attachment')
   }
 
   const sortedApprovalHistory = [...(claim.approvalHistory || [])].sort(
@@ -653,7 +648,7 @@ export function ClaimDetailWorkspace({
 
           {/* Vertical Process Timeline Cards */}
           <div className="relative pl-10 space-y-6">
-            {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT (Level 2) */}
+            {/* STAGE 3: FINANCE VERIFICATION & DISBURSEMENT */}
             {(claim.status === 'UnderReview' ||
               claim.status === 'Approved' ||
               claim.status === 'Paid' ||
@@ -686,9 +681,39 @@ export function ClaimDetailWorkspace({
 
                 <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="text-sm font-bold text-heading">
-                      Finance Verification & Disbursement (Level 2)
-                    </h2>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-sm font-bold text-heading">
+                        Finance Verification & Disbursement
+                      </h2>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                          claim.status === 'Paid'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : claim.status === 'Approved'
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+                              : isLevel2Rejected
+                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+                                : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            claim.status === 'Paid' || claim.status === 'Approved'
+                              ? 'bg-emerald-500'
+                              : isLevel2Rejected
+                                ? 'bg-rose-500'
+                                : 'bg-amber-500'
+                          }`}
+                        />
+                        {claim.status === 'Paid'
+                          ? 'Paid'
+                          : claim.status === 'Approved'
+                            ? 'Approved'
+                            : isLevel2Rejected
+                              ? 'Rejected'
+                              : 'Pending'}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                         <span
@@ -825,7 +850,7 @@ export function ClaimDetailWorkspace({
               </div>
             )}
 
-            {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION (Level 1) */}
+            {/* STAGE 2: DIRECT MANAGER APPROVAL & DOCUMENT COLLECTION */}
             <div className="relative">
               {/* Connecting line down to Stage 1 (Claim Intimation) */}
               <div
@@ -858,9 +883,44 @@ export function ClaimDetailWorkspace({
 
               <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-bold text-heading">
-                    Document Collection & Manager Approval (Level 1)
-                  </h2>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-sm font-bold text-heading">
+                      Document Collection & Manager Approval
+                    </h2>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                        level1Approval?.decision === 'Approved' ||
+                        claim.status === 'UnderReview' ||
+                        claim.status === 'Approved' ||
+                        claim.status === 'Paid'
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : isLevel1Rejected
+                            ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+                            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          level1Approval?.decision === 'Approved' ||
+                          claim.status === 'UnderReview' ||
+                          claim.status === 'Approved' ||
+                          claim.status === 'Paid'
+                            ? 'bg-emerald-500'
+                            : isLevel1Rejected
+                              ? 'bg-rose-500'
+                              : 'bg-amber-500'
+                        }`}
+                      />
+                      {level1Approval?.decision === 'Approved' ||
+                      claim.status === 'UnderReview' ||
+                      claim.status === 'Approved' ||
+                      claim.status === 'Paid'
+                        ? 'Approved'
+                        : isLevel1Rejected
+                          ? 'Rejected'
+                          : 'Pending'}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span
@@ -925,15 +985,14 @@ export function ClaimDetailWorkspace({
                       </div>
                       {claim.filePath ? (
                         <div className="flex items-center gap-2.5 shrink-0">
-                          <a
-                            href={receiptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+                          <button
+                            type="button"
+                            onClick={() => void handleDownload()}
+                            className="inline-flex items-center gap-1 text-primary font-semibold hover:underline cursor-pointer"
                           >
                             <Download className="h-3.5 w-3.5" aria-hidden="true" />
                             Download
-                          </a>
+                          </button>
                           <CheckCircle2
                             className="h-4 w-4 text-emerald-600"
                             aria-hidden="true"
@@ -941,53 +1000,6 @@ export function ClaimDetailWorkspace({
                         </div>
                       ) : (
                         <span className="text-muted-foreground">No file</span>
-                      )}
-                    </div>
-
-                    {/* Manager Approval Decision Row */}
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
-                      <div className="flex items-center gap-2 font-semibold text-heading">
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            level1Approval?.decision === 'Approved'
-                              ? 'bg-emerald-500'
-                              : isLevel1Rejected
-                                ? 'bg-rose-500'
-                                : 'bg-amber-500'
-                          }`}
-                        />
-                        <span>Direct Manager Decision</span>
-                      </div>
-                      {level1Approval ? (
-                        <span className="font-bold flex items-center gap-1">
-                          {level1Approval.decision === 'Approved' ? (
-                            <>
-                              <CheckCircle2
-                                className="h-4 w-4 text-emerald-600"
-                                aria-hidden="true"
-                              />
-                              <span className="text-emerald-700 dark:text-emerald-400">
-                                Approved
-                              </span>
-                            </>
-                          ) : level1Approval.decision === 'Rejected' ? (
-                            <>
-                              <XCircle
-                                className="h-4 w-4 text-rose-600"
-                                aria-hidden="true"
-                              />
-                              <span className="text-rose-700 dark:text-rose-400">
-                                Rejected
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-amber-600">{level1Approval.decision}</span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-amber-700 dark:text-amber-400 font-semibold">
-                          Awaiting Manager Review
-                        </span>
                       )}
                     </div>
 
@@ -1014,9 +1026,15 @@ export function ClaimDetailWorkspace({
 
               <div className="bg-card rounded-xl border border-border shadow-2xs overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-bold text-heading">
-                    Claim Initialization & Submission
-                  </h2>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-sm font-bold text-heading">
+                      Claim Submission
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      Submitted
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span
@@ -1227,27 +1245,4 @@ export function ClaimDetailWorkspace({
       </Dialog>
     </main>
   )
-}
-
-async function downloadAttachment(url: string, fileName: string) {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Download failed: ${response.status}`)
-  }
-
-  const blob = await response.blob()
-  const objectUrl = window.URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = objectUrl
-  link.download = fileName || 'receipt-attachment'
-
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-
-  window.setTimeout(() => {
-    window.URL.revokeObjectURL(objectUrl)
-  }, 1000)
 }

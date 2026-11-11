@@ -4,7 +4,12 @@ import z from 'zod'
 export const createClaimBlurSchema = z
   .object({
     claimType: z.string(),
-    description: z.string().min(5, 'Description must be at least 5 characters'),
+    description: z
+      .string()
+      .refine(
+        (val) => val.trim().length === 0 || val.trim().length >= 5,
+        { message: 'Description must be at least 5 characters' },
+      ),
     transactionDate: z.string().min(1, 'Transaction date is required'),
     amount: z.number(),
     employeeBenefitId: z.string().nullable(),
@@ -45,13 +50,15 @@ export const createClaimBlurSchema = z
     },
   )
 
-export const createClaimSchema = createClaimBlurSchema.refine(
-  (data) => data.amount > 0,
-  {
+export const createClaimSchema = createClaimBlurSchema
+  .refine((data) => data.description.trim().length >= 5, {
+    message: 'Description must be at least 5 characters',
+    path: ['description'],
+  })
+  .refine((data) => data.amount > 0, {
     message: 'Amount must be greater than 0',
     path: ['amount'],
-  },
-)
+  })
 
 export const approvalClaimSchema = z
   .object({

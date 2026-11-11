@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, FileText, XCircle } from 'lucide-react'
+import { CheckCircle2, Download, FileText } from 'lucide-react'
 import {
   ChecklistRow,
   NotesBox,
@@ -43,16 +43,37 @@ export function ManagerStage({
       ? 'danger'
       : 'warning'
 
-  const decisionDot =
-    approval?.decision === 'Approved'
-      ? 'bg-emerald-500'
-      : isRejected
-        ? 'bg-rose-500'
-        : 'bg-amber-500'
+  const statusBadge = (
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+        isApproved
+          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+          : isRejected
+            ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+      }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${
+          isApproved
+            ? 'bg-emerald-500'
+            : isRejected
+              ? 'bg-rose-500'
+              : 'bg-amber-500'
+        }`}
+      />
+      {isApproved
+        ? 'Approved'
+        : isRejected
+          ? 'Rejected'
+          : 'Pending'}
+    </span>
+  )
 
   return (
     <TimelineStage
-      title="Document Collection & Manager Approval (Level 1)"
+      title="Document Collection & Manager Approval"
+      statusBadge={statusBadge}
       tone={tone}
       approverName={managerName}
       showViewButton={receipt.hasFile}
@@ -98,51 +119,10 @@ export function ManagerStage({
           )}
         </ChecklistRow>
 
-        <ChecklistRow
-          dotClass={decisionDot}
-          label={<span>Direct Manager Decision</span>}
-        >
-          <DecisionLabel approval={approval} />
-        </ChecklistRow>
-
         {approval?.notes && (
           <NotesBox label="Manager Notes">{approval.notes}</NotesBox>
         )}
       </StageBody>
     </TimelineStage>
-  )
-}
-
-function DecisionLabel({ approval }: { approval?: ApprovalRecord }) {
-  if (!approval) {
-    return (
-      <span className="text-amber-700 dark:text-amber-400 font-semibold">
-        Awaiting Manager Review
-      </span>
-    )
-  }
-
-  if (approval.decision === 'Approved') {
-    return (
-      <span className="font-bold flex items-center gap-1">
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-        <span className="text-emerald-700 dark:text-emerald-400">Approved</span>
-      </span>
-    )
-  }
-
-  if (approval.decision === 'Rejected') {
-    return (
-      <span className="font-bold flex items-center gap-1">
-        <XCircle className="h-4 w-4 text-rose-600" aria-hidden="true" />
-        <span className="text-rose-700 dark:text-rose-400">Rejected</span>
-      </span>
-    )
-  }
-
-  return (
-    <span className="font-bold flex items-center gap-1">
-      <span className="text-amber-600">{approval.decision}</span>
-    </span>
   )
 }

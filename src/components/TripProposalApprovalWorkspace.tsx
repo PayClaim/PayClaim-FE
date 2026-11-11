@@ -6,11 +6,14 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Download,
   FileText,
   MapPin,
   Users,
   XCircle,
 } from 'lucide-react'
+
+import { downloadFile } from '#/lib/download'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
 
@@ -547,20 +550,33 @@ const { data: currentUser } = useQuery(getCurrentUser())
               Proposal Attachment
             </h2>
 
-            <div className="mt-4 flex items-center gap-3 rounded-lg border bg-gray-50 p-4">
-              <div className="rounded-lg bg-blue-100 p-2 text-blue-700">
-                <FileText size={22} />
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border bg-gray-50 p-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="rounded-lg bg-blue-100 p-2 text-blue-700 shrink-0">
+                  <FileText size={22} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800">
+                    Proposal Document
+                  </p>
+
+                  <p className="mt-1 truncate text-xs text-gray-500">
+                    {proposal.filePath || 'No attachment'}
+                  </p>
+                </div>
               </div>
 
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800">
-                  Proposal Document
-                </p>
-
-                <p className="mt-1 truncate text-xs text-gray-500">
-                  {proposal.filePath || 'No attachment'}
-                </p>
-              </div>
+              {proposal.filePath && (
+                <button
+                  type="button"
+                  onClick={() => void downloadFile(proposal.filePath)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-xs font-semibold text-primary hover:bg-muted/30 cursor-pointer shrink-0 transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </button>
+              )}
             </div>
           </section>
         </div>

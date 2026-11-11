@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { CircleAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from 'cn'
 
 import { Button } from '#/components/ui/button'
@@ -12,6 +13,13 @@ import type { EmployeeResponse } from '#/types/employee.type'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
 
 export const Route = createFileRoute('/_app/trip-proposals/create')({
+  beforeLoad: ({ context }) => {
+    if (context.isAdmin || context.isDirector) {
+      throw redirect({
+        to: '/dashboard',
+      })
+    }
+  },
   component: RouteComponent,
 })
 
@@ -57,6 +65,11 @@ function CreateTripProposalPage({
 }) {
   const form = createTripProposalForm(currentEmployee.id)
 
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+
+  const [accommodationAmountInput, setAccommodationAmountInput] =
+    useState('')
+
   const [participants, setParticipants] = useState<
     TripProposalParticipantInput[]
   >([
@@ -68,7 +81,9 @@ function CreateTripProposalPage({
   ])
 
   // Setiap perubahan peserta juga memperbarui nilai form.
-  const updateParticipants = (newParticipants: TripProposalParticipantInput[]) => {
+  const updateParticipants = (
+    newParticipants: TripProposalParticipantInput[],
+  ) => {
     setParticipants(newParticipants)
     form.setFieldValue('participants', newParticipants)
   }
@@ -94,15 +109,6 @@ function CreateTripProposalPage({
     updateParticipants(updatedParticipants)
   }
 
-  // Mengubah nominal peserta.
-  const handleAmountChange = (index: number, amount: number) => {
-    const updatedParticipants = participants.map((participant, i) =>
-      i === index ? { ...participant, amount } : participant,
-    )
-
-    updateParticipants(updatedParticipants)
-  }
-
   // Menghapus peserta tambahan.
   const handleRemoveParticipant = (index: number) => {
     const updatedParticipants = participants.filter((_, i) => i !== index)
@@ -110,24 +116,80 @@ function CreateTripProposalPage({
     updateParticipants(updatedParticipants)
   }
 
-  const totalAmount = participants.reduce(
-    (total, participant) => total + participant.amount,
-    0,
-  )
+  // Mengubah biaya akomodasi.
+  const handleAccommodationAmountChange = (value: string) => {
+    setAccommodationAmountInput(value)
+
+    form.setFieldValue(
+      'accommodationAmount',
+      value === '' ? 0 : Number(value),
+    )
+  }
+
+  // Validasi tampilan setelah pengguna mencoba submit.
+  const isAccommodationAmountInvalid =
+    hasAttemptedSubmit &&
+    (!accommodationAmountInput ||
+      !Number.isFinite(Number(accommodationAmountInput)) ||
+      Number(accommodationAmountInput) <= 0)
+
+  const isParticipantCountInvalid =
+    hasAttemptedSubmit && participants.length < 1
+
+  const hasEmptyParticipant =
+    participants.some((participant) => !participant.employeeId)
+
+  const isParticipantsInvalid =
+    hasAttemptedSubmit &&
+    (isParticipantCountInvalid || hasEmptyParticipant)
+
+  // Validasi sebelum form benar-benar dikirim.
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    setHasAttemptedSubmit(true)
+
+    // Jalankan validasi schema dan field terlebih dahulu.
+    await form.validateAllFields('submit')
+
+    const values = form.state.values
+
+    if (
+      !values.accommodationAmount ||
+      values.accommodationAmount <= 0
+    ) {
+      toast.error('Accommodation amount must be greater than 0.')
+      return
+    }
+
+    if (participants.length < 1) {
+        toast.error('At least one participant is required.')
+        return
+      }
+
+    if (hasEmptyParticipant) {
+      toast.error('Please select an employee for every participant.')
+      return
+    }
+
+    if (!form.state.isValid) {
+      toast.error('Please check the highlighted fields.')
+      return
+    }
+
+    await form.handleSubmit()
+  }
 
   return (
-    <main className="mx-auto max-w-200 rounded-2xl bg-card p-6 border border-border">
+    <main className="mx-auto max-w-200 rounded-2xl border border-border bg-card p-6">
       <h1 className="mb-8 text-center text-3xl font-bold">
         New Trip Proposal
       </h1>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          form.handleSubmit()
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         {/* Informasi perjalanan */}
         <h2 className="mb-4 text-lg font-semibold">
           Trip Information
@@ -156,6 +218,50 @@ function CreateTripProposalPage({
           </form.AppField>
         </div>
 
+        {/* Accommodation Amount */}
+          <div className="mt-5">
+            <label
+              htmlFor="accommodationAmount"
+              className={cn(
+                'mb-2 block text-sm font-semibold transition-colors',
+                isAccommodationAmountInvalid
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-(--sea-ink)',
+              )}
+            >
+              Accommodation Amount (Hotel, Ticket)
+            </label>
+
+            <input
+              id="accommodationAmount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              aria-invalid={isAccommodationAmountInvalid}
+              className={cn(
+                'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
+                isAccommodationAmountInvalid &&
+                  'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
+              )}
+              value={accommodationAmountInput}
+              placeholder="Enter accommodation amount"
+              onChange={(event) =>
+                handleAccommodationAmountChange(event.target.value)
+              }
+            />
+
+            {isAccommodationAmountInvalid && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                <span>Accommodation amount must be greater than 0</span>
+              </p>
+            )}
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Total biaya akomodasi dan perjalanan untuk seluruh proposal,
+              seperti hotel dan tiket. Bukan limit reimbursement per peserta.
+            </p>
+          </div>
         <form.AppField name="description">
           {(field) => (
             <field.TextArea
@@ -167,16 +273,28 @@ function CreateTripProposalPage({
 
         <form.AppField name="file">
           {(field) => (
-            <field.FileInput label="Proposal File" />
+            <field.FileInput label="Proposal Letter (Required)" />
           )}
         </form.AppField>
 
-        {/* Daftar peserta */}
+        {/* Participants */}
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
-              Participants
-            </h2>
+            <div>
+              <h2
+                className={cn(
+                  'text-lg font-semibold',
+                  isParticipantsInvalid &&
+                    'text-rose-600 dark:text-rose-400',
+                )}
+              >
+                Participants
+              </h2>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                At least one employee is required. The PIC can be the only participant.
+              </p>
+            </div>
 
             <Button
               type="button"
@@ -187,7 +305,13 @@ function CreateTripProposalPage({
             </Button>
           </div>
 
-          <div className="space-y-4">
+          <div
+            className={cn(
+              'space-y-4 rounded-lg',
+              isParticipantsInvalid &&
+                'border border-rose-500 bg-rose-50/20 p-3 dark:bg-rose-950/20',
+            )}
+          >
             {participants.map((participant, index) => {
               const availableEmployees = employees.filter(
                 (employee) =>
@@ -199,22 +323,22 @@ function CreateTripProposalPage({
               )
 
               const isEmployeeInvalid =
+                hasAttemptedSubmit &&
                 !participant.isPic &&
-                !participant.employeeId &&
-                form.state.submissionAttempts > 0
-              const isAmountInvalid =
-                participant.amount <= 0 && form.state.submissionAttempts > 0
+                !participant.employeeId
 
               return (
                 <div
                   key={index}
-                  className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-4 md:grid-cols-[1fr_1fr_auto]"
+                  className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-4 md:grid-cols-[1fr_auto]"
                 >
                   <div>
                     <label
                       className={cn(
                         'mb-2 block text-sm font-semibold transition-colors',
-                        isEmployeeInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
+                        isEmployeeInvalid
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-(--sea-ink)',
                       )}
                     >
                       Employee
@@ -227,10 +351,11 @@ function CreateTripProposalPage({
                     ) : (
                       <>
                         <select
+                          aria-invalid={isEmployeeInvalid}
                           className={cn(
                             'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
                             isEmployeeInvalid &&
-                              'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20',
+                              'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
                           )}
                           value={participant.employeeId}
                           onChange={(event) =>
@@ -240,55 +365,22 @@ function CreateTripProposalPage({
                           <option value="">Select employee</option>
 
                           {availableEmployees.map((employee) => (
-                            <option key={employee.id} value={employee.id}>
+                            <option
+                              key={employee.id}
+                              value={employee.id}
+                            >
                               {employee.fullName} ({employee.number})
                             </option>
                           ))}
                         </select>
+
                         {isEmployeeInvalid && (
                           <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                            <CircleAlert className="w-3.5 h-3.5 shrink-0" />
-                            <span>Pilih karyawan peserta</span>
+                            <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                            <span>Please select an employee.</span>
                           </p>
                         )}
                       </>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      className={cn(
-                        'mb-2 block text-sm font-semibold transition-colors',
-                        isAmountInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-(--sea-ink)',
-                      )}
-                    >
-                      Amount
-                    </label>
-
-                    <input
-                      type="number"
-                      min="0"
-                      className={cn(
-                        'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
-                        isAmountInvalid &&
-                          'border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20',
-                      )}
-                      value={participant.amount || ''}
-                      placeholder="Enter amount"
-                      onChange={(event) =>
-                        handleAmountChange(
-                          index,
-                          event.target.value === ''
-                            ? 0
-                            : Number(event.target.value),
-                        )
-                      }
-                    />
-                    {isAmountInvalid && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                        <CircleAlert className="w-3.5 h-3.5 shrink-0" />
-                        <span>Nominal harus lebih dari 0</span>
-                      </p>
                     )}
                   </div>
 
@@ -312,18 +404,14 @@ function CreateTripProposalPage({
             })}
           </div>
 
-          {/* Total nominal */}
-          <div className="mt-6 flex justify-between rounded-lg bg-muted p-4">
-            <span className="font-semibold">Total Amount</span>
-
-            <span className="font-bold">
-              {new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                maximumFractionDigits: 0,
-              }).format(totalAmount)}
-            </span>
-          </div>
+          {isParticipantCountInvalid && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+              <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                  At least one participant is required.
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Submit */}
