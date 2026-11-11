@@ -1,16 +1,28 @@
 export interface EmployeeResponse {
-  id: string
-  number: string
-  fullName: string
-  email: string
-  hireDate: string
-  isActive: boolean
-  positionId: string
-  positionTitle: string
-  departmentId: string
-  departmentName: string
-  managerId: string | null
-  managerName: string | null
+  pageNumber: 1
+  pageSize: 53
+  totalCount: 53
+  totalPages: 1
+  hasPreviousPage: false
+  hasNextPage: false
+  success: true
+  statusCode: 200
+  message: 'Data retrieved successfully.'
+  data: {
+    id: string
+    number: string
+    fullName: string
+    email: string
+    hireDate: string
+    isActive: boolean
+    positionId: string
+    positionTitle: string
+    departmentId: string
+    departmentName: string
+    managerId: string | null
+    managerName: string | null
+  }[]
+  errors: string[]
 }
 
 export interface CreateEmployeeRequest {

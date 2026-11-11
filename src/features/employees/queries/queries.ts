@@ -10,9 +10,9 @@ export const useGetAllEmployeeQuery = () =>
   useQuery({
     queryKey: ['employees'],
     queryFn: () => {
-      return api.get<EmployeeResponse[]>('/employees')
+      return api.get<EmployeeResponse>('/employees')
     },
-    initialData: [],
+    initialData: null,
   })
 
 export const useGetEmployeeQuery = (id: string) =>
