@@ -5,11 +5,14 @@ import type {
   UpsertBenefitPlanRequest,
 } from '#/types/benefitPlans.type'
 
-export const useGetAllBenefitPlansQuery = () =>
+export const useGetAllBenefitPlansQuery = (params?: Record<string, any>) =>
   useQuery({
-    queryKey: ['benefitPlans'],
-    queryFn: () => {
-      return api.get<BenefitPlanResponse[]>('/benefitplans')
+    queryKey: ['benefitPlans', params],
+    queryFn: async () => {
+      const res = await api.get<any>('/benefitplans', { params })
+      if (Array.isArray(res)) return res as BenefitPlanResponse[]
+      if (Array.isArray(res?.data)) return res.data as BenefitPlanResponse[]
+      return [] as BenefitPlanResponse[]
     },
     initialData: [],
   })
