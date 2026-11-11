@@ -6,11 +6,14 @@ import type {
 } from '#/types/employee.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-export const useGetAllEmployeeQuery = () =>
+export const useGetAllEmployeeQuery = (params?: Record<string, any>) =>
   useQuery({
-    queryKey: ['employees'],
-    queryFn: () => {
-      return api.get<EmployeeResponse[]>('/employees')
+    queryKey: ['employees', params],
+    queryFn: async () => {
+      const res = await api.get<any>('/employees', { params })
+      if (Array.isArray(res)) return res as EmployeeResponse[]
+      if (Array.isArray(res?.data)) return res.data as EmployeeResponse[]
+      return [] as EmployeeResponse[]
     },
     initialData: [],
   })

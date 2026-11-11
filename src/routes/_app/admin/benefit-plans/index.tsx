@@ -59,7 +59,9 @@ function BenefitPlansIndexPage() {
     optionValue: p.id,
   }))
 
-  const displayData = plans.filter((bp) => {
+  const planList: BenefitPlanResponse[] = Array.isArray(plans) ? plans : ((plans as any)?.data ?? [])
+
+  const displayData = planList.filter((bp: BenefitPlanResponse) => {
     const s = searchFilter.toLowerCase()
     const matchSearch =
       !searchFilter ||
@@ -110,7 +112,7 @@ function BenefitPlansIndexPage() {
                 Benefit Plans
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {plans.length}
+                {planList.length}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -178,7 +180,7 @@ function BenefitPlansIndexPage() {
           </div>
 
           <div className="text-xs text-muted-foreground font-medium">
-            Showing {displayData.length} of {plans.length} plans
+            Showing {displayData.length} of {planList.length} plans
           </div>
         </div>
 

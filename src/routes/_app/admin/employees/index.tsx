@@ -77,7 +77,9 @@ function RouteComponent() {
     { label: 'Inactive', optionValue: 'inactive' },
   ]
 
-  const displayData = employees.filter((e) => {
+  const employeeList: EmployeeResponse[] = Array.isArray(employees) ? employees : ((employees as any)?.data ?? [])
+
+  const displayData = employeeList.filter((e: EmployeeResponse) => {
     const searchLower = searchFilter.toLowerCase()
     const matchSearch =
       !searchFilter ||
@@ -113,7 +115,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching && employees.length === 0) {
+  if (isFetching && employeeList.length === 0) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -136,7 +138,7 @@ function RouteComponent() {
                 Employees
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {employees.length}
+                {employeeList.length}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -215,7 +217,7 @@ function RouteComponent() {
           </div>
 
           <div className="text-xs text-muted-foreground font-medium">
-            Showing {displayData.length} of {employees.length} employees
+            Showing {displayData.length} of {employeeList.length} employees
           </div>
         </div>
 

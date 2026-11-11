@@ -8,6 +8,7 @@ import {
   Eye,
   FileCheck,
   FileText,
+  Plus,
   Send,
   XCircle,
 } from 'lucide-react'
@@ -42,6 +43,7 @@ type Props = {
   isPdf: boolean
   status?: string
   actions?: React.ReactNode
+  claimCard?: React.ReactNode
 }
 
 export function TripProposalTimeline({
@@ -51,6 +53,7 @@ export function TripProposalTimeline({
   isPdf,
   status,
   actions,
+  claimCard,
 }: Props) {
   const statusConfig = getProposalStatusConfig(status)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -98,6 +101,22 @@ export function TripProposalTimeline({
         </div>
 
         <div className="relative space-y-6 pl-10">
+          {claimCard && (
+            <div className="relative">
+              {stages.length > 0 && (
+                <div
+                  className="pointer-events-none absolute -left-[25px] top-6 h-[calc(100%+24px)] w-0.5 bg-border"
+                />
+              )}
+
+              <div className="absolute -left-10 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary dark:bg-primary/20">
+                <Plus className="h-4 w-4" />
+              </div>
+
+              {claimCard}
+            </div>
+          )}
+
           {stages.map((stage, index) => {
             const decision = stage.decision
               .toLowerCase()

@@ -8,6 +8,7 @@ import {
   Users,
   AlertCircle,
   Plus,
+  ArrowRight,
 } from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -529,7 +530,11 @@ const exceedsFinanceLimit =
   const myParticipant = proposal?.participants.find(
     (p) =>
       (user?.employeeId &&
-        p.employeeId.toLowerCase() === user.employeeId.toLowerCase()) ||
+        String(p.employeeId).toLowerCase() ===
+          String(user.employeeId).toLowerCase()) ||
+      (user?.employeeNumber &&
+        p.employeeNumber?.trim().toLowerCase() ===
+          user.employeeNumber.trim().toLowerCase()) ||
       (user?.fullName &&
         p.employeeName?.trim().toLowerCase() ===
           user.fullName.trim().toLowerCase()),
@@ -540,23 +545,30 @@ const exceedsFinanceLimit =
     Boolean(myParticipant) &&
     (myParticipant?.amount ?? 0) > 0
 
-  const participantClaimAction = canClaim && proposal ? (
-    <Link
-      to="/claims/create"
-      search={{
-        tripProposalId: proposal.id,
-        claimType: 'BusinessTripReimbursement',
-      }}
-    >
-      <Button
-        size="sm"
-        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1.5 shadow-2xs cursor-pointer"
+  const claimCard =
+    canClaim && proposal ? (
+      <Link
+        to="/claims/create"
+        search={{
+          tripProposalId: proposal.id,
+          claimType: 'BusinessTripReimbursement',
+        }}
+        className="block group"
       >
-        <Plus className="h-4 w-4" />
-        Ajukan Klaim ({formatCurrency(myParticipant?.amount ?? 0)})
-      </Button>
-    </Link>
-  ) : null
+        <div className="flex items-center justify-between rounded-xl bg-primary px-5 py-3.5 text-primary-foreground shadow-2xs transition-all hover:bg-primary/90 hover:shadow-sm cursor-pointer">
+          <div className="flex items-center gap-2.5 text-sm font-bold">
+            <Plus className="h-4 w-4" />
+            <span>
+              + Ajukan Claim ({formatCurrency(myParticipant?.amount ?? 0)})
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-semibold opacity-90 group-hover:translate-x-1 transition-transform">
+            <span>Ajukan Reimbursement</span>
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </div>
+      </Link>
+    ) : null
 
   return (
     <main className="mx-auto w-full max-w-[1600px] space-y-4">
@@ -580,7 +592,8 @@ const exceedsFinanceLimit =
           attachmentFileName={attachmentFileName}
           isPdf={isPdf}
           status={proposal.status}
-          actions={approvalActions || participantClaimAction}
+          actions={approvalActions}
+          claimCard={claimCard}
         />
       </div>
 
