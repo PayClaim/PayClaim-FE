@@ -411,11 +411,11 @@ function RouteComponent() {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-5">Destinasi & ID</th>
+                <th className="py-3 px-5">Destinasi</th>
                 <th className="py-3 px-5">Periode Perjalanan</th>
-                <th className="py-3 px-5">Peran / PIC</th>
+                <th className="py-3 px-5">PIC</th>
                 <th className="py-3 px-5">Peserta</th>
-                <th className="py-3 px-5 text-right">Estimasi Biaya</th>
+                <th className="py-3 px-5 text-right">Total Biaya</th>
                 <th className="py-3 px-5 text-center">Status</th>
                 <th className="py-3 px-5 text-right">Aksi</th>
               </tr>
@@ -446,13 +446,10 @@ function RouteComponent() {
                     }
                     className="hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
-                    {/* Destinasi & ID */}
+                    {/* Destinasi */}
                     <td className="py-3.5 px-5">
                       <div className="font-semibold text-foreground text-sm">
                         {proposal.destination}
-                      </div>
-                      <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                        ID: TRIP-{proposal.id.slice(0, 8).toUpperCase()}
                       </div>
                     </td>
 
@@ -464,28 +461,33 @@ function RouteComponent() {
                         <span className="text-muted-foreground">s/d</span>
                         <span>{formatDate(proposal.endDate)}</span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        Diajukan: {formatDate(proposal.submittedAt)}
-                      </div>
                     </td>
 
-                    {/* Peran / PIC */}
+                    {/* PIC */}
                     <td className="py-3.5 px-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-semibold text-xs flex items-center justify-center shrink-0">
+                        <div
+                          className={`w-7 h-7 rounded-full text-xs font-semibold flex items-center justify-center shrink-0 ${
+                            isCurrentUserPic
+                              ? 'bg-blue-600 text-white font-bold'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
                           {getInitials(proposal.picName)}
                         </div>
-                        <div className="min-w-0">
-                          <span className="font-medium text-foreground text-xs block">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-xs ${
+                              isCurrentUserPic
+                                ? 'font-bold text-foreground'
+                                : 'font-medium text-foreground'
+                            }`}
+                          >
                             {proposal.picName || '-'}
                           </span>
-                          {isCurrentUserPic ? (
-                            <span className="inline-flex items-center rounded px-1.5 py-0.2 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60 text-[10px] font-bold">
-                              PIC (You)
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded px-1.5 py-0.2 bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 text-[10px] font-medium">
-                              Participant
+                          {isCurrentUserPic && (
+                            <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60 text-[10px] font-bold">
+                              (You)
                             </span>
                           )}
                         </div>
@@ -500,7 +502,7 @@ function RouteComponent() {
                       </span>
                     </td>
 
-                    {/* Estimasi Biaya */}
+                    {/* Total Biaya */}
                     <td className="py-3.5 px-5 text-right font-mono font-bold text-foreground whitespace-nowrap">
                       {formatCurrency(proposal.totalAmount)}
                     </td>

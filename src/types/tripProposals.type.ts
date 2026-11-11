@@ -146,6 +146,8 @@ export interface ParticipantItem {
   employeeNumber?: string
   isPic: boolean
   amount: number
+  claimedAmount?: number
+  remainingBudget?: number
 }
 
 export interface TripApprovalHistory {
@@ -188,6 +190,9 @@ export interface TripProposalDetailResponse {
   filePath: string
   participants: TripProposalDetailParticipant[]
   approvalHistory: TripProposalApprovalHistory[]
+  myParticipantAmount?: number | null
+  myClaimedAmount?: number | null
+  myRemainingBudget?: number | null
 }
 
 export interface TripProposalDetailParticipant {
@@ -196,6 +201,8 @@ export interface TripProposalDetailParticipant {
   employeeNumber: string | null
   isPic: boolean
   amount: number
+  claimedAmount?: number
+  remainingBudget?: number
 }
 
 export interface TripProposalApprovalHistory {
