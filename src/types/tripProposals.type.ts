@@ -7,6 +7,7 @@ export type TripProposal = {
   totalAmount: number
   submittedAt: string
   status: string
+  picEmployeeId?: string | null
   picName: string | null
   participantCount: number
   filePath: string | null

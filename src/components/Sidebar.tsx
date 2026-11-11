@@ -40,6 +40,7 @@ interface MenuItem {
   adminOnly?: boolean
   employeeOnly?: boolean
   approverOnly?: boolean
+  hideForAdminOrDirector?: boolean
   resolveTo?: (isAdmin: boolean, isEmployee: boolean) => string
   resolveLabel?: (isAdmin: boolean, isEmployee: boolean) => string
   children?: MenuChild[]
@@ -69,11 +70,13 @@ const MENU_CATEGORIES: MenuCategory[] = [
         label: 'My Claims',
         to: '/claims',
         icon: Receipt,
+        hideForAdminOrDirector: true,
       },
       {
         label: 'My Trip Proposals',
         to: '/trip-proposals/',
         icon: Plane,
+        hideForAdminOrDirector: true,
       },
       {
         label: 'Approvals',
@@ -192,12 +195,18 @@ export function Sidebar({
     ),
   )
 
+  const isDirector =
+    user?.positionTitle?.toLowerCase() === 'director' ||
+    user?.positionId?.toLowerCase() === 'dir'
+  const isRestricted = isAdmin || isDirector
+
   // Mengumpulkan route menu yang memang boleh dilihat oleh user.
   const visibleMenuPaths = MENU_CATEGORIES.flatMap((category) =>
     category.items.flatMap((item) => {
       if (item.adminOnly && !isAdmin) return []
       if (item.employeeOnly && !isEmployee) return []
       if (item.approverOnly && !isApprover) return []
+      if (item.hideForAdminOrDirector && isRestricted) return []
 
       if (item.children) {
         return item.children.map((child) => child.to)
@@ -262,6 +271,7 @@ export function Sidebar({
             if (item.adminOnly && !isAdmin) return false
             if (item.employeeOnly && !isEmployee) return false
             if (item.approverOnly && !isApprover) return false
+            if (item.hideForAdminOrDirector && isRestricted) return false
 
             return true
           })

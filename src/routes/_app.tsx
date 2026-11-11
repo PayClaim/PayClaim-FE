@@ -11,10 +11,15 @@ export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ context, location }) => {
     try {
       const user = await context.queryClient.ensureQueryData(getCurrentUser())
-      const isAdmin = user.roles.includes('Admin')
+      const isAdmin =
+        user.roles?.some((r: string) => r.toLowerCase() === 'admin') ?? false
+      const isDirector =
+        user.positionTitle?.toLowerCase() === 'director' ||
+        user.positionId?.toLowerCase() === 'dir'
       return {
         user,
         isAdmin,
+        isDirector,
       }
     } catch (err) {
       toast.error('Sesi masuk telah berakhir, silakan login kembali')

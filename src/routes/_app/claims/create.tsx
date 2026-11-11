@@ -30,9 +30,9 @@ export const Route = createFileRoute('/_app/claims/create')({
         : undefined,
   }),
   beforeLoad: ({ context }) => {
-    if (context.isAdmin) {
+    if (context.isAdmin || context.isDirector) {
       throw redirect({
-        to: '/claims',
+        to: '/dashboard',
       })
     }
   },
