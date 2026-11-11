@@ -19,11 +19,13 @@ interface FilterSelectProps<T extends string | number> {
   setValue: (v: T | null) => void
   nullable?: boolean
   nullLabel?: string
+  className?: string
 }
 
 const NULL_VALUE = '__null__'
 
 export function FilterSelect({
+  className,
   filterLabel,
   val,
   options,
@@ -49,12 +51,15 @@ export function FilterSelect({
           setValue(raw === NULL_VALUE ? null : raw)
         }}
       >
-        <SelectTrigger>
+        <SelectTrigger className="flex-1 w-full">
           <SelectValue placeholder="No Filter" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value={NULL_VALUE} className="text-muted-foreground">
+            <SelectItem
+              value={NULL_VALUE}
+              className="text-muted-foreground w-full"
+            >
               {nullLabel}
             </SelectItem>
             {options.map((op) => (

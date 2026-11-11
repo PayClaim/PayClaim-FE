@@ -1,4 +1,4 @@
-import { FilterSelect, FilterSelectNumber } from '#/components/FilterSelect'
+import { FilterSelect } from '#/components/FilterSelect'
 import { SearchFilter } from '#/components/SearchFilter'
 import { getClaimBadgeClass } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -14,8 +14,8 @@ import {
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { toDateTimeString } from '#/lib/utils'
-import type { ClaimResponse } from '#/types/claims.type'
+import { toDateOnly, toDateTimeString } from '#/lib/utils'
+import type { ClaimResponse, ClaimTypeEnum } from '#/types/claims.type'
 import {
   createFileRoute,
   Link,
@@ -26,14 +26,13 @@ import { useState } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { PaginationSection } from '#/components/PaginationSection'
-import z from 'zod'
-
-const claimFilterSchema = z.object({
-  pageNumber: z.number().int().min(1).catch(1).optional(),
-  pageSize: z.number().int().min(1).max(100).catch(10).optional(),
-  search: z.string().optional().catch(undefined),
-  status: z.string().optional().catch(undefined),
-})
+import { DatePickerWithRange } from '#/components/DateRangePicker'
+import type { DateRange } from 'react-day-picker'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
 
 export const Route = createFileRoute('/_app/claims/')({
   component: RouteComponent,
@@ -41,6 +40,7 @@ export const Route = createFileRoute('/_app/claims/')({
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const params = Route.useSearch()
   const { isAdmin } = useRouteContext({ from: '/_app' })
   const {
@@ -50,24 +50,10 @@ function RouteComponent() {
   } = useGetAllClaimsQuery(params)
 
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [date, setDate] = useState<DateRange | undefined>()
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
-  const [monthFilter, setMonthFilter] = useState<number | null>(null)
   const [searchFilter, setSearchFilter] = useState<string>('')
-
-  const monthOptions = [
-    { label: 'Jan', optionValue: 0 },
-    { label: 'Feb', optionValue: 1 },
-    { label: 'Mar', optionValue: 2 },
-    { label: 'Apr', optionValue: 3 },
-    { label: 'May', optionValue: 4 },
-    { label: 'Jun', optionValue: 5 },
-    { label: 'Jul', optionValue: 6 },
-    { label: 'Aug', optionValue: 7 },
-    { label: 'Sep', optionValue: 8 },
-    { label: 'Oct', optionValue: 9 },
-    { label: 'Nov', optionValue: 10 },
-    { label: 'Dec', optionValue: 11 },
-  ]
+  const [claimType, setClaimType] = useState<ClaimTypeEnum | undefined>()
 
   const statusOptions = [
     { optionValue: 'Submitted', label: 'Submitted' },
@@ -85,33 +71,19 @@ function RouteComponent() {
   ]
 
   const claimsList = claimResponse?.data || []
-
-  // Filter dan Sort Terbaru (SubmittedAt DESC atau TransactionDate DESC)
-  const displayData = claimsList
-    .filter((c) => {
-      const searchLower = searchFilter.toLowerCase()
-      const matchSearch =
-        !searchFilter ||
-        (c.benefitName && c.benefitName.toLowerCase().includes(searchLower)) ||
-        (c.description && c.description.toLowerCase().includes(searchLower)) ||
-        (c.tripProposalDescription &&
-          c.tripProposalDescription.toLowerCase().includes(searchLower))
-
-      const txDate = new Date(c.transactionDate)
-      const matchMonth =
-        monthFilter === null ||
-        (!isNaN(txDate.getTime()) && txDate.getMonth() === monthFilter)
-
-      const matchStatus = !statusFilter || c.status === statusFilter
-      const matchType = !typeFilter || c.claimType === typeFilter
-
-      return matchSearch && matchMonth && matchStatus && matchType
+  const applyFilterClick = async () => {
+    await navigate({
+      to: '.',
+      search: {
+        claimType: claimType,
+        pageNumber: 0,
+        pageSize: 10,
+        startDate: toDateOnly(date?.from),
+        endDate: toDateOnly(date?.to),
+        status: statusFilter ? statusFilter : undefined,
+      },
     })
-    .sort((a, b) => {
-      const timeA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0
-      const timeB = b.submittedAt ? new Date(b.submittedAt).getTime() : 0
-      return timeB - timeA
-    })
+  }
 
   if (isError)
     return <ErrorComponent pageTitle={isAdmin ? 'All Claims' : 'My Claims'} />
@@ -148,37 +120,43 @@ function RouteComponent() {
       </div>
 
       <div className="bg-card p-8 rounded-2xl mb-8 border border-border">
-        <div className="flex flex-wrap justify-start items-center gap-4 pb-6 border-b border-border">
+        <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-border">
           <SearchFilter search={searchFilter} setSearch={setSearchFilter} />
-          <FilterSelect
-            nullable
-            val={typeFilter}
-            setValue={setTypeFilter}
-            options={typeOptions}
-            filterLabel="Claim Type"
-            nullLabel="All Types"
-          />
-          <FilterSelect
-            nullable
-            val={statusFilter}
-            setValue={setStatusFilter}
-            options={statusOptions}
-            filterLabel="Status"
-            nullLabel="All Statuses"
-          />
-          <FilterSelectNumber
-            nullable
-            val={monthFilter}
-            setValue={setMonthFilter}
-            options={monthOptions}
-            filterLabel="By Month"
-            nullLabel="All Months"
-          />
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button>Add Filter</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end">
+              <div className="">
+                <FilterSelect
+                  nullable
+                  val={typeFilter}
+                  setValue={setTypeFilter}
+                  options={typeOptions}
+                  filterLabel="Claim Type"
+                  nullLabel="All Types"
+                />
+                <FilterSelect
+                  nullable
+                  val={statusFilter}
+                  setValue={setStatusFilter}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullLabel="All Statuses"
+                />
+                <DatePickerWithRange date={date} setDate={setDate} />
+              </div>
+              <Button className="w-full" onClick={applyFilterClick}>
+                Apply Filter
+              </Button>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Table */}
         <div className="mt-6">
-          <ClaimTable claims={displayData} />
+          <ClaimTable claims={claimsList} />
         </div>
         <div>
           <PaginationSection pagination={paginationProp} />
