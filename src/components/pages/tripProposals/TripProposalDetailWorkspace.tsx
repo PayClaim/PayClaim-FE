@@ -538,46 +538,90 @@ const exceedsFinanceLimit =
           user.fullName.trim().toLowerCase()),
   )
 
-  const canClaim =
-    isApprovedOrCompleted &&
-    Boolean(myParticipant) &&
-    (myParticipant?.amount ?? 0) > 0
+  const myTotalBudget =
+    proposal?.myParticipantAmount ?? myParticipant?.amount ?? 0
+  const myRemainingBudget =
+    proposal?.myRemainingBudget ??
+    myParticipant?.remainingBudget ??
+    myTotalBudget
+  const myClaimedAmount =
+    proposal?.myClaimedAmount ??
+    myParticipant?.claimedAmount ??
+    Math.max(0, myTotalBudget - myRemainingBudget)
+
+  const canClaim = isApprovedOrCompleted && myTotalBudget > 0
+  const hasRemainingBudget = myRemainingBudget > 0
 
   const claimCard =
     canClaim && proposal ? (
-      <Link
-        to="/claims/create"
-        search={{
-          tripProposalId: proposal.id,
-          claimType: 'BusinessTripReimbursement',
-        }}
-        className="block group"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-2xs transition-all hover:border-emerald-400 hover:bg-emerald-100/70 hover:shadow-xs cursor-pointer dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:border-emerald-700">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
-                Pengajuan Klaim Reimbursement
-              </span>
-              <span className="inline-flex items-center rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                Tersedia
+      hasRemainingBudget ? (
+        <Link
+          to="/claims/create"
+          search={{
+            tripProposalId: proposal.id,
+            claimType: 'BusinessTripReimbursement',
+          }}
+          className="block group"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-2xs transition-all hover:border-emerald-400 hover:bg-emerald-100/70 hover:shadow-xs cursor-pointer dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:border-emerald-700">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
+                  Pengajuan Klaim Reimbursement
+                </span>
+                <span className="inline-flex items-center rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                  Tersedia
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-emerald-700/90 dark:text-emerald-300/90">
+                {myClaimedAmount > 0 ? (
+                  <>
+                    Sisa plafon Anda:{' '}
+                    <span className="font-bold text-emerald-950 dark:text-emerald-100">
+                      {formatCurrency(myRemainingBudget)}
+                    </span>
+                    <span className="ml-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">
+                      (Total: {formatCurrency(myTotalBudget)}, Terklaim: {formatCurrency(myClaimedAmount)})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Plafon anggaran Anda:{' '}
+                    <span className="font-bold text-emerald-950 dark:text-emerald-100">
+                      {formatCurrency(myTotalBudget)}
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center self-end sm:self-center">
+              <span className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all group-hover:bg-emerald-700 group-hover:shadow-xs group-active:scale-95">
+                Ajukan Klaim ({formatCurrency(myRemainingBudget)})
               </span>
             </div>
-            <p className="mt-0.5 text-xs text-emerald-700/90 dark:text-emerald-300/90">
-              Plafon anggaran Anda:{' '}
-              <span className="font-bold text-emerald-950 dark:text-emerald-100">
-                {formatCurrency(myParticipant?.amount ?? 0)}
+          </div>
+        </Link>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-border bg-muted/30 p-3.5 shadow-2xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-foreground">
+                Pengajuan Klaim Reimbursement
               </span>
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground border border-border">
+                Plafon Habis
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Seluruh plafon anggaran perjalanan Anda ({formatCurrency(myTotalBudget)}) telah diajukan klaim.
             </p>
           </div>
-
-          <div className="flex items-center self-end sm:self-center">
-            <span className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all group-hover:bg-emerald-700 group-hover:shadow-xs group-active:scale-95">
-              Ajukan Klaim ({formatCurrency(myParticipant?.amount ?? 0)})
-            </span>
+          <div className="text-xs font-medium text-muted-foreground self-end sm:self-center">
+            Plafon Terpakai Penuh
           </div>
         </div>
-      </Link>
+      )
     ) : null
 
   return (
