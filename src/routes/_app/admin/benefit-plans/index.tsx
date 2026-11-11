@@ -26,7 +26,7 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
-import { Briefcase, Building2, Layers, Pencil, Plus, Search, SearchX, Trash2, Wallet } from 'lucide-react'
+import { Layers, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/admin/benefit-plans/')({
   component: BenefitPlansIndexPage,
@@ -77,10 +77,6 @@ function BenefitPlansIndexPage() {
 
   const hasActiveFilters = Boolean(searchFilter || departmentFilter || positionFilter)
 
-  const totalAllocated = plans.reduce((acc, curr) => acc + (curr.amount || 0), 0)
-  const coveredDepartments = new Set(plans.map((p) => p.departmentId)).size
-  const coveredPositions = new Set(plans.map((p) => p.positionId)).size
-
   if (isError) {
     return (
       <main className="p-6">
@@ -129,60 +125,6 @@ function BenefitPlansIndexPage() {
             <span>New Benefit Plan</span>
           </Button>
         </Link>
-      </div>
-
-      {/* KPI Overview Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              Total Matriks Plafon
-            </span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Layers className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
-            {plans.length}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            Konfigurasi tunjangan terpasang
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              Departemen & Jabatan
-            </span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Building2 className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
-            {coveredDepartments} <span className="text-sm font-normal text-muted-foreground font-sans">Dept /</span> {coveredPositions} <span className="text-sm font-normal text-muted-foreground font-sans">Role</span>
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            Cakupan unit organisasi
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
-              Total Plafon Terdistribusi
-            </span>
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-indigo-600 dark:text-indigo-400">
-            {formatCurrency(totalAllocated)}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            Akumulasi batas limit nominal
-          </p>
-        </div>
       </div>
 
       {/* Table Card Container */}
