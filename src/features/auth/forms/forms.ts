@@ -15,7 +15,6 @@ import { getFriendlyErrorMessage } from '#/lib/error'
 
 export const loginForm = () => {
   const mutation = loginMutation()
-  const navigate = useNavigate()
   const search = useSearch({
     from: '/login',
   })

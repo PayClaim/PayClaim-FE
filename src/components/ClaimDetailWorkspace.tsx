@@ -194,7 +194,7 @@ export function ClaimDetailWorkspace({
   const showApprovalActions = canManagerApprove || canFinanceApprove
 
   const canResubmitClaim =
-    claim.status === 'NeedsRevision' && (isOwnClaim || isAdmin)
+    claim.status === 'NeedsRevision' && isOwnClaim && !isAdmin
 
   const backendBaseUrl = import.meta.env.VITE_API_URL
     ? import.meta.env.VITE_API_URL.replace('/api', '')
@@ -288,7 +288,7 @@ export function ClaimDetailWorkspace({
   return (
     <main className="w-full max-w-[1600px] mx-auto space-y-4">
       {/* Warning banner jika status NeedsRevision */}
-      {claim.status === 'NeedsRevision' && (
+      {claim.status === 'NeedsRevision' && canResubmitClaim && (
         <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 flex items-start gap-3">
           <AlertTriangle
             className="h-5 w-5 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400"
