@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { Button } from '#/components/ui/button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClaimForm } from '#/features/claims/forms/forms'
 import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
@@ -18,7 +18,17 @@ import {
   DialogHeader,
 } from '#/components/ui/dialog'
 
+interface ClaimCreateSearchParams {
+  employeeBenefitId?: string
+}
+
 export const Route = createFileRoute('/_app/claims/create')({
+  validateSearch: (search: Record<string, unknown>): ClaimCreateSearchParams => ({
+    employeeBenefitId:
+      typeof search.employeeBenefitId === 'string'
+        ? search.employeeBenefitId
+        : undefined,
+  }),
   beforeLoad: ({ context }) => {
     if (context.isAdmin) {
       throw redirect({
@@ -30,6 +40,7 @@ export const Route = createFileRoute('/_app/claims/create')({
 })
 
 function RouteComponent() {
+  const { employeeBenefitId: searchBenefitId } = Route.useSearch()
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
   const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -56,7 +67,15 @@ function RouteComponent() {
     value: b.employeeBenefitId,
   }))
 
-  const form = createClaimForm()
+  const form = createClaimForm(searchBenefitId)
+
+  useEffect(() => {
+    if (searchBenefitId) {
+      setClaimType('Benefit')
+      form.setFieldValue('claimType', 'Benefit')
+      form.setFieldValue('employeeBenefitId', searchBenefitId)
+    }
+  }, [searchBenefitId])
 
   const handleClaimTypeClick = (value: string) => {
     setClaimType(value)

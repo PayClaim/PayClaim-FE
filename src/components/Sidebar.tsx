@@ -41,11 +41,13 @@ interface MenuItem {
   employeeOnly?: boolean
   approverOnly?: boolean
   resolveTo?: (isAdmin: boolean, isEmployee: boolean) => string
+  resolveLabel?: (isAdmin: boolean, isEmployee: boolean) => string
   children?: MenuChild[]
 }
 
 interface MenuCategory {
   title: string
+  resolveTitle?: (isAdmin: boolean, isEmployee: boolean) => string
   items: MenuItem[]
 }
 
@@ -93,9 +95,13 @@ const MENU_CATEGORIES: MenuCategory[] = [
   },
   {
     title: 'Benefits Management',
+    resolveTitle: (isAdmin) =>
+      isAdmin ? 'Benefits Management' : 'Benefits',
     items: [
       {
         label: 'Benefits',
+        resolveLabel: (isAdmin) =>
+          isAdmin ? 'Benefits' : 'My Benefits',
         to: '/benefits',
         icon: Gift,
         resolveTo: (isAdmin) =>
@@ -274,7 +280,9 @@ export function Sidebar({
                   catIndex === 0 ? 'mt-1' : 'mt-4',
                 )}
               >
-                {category.title}
+                {category.resolveTitle
+                  ? category.resolveTitle(isAdmin, isEmployee)
+                  : category.title}
               </div>
 
               {/* Menu Items */}
@@ -324,7 +332,9 @@ export function Sidebar({
                       </div>
 
                       <span className="truncate">
-                        {item.label}
+                        {item.resolveLabel
+                          ? item.resolveLabel(isAdmin, isEmployee)
+                          : item.label}
                       </span>
                     </Link>
                   )

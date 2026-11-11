@@ -89,7 +89,7 @@ export function applyBackendErrorToForm(
   }))
 }
 
-export const createClaimForm = () => {
+export const createClaimForm = (initialBenefitId?: string | null) => {
   const mutation = useCreateClaimMutation()
   const navigate = useNavigate()
   const today = new Date()
@@ -101,7 +101,7 @@ export const createClaimForm = () => {
       description: '',
       transactionDate: toDateOnly(new Date(today)),
       amount: 0,
-      employeeBenefitId: null as string | null,
+      employeeBenefitId: initialBenefitId ?? (null as string | null),
       tripProposalId: null as string | null,
       receiptFile: null as File | null,
     },

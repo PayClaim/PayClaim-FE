@@ -551,7 +551,11 @@ function RouteComponent() {
 
                       {/* Action CTA Button */}
                       {isAvailable ? (
-                        <Link to="/claims/create" className="block w-full">
+                        <Link
+                          to="/claims/create"
+                          search={{ employeeBenefitId: benefit.employeeBenefitId }}
+                          className="block w-full"
+                        >
                           <Button
                             size="sm"
                             className="w-full h-9 rounded-lg font-semibold text-xs bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
