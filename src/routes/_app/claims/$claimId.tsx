@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ClaimDetailWorkspace } from '#/components/ClaimDetailWorkspace'
+import { ClaimDetailWorkspace } from '#/components/pages/approvals/ClaimDetailWorkspace'
 
 export const Route = createFileRoute('/_app/claims/$claimId')({
   component: RouteComponent,

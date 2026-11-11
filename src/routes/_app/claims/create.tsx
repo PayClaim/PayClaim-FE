@@ -28,7 +28,9 @@ interface ClaimCreateSearchParams {
 }
 
 export const Route = createFileRoute('/_app/claims/create')({
-  validateSearch: (search: Record<string, unknown>): ClaimCreateSearchParams => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): ClaimCreateSearchParams => ({
     employeeBenefitId:
       typeof search.employeeBenefitId === 'string'
         ? search.employeeBenefitId
@@ -38,9 +40,7 @@ export const Route = createFileRoute('/_app/claims/create')({
         ? search.tripProposalId
         : undefined,
     claimType:
-      typeof search.claimType === 'string'
-        ? search.claimType
-        : undefined,
+      typeof search.claimType === 'string' ? search.claimType : undefined,
   }),
   beforeLoad: ({ context }) => {
     if (context.isAdmin || context.isDirector) {
@@ -100,8 +100,7 @@ function RouteComponent() {
   })
 
   const tripSelect = approvedTrips.map((t) => {
-    const budget =
-      t.myRemainingBudget ?? t.myParticipantAmount ?? t.totalAmount
+    const budget = t.myRemainingBudget ?? t.myParticipantAmount ?? t.totalAmount
     return {
       label: `${t.destination} (Plafon: ${idNumberFormatter.format(budget)})`,
       value: t.id,
@@ -112,7 +111,7 @@ function RouteComponent() {
   const benefitGroups: SelectOptionGroup[] = useMemo(() => {
     const groupMap = new Map<string, Array<{ label: string; value: string }>>()
     empBenefits.forEach((b) => {
-      const category = b.categoryName?.trim() || 'General Benefits'
+      const category = b.categoryName.trim() || 'General Benefits'
       if (!groupMap.has(category)) {
         groupMap.set(category, [])
       }
@@ -176,7 +175,7 @@ function RouteComponent() {
       form.setFieldMeta('amount', (prev) => ({
         ...prev,
         isTouched: true,
-        errorMap: { ...prev?.errorMap, onSubmit: msg },
+        errorMap: { ...prev.errorMap, onSubmit: msg },
       }))
       toast.error(msg)
       return
@@ -191,7 +190,7 @@ function RouteComponent() {
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
-          errorMap: { ...prev?.errorMap, onSubmit: msg },
+          errorMap: { ...prev.errorMap, onSubmit: msg },
         }))
         toast.error(msg)
         return
@@ -239,7 +238,7 @@ function RouteComponent() {
         form.setFieldMeta('amount', (prev) => ({
           ...prev,
           isTouched: true,
-          errorMap: { ...prev?.errorMap, onSubmit: msg },
+          errorMap: { ...prev.errorMap, onSubmit: msg },
         }))
         toast.error(msg)
         return
@@ -277,7 +276,8 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Lengkapi rincian pengeluaran dan lampirkan bukti kuitansi sah untuk diproses reviewer.
+              Lengkapi rincian pengeluaran dan lampirkan bukti kuitansi sah
+              untuk diproses reviewer.
             </p>
           </div>
         </div>
@@ -306,7 +306,9 @@ function RouteComponent() {
                     <Button
                       key={t.value}
                       type="button"
-                      variant={currentClaimType === t.value ? 'default' : 'outline'}
+                      variant={
+                        currentClaimType === t.value ? 'default' : 'outline'
+                      }
                       className={`grow h-10 cursor-pointer font-semibold transition-all ${
                         currentClaimType === t.value
                           ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
@@ -370,7 +372,8 @@ function RouteComponent() {
                     Benefit / Allocation
                   </label>
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
-                    Penggantian operasional langsung diajukan tanpa penautan benefit atau trip.
+                    Penggantian operasional langsung diajukan tanpa penautan
+                    benefit atau trip.
                   </div>
                 </div>
               )}
@@ -384,12 +387,10 @@ function RouteComponent() {
               />
             )}
 
-            {currentClaimType === 'BusinessTripReimbursement' && selectedTripId && (
-              <TripInfoBanner
-                tripId={selectedTripId}
-                trips={approvedTrips}
-              />
-            )}
+            {currentClaimType === 'BusinessTripReimbursement' &&
+              selectedTripId && (
+                <TripInfoBanner tripId={selectedTripId} trips={approvedTrips} />
+              )}
           </div>
 
           <div className="h-px bg-border/70" />
@@ -512,7 +513,11 @@ function RouteComponent() {
           {/* FORM FOOTER ACTIONS */}
           <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <Link to="/claims">
-              <Button type="button" variant="outline" className="cursor-pointer">
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+              >
                 Batal
               </Button>
             </Link>
@@ -522,7 +527,9 @@ function RouteComponent() {
               disabled={form.state.isSubmitting}
             >
               <Send className="w-4 h-4" />
-              <span>{form.state.isSubmitting ? 'Mengirimkan...' : 'Submit Claim'}</span>
+              <span>
+                {form.state.isSubmitting ? 'Mengirimkan...' : 'Submit Claim'}
+              </span>
             </Button>
           </div>
 
@@ -532,7 +539,8 @@ function RouteComponent() {
               <DialogHeader>
                 <DialogTitle>Konfirmasi Pengajuan Klaim</DialogTitle>
                 <DialogDescription className="text-sm pt-1">
-                  Pastikan rincian data pengajuan klaim Anda sudah benar sebelum diteruskan ke reviewer.
+                  Pastikan rincian data pengajuan klaim Anda sudah benar sebelum
+                  diteruskan ke reviewer.
                 </DialogDescription>
               </DialogHeader>
 
@@ -540,15 +548,22 @@ function RouteComponent() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Tipe Klaim:</span>
                   <span className="font-semibold text-foreground">
-                    {claimTypeSelect.find((c) => c.value === currentClaimType)?.label || currentClaimType}
+                    {claimTypeSelect.find((c) => c.value === currentClaimType)
+                      ?.label || currentClaimType}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Tanggal Invoice:</span>
-                  <span className="font-semibold text-foreground">{form.state.values.transactionDate}</span>
+                  <span className="text-muted-foreground">
+                    Tanggal Invoice:
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {form.state.values.transactionDate}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Nominal Pengajuan:</span>
+                  <span className="text-muted-foreground">
+                    Nominal Pengajuan:
+                  </span>
                   <span className="font-bold text-base text-blue-600 dark:text-blue-400 font-mono">
                     {idNumberFormatter.format(form.state.values.amount)}
                   </span>
@@ -557,7 +572,11 @@ function RouteComponent() {
 
               <DialogFooter className="gap-2 sm:gap-0 pt-2">
                 <DialogClose asChild>
-                  <Button variant="outline" size="sm" className="cursor-pointer">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                  >
                     Periksa Kembali
                   </Button>
                 </DialogClose>
@@ -567,7 +586,9 @@ function RouteComponent() {
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
                 >
-                  {form.state.isSubmitting ? 'Mengirimkan...' : 'Konfirmasi & Kirim'}
+                  {form.state.isSubmitting
+                    ? 'Mengirimkan...'
+                    : 'Konfirmasi & Kirim'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -603,8 +624,14 @@ function BenefitInfoBanner({
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Periode aktif: <span className="font-medium text-foreground">{selectedBenefit.startDate}</span> s/d{' '}
-          <span className="font-medium text-foreground">{selectedBenefit.endDate}</span>
+          Periode aktif:{' '}
+          <span className="font-medium text-foreground">
+            {selectedBenefit.startDate}
+          </span>{' '}
+          s/d{' '}
+          <span className="font-medium text-foreground">
+            {selectedBenefit.endDate}
+          </span>
         </p>
       </div>
 
@@ -641,8 +668,14 @@ function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Jadwal: <span className="font-medium text-foreground">{selectedTrip.startDate}</span> -{' '}
-          <span className="font-medium text-foreground">{selectedTrip.endDate}</span>
+          Jadwal:{' '}
+          <span className="font-medium text-foreground">
+            {selectedTrip.startDate}
+          </span>{' '}
+          -{' '}
+          <span className="font-medium text-foreground">
+            {selectedTrip.endDate}
+          </span>
         </p>
       </div>
 

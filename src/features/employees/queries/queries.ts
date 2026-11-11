@@ -15,7 +15,7 @@ export const useGetAllEmployeeQuery = (params?: Record<string, any>) =>
       if (Array.isArray(res?.data)) return res.data as EmployeeResponse[]
       return [] as EmployeeResponse[]
     },
-    initialData: [],
+    initialData: null,
   })
 
 export const useGetEmployeeQuery = (id: string) =>

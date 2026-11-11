@@ -7,6 +7,7 @@ import {
 import { useMemo, useState } from 'react'
 
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { Button } from '#/components/ui/button'
@@ -25,6 +26,8 @@ import {
   Tag,
   X,
 } from 'lucide-react'
+import NotFoundPage from '#/components/pages/NotFoundPage'
+import { PaginationSection } from '#/components/PaginationSection'
 
 export const Route = createFileRoute('/_app/claims/')({
   beforeLoad: ({ context }) => {
@@ -33,6 +36,7 @@ export const Route = createFileRoute('/_app/claims/')({
     }
   },
   component: RouteComponent,
+  validateSearch: (s) => s as ClaimFilterParams,
 })
 
 function formatDate(date: string) {
@@ -51,25 +55,29 @@ function getClaimTypeBadge(claimType: string) {
       return {
         label: 'Operational',
         icon: Briefcase,
-        className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
       }
     case 'BusinessTripReimbursement':
       return {
         label: 'Business Trip',
         icon: Plane,
-        className: 'bg-indigo-50 text-indigo-700 border-indigo-200/70 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800/60',
+        className:
+          'bg-indigo-50 text-indigo-700 border-indigo-200/70 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800/60',
       }
     case 'Benefit':
       return {
         label: 'Benefit',
         icon: Tag,
-        className: 'bg-sky-50 text-sky-700 border-sky-200/70 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800/60',
+        className:
+          'bg-sky-50 text-sky-700 border-sky-200/70 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800/60',
       }
     default:
       return {
         label: claimType,
         icon: Layers,
-        className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
       }
   }
 }
@@ -79,53 +87,66 @@ function getStatusBadgeConfig(status: string) {
     case 'Approved':
       return {
         label: 'Approved',
-        className: 'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60',
+        className:
+          'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60',
         dotColor: 'bg-blue-600',
       }
     case 'Paid':
       return {
         label: 'Paid',
-        className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60',
+        className:
+          'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60',
         dotColor: 'bg-emerald-600',
       }
     case 'Submitted':
       return {
         label: 'Submitted',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
     case 'UnderReview':
       return {
         label: 'Under Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
     case 'NeedsRevision':
       return {
         label: 'Needs Revision',
-        className: 'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800/60',
+        className:
+          'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800/60',
         dotColor: 'bg-orange-500',
       }
     case 'Rejected':
       return {
         label: 'Rejected',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
+        className:
+          'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
         dotColor: 'bg-rose-500',
       }
     default:
       return {
         label: status,
-        className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
         dotColor: 'bg-slate-500',
       }
   }
 }
 
-type StatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
+type StatusTab =
+  'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
+  const search = Route.useSearch()
   const navigate = useNavigate()
-  const { data: claimResponse, isError, isFetching } = useGetAllClaimsQuery()
+  const {
+    data: claimResponse,
+    isError,
+    isFetching,
+  } = useGetAllClaimsQuery(search)
 
   const claims = claimResponse?.data ?? []
 
@@ -142,7 +163,10 @@ function RouteComponent() {
       ['Submitted', 'UnderReview'].includes(c.status),
     )
     const waitingCount = waitingClaims.length
-    const waitingAmount = waitingClaims.reduce((sum, c) => sum + (c.amount || 0), 0)
+    const waitingAmount = waitingClaims.reduce(
+      (sum, c) => sum + (c.amount || 0),
+      0,
+    )
 
     const approvedPaidClaims = claims.filter((c) =>
       ['Approved', 'Paid'].includes(c.status),
@@ -201,7 +225,11 @@ function RouteComponent() {
   }, [claims, activeTab, searchQuery])
 
   if (isError) return <ErrorComponent pageTitle="My Claims" />
-  if (isFetching && !claimResponse) return <LoadingComponent pageTitle="My Claims" />
+  if (isFetching) return <LoadingComponent pageTitle="My Claims" />
+
+  if (!claimResponse) return <NotFoundPage />
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    claimResponse
 
   return (
     <main className="space-y-6">
@@ -279,7 +307,8 @@ function RouteComponent() {
             {metrics.approvedPaidCount}
           </p>
           <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.approvedPaidAmount)} telah disetujui/cair
+            {idNumberFormatter.format(metrics.approvedPaidAmount)} telah
+            disetujui/cair
           </p>
         </div>
       </div>
@@ -293,7 +322,8 @@ function RouteComponent() {
               Riwayat Klaim
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Klik pada baris klaim untuk melihat detail pengajuan dan progres approval.
+              Klik pada baris klaim untuk melihat detail pengajuan dan progres
+              approval.
             </p>
           </div>
 
@@ -436,11 +466,13 @@ function RouteComponent() {
                           claim.description ||
                           '-'}
                       </span>
-                      {claim.description && (claim.benefitName || claim.tripProposalDescription) && (
-                        <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
-                          {claim.description}
-                        </span>
-                      )}
+                      {claim.description &&
+                        (claim.benefitName ||
+                          claim.tripProposalDescription) && (
+                          <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
+                            {claim.description}
+                          </span>
+                        )}
                     </td>
 
                     {/* Nominal */}
@@ -473,10 +505,15 @@ function RouteComponent() {
 
               {filteredClaims.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-muted-foreground"
+                  >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
-                      <p className="font-medium">Tidak ada klaim yang ditemukan</p>
+                      <p className="font-medium">
+                        Tidak ada klaim yang ditemukan
+                      </p>
                       <p className="text-xs text-muted-foreground/80">
                         {searchQuery || activeTab !== 'ALL'
                           ? 'Coba ubah kata kunci pencarian atau tab status.'
@@ -491,13 +528,21 @@ function RouteComponent() {
         </div>
 
         {/* Footer info bar */}
-        <div className="px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground flex items-center justify-between">
-          <span>Menampilkan {filteredClaims.length} dari {claims.length} total klaim</span>
-          {activeTab !== 'ALL' && (
-            <span className="font-medium text-foreground">
-              Filter aktif: {activeTab}
+        <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <span>
+              Menampilkan {filteredClaims.length} dari {claims.length} total
+              klaim
             </span>
-          )}
+            {activeTab !== 'ALL' && (
+              <span className="font-medium text-foreground">
+                Filter aktif: {activeTab}
+              </span>
+            )}
+          </div>
+          <div className="w-fit grow-0">
+            <PaginationSection pagination={paginationProp} />
+          </div>
         </div>
       </section>
     </main>
