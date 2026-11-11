@@ -8,23 +8,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
+import { Link, useRouteContext } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { storage } from '#/lib/storage'
 import type { UserProfile } from '#/types/auth.type'
 
 export default function Header() {
   const { user } = useRouteContext({ from: '/_app' }) as { user: UserProfile }
-  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  const onClickLogout = async () => {
+  const onClickLogout = () => {
     try {
       storage.remove('token')
-      await navigate({
-        to: '/login',
-        search: {
-          redirect: null,
-        },
-      })
+      queryClient.clear()
+      window.location.href = '/login'
     } catch (err) {
       console.error(err)
     }

@@ -31,9 +31,7 @@ export const loginForm = () => {
     onSubmit: async ({ value }) => {
       try {
         await mutation.mutateAsync(value)
-        await navigate({
-          to: search.redirect ?? '/dashboard',
-        })
+        window.location.href = search.redirect ?? '/dashboard'
       } catch (err: unknown) {
         toast.error(getFriendlyErrorMessage(err, 'Gagal masuk. Periksa username dan password Anda.'))
       }

@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_app')({
   component: RouteComponent,
   beforeLoad: async ({ context, location }) => {
     try {
-      const user = await context.queryClient.ensureQueryData(getCurrentUser())
+      const user = await context.queryClient.fetchQuery(getCurrentUser())
       const isAdmin =
         user.roles?.some((r: string) => r.toLowerCase() === 'admin') ?? false
       const isDirector =
