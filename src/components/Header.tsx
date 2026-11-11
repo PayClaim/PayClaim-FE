@@ -1,13 +1,14 @@
-import { ChevronsUpDown, LogOut } from 'lucide-react'
+import { ChevronsUpDown, KeyRound, LogOut } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import type { ReactNode } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { useNavigate, useRouteContext } from '@tanstack/react-router'
+import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
 import { storage } from '#/lib/storage'
 import type { UserProfile } from '#/types/auth.type'
 
@@ -97,29 +98,53 @@ function UserDropDown({
   const displayName = user.fullName || user.username
   const primaryRole = user.roles?.[0] || 'User'
   const subInfo = user.positionTitle
-    ? `${user.positionTitle} • ${primaryRole}`
+    ? `${user.positionTitle} • ${user.departmentName || primaryRole}`
     : primaryRole
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-60 p-1.5">
+      <DropdownMenuContent align="end" className="w-64 p-1.5">
         <div className="px-3 py-2 border-b border-border/60 mb-1">
           <p className="text-sm font-bold text-heading truncate">
             {displayName}
           </p>
-          <p className="text-xs text-muted-foreground capitalize truncate">
-            {subInfo}
-          </p>
+          {user.email && (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {user.email}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60 capitalize">
+              {primaryRole}
+            </span>
+            {user.positionTitle && (
+              <span className="text-[11px] text-muted-foreground truncate">
+                {user.positionTitle}
+              </span>
+            )}
+          </div>
         </div>
+
+        <DropdownMenuItem asChild>
+          <Link
+            to="/change-password"
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <KeyRound className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+            <span>Ganti Kata Sandi</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="my-1" />
 
         <DropdownMenuItem
           onClick={() => logout()}
-          className="text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40 gap-2 cursor-pointer font-medium"
+          className="text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40 gap-2 cursor-pointer font-medium text-xs px-3 py-2"
         >
           <LogOut className="w-4 h-4" strokeWidth={1.75} />
-          <span>Logout</span>
+          <span>Keluar (Logout)</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { Pencil, Plus, Search, SearchX, Tags, Trash2 } from 'lucide-react'
+import { CheckCircle2, FolderTree, Pencil, Plus, Search, SearchX, Tags, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -80,11 +80,65 @@ function RouteComponent() {
         </div>
 
         <Link to="/admin/benefit-categories/create">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg cursor-pointer">
             <Plus className="w-4 h-4" strokeWidth={2} />
             <span>New Category</span>
           </Button>
         </Link>
+      </div>
+
+      {/* KPI Overview Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Total Kategori
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Tags className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
+            {categories.length}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Klasifikasi tunjangan terdaftar
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Status Operasional
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+            Aktif
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Siap digunakan pada matriks benefit
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Struktur Modul
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <FolderTree className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-indigo-600 dark:text-indigo-400">
+            Kategori Induk
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Dasar pengelompokan item plafon
+          </p>
+        </div>
       </div>
 
       {/* Table Card Container */}

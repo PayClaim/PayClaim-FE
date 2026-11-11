@@ -1,6 +1,6 @@
 import { Button } from '#/components/ui/button'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
   Table,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
-import { Building2, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
+import { Building2, Network, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -42,6 +42,13 @@ function RouteComponent() {
       d.parentDeptName?.toLowerCase().includes(s)
     )
   })
+
+  const metrics = useMemo(() => {
+    const total = departments.length
+    const parentCount = departments.filter((d) => !d.parentDepartmentId).length
+    const subCount = departments.filter((d) => Boolean(d.parentDepartmentId)).length
+    return { total, parentCount, subCount }
+  }, [departments])
 
   if (isError) {
     return (
@@ -86,11 +93,65 @@ function RouteComponent() {
         </div>
 
         <Link to="/admin/departments/create">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg cursor-pointer">
             <Plus className="w-4 h-4" strokeWidth={2} />
             <span>New Department</span>
           </Button>
         </Link>
+      </div>
+
+      {/* KPI Overview Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Total Departemen
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Building2 className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
+            {metrics.total}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Seluruh unit kerja terdaftar
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Divisi Induk / HQ
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <Building2 className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+            {metrics.parentCount}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Tingkat hirarki utama
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Sub-Departemen / Cabang
+            </span>
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Network className="w-5 h-5" />
+            </div>
+          </div>
+          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-indigo-600 dark:text-indigo-400">
+            {metrics.subCount}
+          </p>
+          <p className="text-xs font-medium text-slate-500 mt-1">
+            Terhubung ke departemen induk
+          </p>
+        </div>
       </div>
 
       {/* Table Card Container */}
