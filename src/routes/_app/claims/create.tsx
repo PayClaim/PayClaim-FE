@@ -8,7 +8,7 @@ import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/que
 import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { toast } from 'sonner'
-import { ArrowLeft, Plane, Send, Sparkles } from 'lucide-react'
+import { ArrowLeft, Send } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -62,6 +62,13 @@ function RouteComponent() {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const [currentClaimType, setClaimType] = useState('Benefit')
+  const [selectedBenefitId, setSelectedBenefitId] = useState<string | null>(
+    searchBenefitId ?? null,
+  )
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(
+    searchTripId ?? null,
+  )
+
   const claimTypeSelect = [
     { label: 'Benefit', value: 'Benefit' },
     { label: 'Operational', value: 'OperationalReimbursement' },
@@ -73,6 +80,8 @@ function RouteComponent() {
     form.setFieldValue('claimType', value)
     form.setFieldValue('employeeBenefitId', null)
     form.setFieldValue('tripProposalId', null)
+    setSelectedBenefitId(null)
+    setSelectedTripId(null)
   }
 
   const approvedTrips = tripProposals.filter((t) => {
@@ -123,11 +132,15 @@ function RouteComponent() {
       form.setFieldValue('claimType', 'BusinessTripReimbursement')
       form.setFieldValue('tripProposalId', searchTripId)
       form.setFieldValue('employeeBenefitId', null)
+      setSelectedTripId(searchTripId)
+      setSelectedBenefitId(null)
     } else if (searchBenefitId) {
       setClaimType('Benefit')
       form.setFieldValue('claimType', 'Benefit')
       form.setFieldValue('employeeBenefitId', searchBenefitId)
       form.setFieldValue('tripProposalId', null)
+      setSelectedBenefitId(searchBenefitId)
+      setSelectedTripId(null)
     } else if (searchClaimType) {
       setClaimType(searchClaimType)
       form.setFieldValue('claimType', searchClaimType)
@@ -194,9 +207,6 @@ function RouteComponent() {
     await form.handleSubmit()
     setDialogOpen(false)
   }
-
-  const selectedBenefitId = form.state.values.employeeBenefitId
-  const selectedTripId = form.state.values.tripProposalId
 
   return (
     <main className="max-w-4xl mx-auto space-y-6">
@@ -275,6 +285,7 @@ function RouteComponent() {
                         }
                         label="Benefit"
                         groups={benefitGroups}
+                        onCustomChange={(val) => setSelectedBenefitId(val)}
                       />
                     )}
                   </form.AppField>
@@ -293,6 +304,7 @@ function RouteComponent() {
                         }
                         label="Trip Proposal"
                         values={tripSelect}
+                        onCustomChange={(val) => setSelectedTripId(val)}
                       />
                     )}
                   </form.AppField>
@@ -489,24 +501,19 @@ function BenefitInfoBanner({
 
   return (
     <div className="p-4 rounded-xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-          <Sparkles className="w-4 h-4" />
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm text-heading">
+            {selectedBenefit.benefitName}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+            {selectedBenefit.categoryName || 'General'}
+          </span>
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-heading">
-              {selectedBenefit.benefitName}
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
-              {selectedBenefit.categoryName || 'General'}
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Periode aktif: <span className="font-medium text-foreground">{selectedBenefit.startDate}</span> s/d{' '}
-            <span className="font-medium text-foreground">{selectedBenefit.endDate}</span>
-          </p>
-        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Periode aktif: <span className="font-medium text-foreground">{selectedBenefit.startDate}</span> s/d{' '}
+          <span className="font-medium text-foreground">{selectedBenefit.endDate}</span>
+        </p>
       </div>
 
       <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
@@ -532,24 +539,19 @@ function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
 
   return (
     <div className="p-4 rounded-xl border border-sky-200/80 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/20 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-          <Plane className="w-4 h-4" />
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm text-heading">
+            Perjalanan Dinas: {selectedTrip.destination}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">
+            Trip Proposal
+          </span>
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-heading">
-              Perjalanan Dinas: {selectedTrip.destination}
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">
-              Trip Proposal
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Jadwal: <span className="font-medium text-foreground">{selectedTrip.startDate}</span> -{' '}
-            <span className="font-medium text-foreground">{selectedTrip.endDate}</span>
-          </p>
-        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Jadwal: <span className="font-medium text-foreground">{selectedTrip.startDate}</span> -{' '}
+          <span className="font-medium text-foreground">{selectedTrip.endDate}</span>
+        </p>
       </div>
 
       <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
