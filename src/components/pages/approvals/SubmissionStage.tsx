@@ -22,9 +22,17 @@ export function SubmissionStage({
   hasReceipt,
   onPreview,
 }: SubmissionStageProps) {
+  const statusBadge = (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300">
+      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+      Submitted
+    </span>
+  )
+
   return (
     <TimelineStage
       title="Claim Initialization & Submission"
+      statusBadge={statusBadge}
       tone="success"
       connector={false}
       approverName={claim.employeeName}

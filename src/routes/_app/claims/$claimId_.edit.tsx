@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
 import { useState } from 'react'
 import { editClaimForm } from '#/features/claims/forms/forms'
@@ -16,11 +16,8 @@ import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import {
   AlertTriangle,
   ArrowLeft,
-  CheckCircle2,
-  Clock,
   Download,
   FileText,
-  Info,
 } from 'lucide-react'
 import { downloadFile } from '#/lib/download'
 
@@ -30,7 +27,6 @@ export const Route = createFileRoute('/_app/claims/$claimId_/edit')({
 
 function RouteComponent() {
   const { claimId } = Route.useParams()
-  const navigate = useNavigate()
   const { data: claim, isError, error, isFetching } = useGetClaimsQuery(claimId)
 
   const [dialogOpen, setDialogOpen] = useState(false)

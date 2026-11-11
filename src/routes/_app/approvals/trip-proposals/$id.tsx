@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <TripProposalDetailWorkspace
       id={id}
-      backTo="/trip-proposals"
-      backLabel="Back to My Trip Proposals"
+      backTo="/approvals/trip-proposals"
+      backLabel="Back to Approval Trip Proposals"
     />
   )
 }

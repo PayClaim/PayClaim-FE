@@ -8,6 +8,7 @@ import {
   Eye,
   FileCheck,
   FileText,
+  Send,
   XCircle,
 } from 'lucide-react'
 
@@ -108,6 +109,7 @@ export function TripProposalTimeline({
             const isApproved = decision === 'approved'
             const isRejected = decision === 'rejected'
             const isNeedsRevision = decision === 'needsrevision'
+            const isForwarded = decision === 'forwardedtofinancemanager'
 
             const dateInfo = getDateParts(stage.decidedAt)
 
@@ -132,7 +134,9 @@ export function TripProposalTimeline({
                           ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-700 dark:bg-rose-950'
                           : isNeedsRevision
                             ? 'border-purple-300 bg-purple-50 text-purple-600 dark:border-purple-700 dark:bg-purple-950'
-                            : 'border-border bg-muted text-muted-foreground'
+                            : isForwarded
+                              ? 'border-sky-300 bg-sky-50 text-sky-600 dark:border-sky-700 dark:bg-sky-950'
+                              : 'border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   {isPending ? (
@@ -145,6 +149,8 @@ export function TripProposalTimeline({
                     <XCircle className="h-4 w-4" />
                   ) : isNeedsRevision ? (
                     <AlertTriangle className="h-4 w-4" />
+                  ) : isForwarded ? (
+                    <Send className="h-4 w-4" />
                   ) : (
                     <FileText className="h-4 w-4" />
                   )}
@@ -153,9 +159,48 @@ export function TripProposalTimeline({
                 {/* Card aktivitas. */}
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-                    <h3 className="text-sm font-bold">
-                      {stage.title}
-                    </h3>
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-sm font-bold text-heading">
+                        {stage.title}
+                      </h3>
+
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                          isPending
+                            ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+                            : isApproved || isSubmitted
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+                              : isRejected
+                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+                                : isNeedsRevision
+                                  ? 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700/60 dark:bg-purple-950/60 dark:text-purple-300'
+                                  : isForwarded
+                                    ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-950/60 dark:text-sky-300'
+                                    : 'border-border bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isPending
+                              ? 'bg-amber-500'
+                              : isApproved || isSubmitted
+                                ? 'bg-emerald-500'
+                                : isRejected
+                                  ? 'bg-rose-500'
+                                  : isNeedsRevision
+                                    ? 'bg-purple-500'
+                                    : isForwarded
+                                      ? 'bg-sky-500'
+                                      : 'bg-muted-foreground'
+                          }`}
+                        />
+                        {isPending
+                          ? 'Pending'
+                          : isSubmitted
+                            ? 'Submitted'
+                            : formatDecision(stage.decision)}
+                      </span>
+                    </div>
 
                     <div className="flex items-center gap-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
@@ -216,56 +261,28 @@ export function TripProposalTimeline({
                             <CheckCircle2 className="h-4 w-4" />
                           ) : isRejected ? (
                             <XCircle className="h-4 w-4" />
+                          ) : isNeedsRevision ? (
+                            <AlertTriangle className="h-4 w-4" />
+                          ) : isForwarded ? (
+                            <Send className="h-4 w-4 text-sky-600" />
                           ) : (
                             <FileText className="h-4 w-4" />
                           )}
                         </div>
 
                         <div className="min-w-0">
-                          <p className="text-sm font-bold">
+                          <p className="text-sm font-bold text-heading">
                             {isSubmitted
                               ? 'Proposal successfully submitted'
                               : isPending
                                 ? `Waiting for ${stage.approverName}`
-                                : formatDecision(stage.decision)}
-                          </p>
-
-                          <p className="text-xs text-muted-foreground">
-                            {isSubmitted
-                              ? 'Initial proposal submission'
-                              : stage.approvalLevel
-                                ? `Approval Level ${stage.approvalLevel}`
-                                : 'Proposal process'}
+                                : isApproved
+                                  ? `Approved by ${stage.approverName}`
+                                  : isRejected
+                                    ? `Rejected by ${stage.approverName}`
+                                    : formatDecision(stage.decision)}
                           </p>
                         </div>
-                      </div>
-
-                      {/* Keputusan approval. */}
-                      <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/40 px-3.5 py-2.5 text-xs">
-                        <span className="font-semibold">
-                          {isSubmitted
-                            ? 'Submission Status'
-                            : 'Approval Decision'}
-                        </span>
-
-                        <Badge
-                          variant="outline"
-                          className={
-                            isPending
-                              ? 'border-amber-300 text-amber-700 dark:text-amber-300'
-                              : isApproved || isSubmitted
-                                ? 'border-emerald-300 text-emerald-700 dark:text-emerald-300'
-                                : isRejected
-                                  ? 'border-rose-300 text-rose-700 dark:text-rose-300'
-                                  : isNeedsRevision
-                                    ? 'border-purple-300 text-purple-700 dark:text-purple-300'
-                                    : ''
-                          }
-                        >
-                          {isPending
-                            ? 'Pending'
-                            : formatDecision(stage.decision)}
-                        </Badge>
                       </div>
 
                       {/* Attachment pada aktivitas submission. */}
@@ -389,25 +406,27 @@ function getInitials(name?: string | null) {
 }
 
 function formatDecision(decision: string) {
-  if (decision.toLowerCase().replace(/\s/g, '') === 'needsrevision') {
+  const norm = decision.toLowerCase().replace(/[\s_-]/g, '')
+  if (norm === 'needsrevision') {
     return 'Needs Revision'
+  }
+  if (norm === 'forwardedtofinancemanager') {
+    return 'Forwarded to Finance Manager'
   }
 
   return decision
 }
 
+function parseDateUtc(value: string): Date | null {
+  if (!value) return null
+  const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
+  const d = new Date(hasTz ? value : `${value}Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 function getDateParts(value: string) {
-  if (!value) {
-    return {
-      day: '-',
-      monthYear: '-',
-      time: '-',
-    }
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
+  const date = parseDateUtc(value)
+  if (!date) {
     return {
       day: '-',
       monthYear: '-',
@@ -416,15 +435,20 @@ function getDateParts(value: string) {
   }
 
   return {
-    day: date.getDate().toString(),
-    monthYear: date.toLocaleDateString('en-US', {
+    day: date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      timeZone: 'Asia/Jakarta',
+    }),
+    monthYear: date.toLocaleDateString('id-ID', {
       month: 'short',
       year: 'numeric',
+      timeZone: 'Asia/Jakarta',
     }),
-    time: date.toLocaleTimeString('en-US', {
+    time: date.toLocaleTimeString('id-ID', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-    }),
+      timeZone: 'Asia/Jakarta',
+    }).replace('.', ':'),
   }
 } 

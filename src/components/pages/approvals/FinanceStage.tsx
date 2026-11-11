@@ -35,9 +35,41 @@ export function FinanceStage({
       ? 'danger'
       : 'warning'
 
+  const statusBadge = (
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+        isPaid
+          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+          : isApproved
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+            : isRejected
+              ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+              : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+      }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${
+          isPaid || isApproved
+            ? 'bg-emerald-500'
+            : isRejected
+              ? 'bg-rose-500'
+              : 'bg-amber-500'
+        }`}
+      />
+      {isPaid
+        ? 'Paid'
+        : isApproved
+          ? 'Approved'
+          : isRejected
+            ? 'Rejected'
+            : 'Pending'}
+    </span>
+  )
+
   return (
     <TimelineStage
-      title="Finance Verification & Disbursement (Level 2)"
+      title="Finance Verification & Disbursement"
+      statusBadge={statusBadge}
       tone={tone}
       approverName={approval?.approverName || 'Finance Officer'}
       showViewButton={hasReceipt}

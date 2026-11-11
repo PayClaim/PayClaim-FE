@@ -97,9 +97,6 @@ function UserDropDown({
 }) {
   const displayName = user.fullName || user.username
   const primaryRole = user.roles?.[0] || 'User'
-  const subInfo = user.positionTitle
-    ? `${user.positionTitle} • ${user.departmentName || primaryRole}`
-    : primaryRole
 
   return (
     <DropdownMenu>

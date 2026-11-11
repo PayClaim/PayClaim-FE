@@ -1,6 +1,6 @@
 import { useSelector } from '@tanstack/react-form'
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, FileText, FileUp, X, Image as ImageIcon } from 'lucide-react'
+import { Eye, EyeOff, FileText, FileUp, X } from 'lucide-react'
 import { cn } from 'cn'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -230,7 +230,6 @@ export function CurrencyField({
 
 export function FileInput({
   label,
-  placeholder,
   accept = 'image/*,.pdf,application/pdf',
 }: TextFieldProps & { accept?: string }) {
   const field = useFieldContext<File | null>()

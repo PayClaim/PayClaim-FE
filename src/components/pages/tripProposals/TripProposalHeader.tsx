@@ -18,8 +18,14 @@ type Props = {
 export function TripProposalHeader({
   proposal,
   backTo = '/trip-proposals',
-  backLabel = 'Back',
+  backLabel = 'Back to My Trip Proposals',
 }: Props) {
+  const isAccommodationPaid = [
+    'financemanagerreview',
+    'approved',
+    'completed',
+  ].includes((proposal.status || '').replace(/[\s_-]/g, '').toLowerCase())
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
       {/* Judul, informasi submit, dan status. */}
@@ -79,7 +85,18 @@ export function TripProposalHeader({
 
         <SummaryItem
           label="Accommodation Amount (Hotel, Ticket)"
-          value={formatCurrency(proposal.accommodationAmount)}
+          value={
+            isAccommodationPaid ? (
+              <span>
+                {formatCurrency(proposal.accommodationAmount)}{' '}
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  (PAID)
+                </span>
+              </span>
+            ) : (
+              formatCurrency(proposal.accommodationAmount)
+            )
+          }
         />
 
         <SummaryItem
@@ -98,7 +115,7 @@ function SummaryItem({
   highlight = false,
 }: {
   label: string
-  value: string
+  value: React.ReactNode
   highlight?: boolean
 }) {
   return (
@@ -151,20 +168,30 @@ function formatDate(date: string) {
   })
 }
 
+function parseDateUtc(value: string): Date | null {
+  if (!value) return null
+  const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
+  const d = new Date(hasTz ? value : `${value}Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 function formatSubmittedAt(value: string) {
-  const date = new Date(value)
+  const date = parseDateUtc(value)
+  if (!date) return '-'
 
   const formattedDate = date.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'Asia/Jakarta',
   })
 
   const formattedTime = date.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  })
+    timeZone: 'Asia/Jakarta',
+  }).replace('.', ':')
 
   return `${formattedDate} at ${formattedTime}`
 }

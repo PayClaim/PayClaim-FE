@@ -4,7 +4,6 @@ import { Button } from '#/components/ui/button'
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
-import { useState } from 'react'
 
 export const Route = createFileRoute('/_app/playground/$claimId')({
   component: RouteComponent,
@@ -13,11 +12,6 @@ export const Route = createFileRoute('/_app/playground/$claimId')({
 function RouteComponent() {
   const { claimId } = Route.useParams()
   const { data: claim, isFetching, isError, error } = useGetClaimsQuery(claimId)
-
-  const [actionType, setActionType] = useState<
-    'Approved' | 'Rejected' | 'NeedsRevision' | 'Pay' | null
-  >(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
 
   if (isFetching) return <LoadingComponent pageTitle="Claim Details" />
 

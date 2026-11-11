@@ -141,7 +141,7 @@ function RouteComponent() {
     timelineStages.push(
       createApprovalStage(
         3,
-        'Finance Manager Approval (Level 3)',
+        'Finance Manager Approval',
         'Finance Manager',
         financeManagerApproval,
         proposal.status === TripProposalStatus.FinanceManagerReview,

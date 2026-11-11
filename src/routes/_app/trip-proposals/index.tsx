@@ -9,7 +9,6 @@ import { useQuery } from '@tanstack/react-query'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
-import type { TripProposal } from '#/types/tripProposals.type'
 import { Button } from '#/components/ui/button'
 
 import {

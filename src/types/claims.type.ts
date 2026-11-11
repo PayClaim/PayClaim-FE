@@ -51,7 +51,6 @@ export interface MyClaimResponse {
 }
 
 export interface ClaimResponseWithHistory {
-  tripProposalDescription: string | null | undefined
   id: string
   claimType: ClaimTypeEnum
   description: string

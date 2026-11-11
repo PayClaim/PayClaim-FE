@@ -5,12 +5,15 @@ export type TripProposal = {
   endDate: string
   accommodationAmount: number
   totalAmount: number
+  description?: string | null
   submittedAt: string
   status: string
   picEmployeeId?: string | null
   picName: string | null
   participantCount: number
   filePath: string | null
+  myParticipantAmount?: number | null
+  myRemainingBudget?: number | null
 }
 
 export enum TripProposalStatus {
