@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { editClaimForm } from '#/features/claims/forms/forms'
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimResponseWithHistory } from '#/types/claims.type'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogClose,
@@ -69,7 +70,19 @@ function EditClaimFormContent({
     ? claim.filePath.split('/').pop()?.split('?')[0] || 'Receipt_Attachment'
     : null
 
+  const isFormChanged = (values: typeof form.state.values) => {
+    const isAmountChanged = Number(values.amount) !== Number(initialValue.amount)
+    const isDateChanged = values.transactionDate !== initialValue.transactionDate
+    const isDescChanged = values.description.trim() !== initialValue.description.trim()
+    const isReceiptChanged = Boolean(values.receiptFile)
+    return isAmountChanged || isDateChanged || isDescChanged || isReceiptChanged
+  }
+
   const handleReview = async () => {
+    if (!isFormChanged(form.state.values)) {
+      toast.info('Belum ada perubahan data pada formulir klaim ini.')
+      return
+    }
     await form.validateAllFields('submit')
     if (form.state.isValid) setDialogOpen(true)
   }
@@ -190,12 +203,30 @@ function EditClaimFormContent({
                 Batal
               </Button>
             </Link>
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
+            <form.Subscribe
+              selector={(state) => ({
+                values: state.values,
+                isSubmitting: state.isSubmitting,
+              })}
             >
-              Ajukan Ulang Revisi
-            </Button>
+              {({ values, isSubmitting }) => {
+                const hasChanges = isFormChanged(values)
+                return (
+                  <Button
+                    type="submit"
+                    disabled={!hasChanges || isSubmitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      hasChanges
+                        ? 'Ajukan ulang revisi'
+                        : 'Lakukan perubahan data atau unggah berkas baru untuk mengajukan revisi'
+                    }
+                  >
+                    Ajukan Ulang Revisi
+                  </Button>
+                )
+              }}
+            </form.Subscribe>
           </div>
 
           {/* Dialog Konfirmasi Submit */}

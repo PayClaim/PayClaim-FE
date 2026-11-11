@@ -8,7 +8,6 @@ import {
   Eye,
   FileCheck,
   FileText,
-  Plus,
   Send,
   XCircle,
 } from 'lucide-react'
@@ -105,12 +104,12 @@ export function TripProposalTimeline({
             <div className="relative">
               {stages.length > 0 && (
                 <div
-                  className="pointer-events-none absolute -left-[25px] top-6 h-[calc(100%+24px)] w-0.5 bg-border"
+                  className="pointer-events-none absolute -left-[25px] top-7 h-[calc(100%+24px)] w-0.5 bg-border"
                 />
               )}
 
-              <div className="absolute -left-10 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary dark:bg-primary/20">
-                <Plus className="h-4 w-4" />
+              <div className="absolute -left-10 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               </div>
 
               {claimCard}

@@ -7,8 +7,6 @@ import {
   XCircle,
   Users,
   AlertCircle,
-  Plus,
-  ArrowRight,
 } from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -555,16 +553,28 @@ const exceedsFinanceLimit =
         }}
         className="block group"
       >
-        <div className="flex items-center justify-between rounded-xl bg-primary px-5 py-3.5 text-primary-foreground shadow-2xs transition-all hover:bg-primary/90 hover:shadow-sm cursor-pointer">
-          <div className="flex items-center gap-2.5 text-sm font-bold">
-            <Plus className="h-4 w-4" />
-            <span>
-              + Ajukan Claim ({formatCurrency(myParticipant?.amount ?? 0)})
-            </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 shadow-2xs transition-all hover:border-emerald-400 hover:bg-emerald-100/70 hover:shadow-xs cursor-pointer dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:border-emerald-700">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
+                Pengajuan Klaim Reimbursement
+              </span>
+              <span className="inline-flex items-center rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                Tersedia
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-emerald-700/90 dark:text-emerald-300/90">
+              Plafon anggaran Anda:{' '}
+              <span className="font-bold text-emerald-950 dark:text-emerald-100">
+                {formatCurrency(myParticipant?.amount ?? 0)}
+              </span>
+            </p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold opacity-90 group-hover:translate-x-1 transition-transform">
-            <span>Ajukan Reimbursement</span>
-            <ArrowRight className="h-4 w-4" />
+
+          <div className="flex items-center self-end sm:self-center">
+            <span className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all group-hover:bg-emerald-700 group-hover:shadow-xs group-active:scale-95">
+              Ajukan Klaim ({formatCurrency(myParticipant?.amount ?? 0)})
+            </span>
           </div>
         </div>
       </Link>
