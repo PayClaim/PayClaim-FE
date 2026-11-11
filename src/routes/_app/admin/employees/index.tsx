@@ -53,11 +53,7 @@ function getInitials(name?: string | null): string {
 }
 
 function RouteComponent() {
-  const {
-    data: employeesResponse,
-    isError,
-    isFetching,
-  } = useGetAllEmployeeQuery()
+  const { data: employees, isError, isFetching } = useGetAllEmployeeQuery()
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
 
@@ -80,9 +76,10 @@ function RouteComponent() {
     { label: 'Active', optionValue: 'active' },
     { label: 'Inactive', optionValue: 'inactive' },
   ]
-  const employees = employeesResponse?.data || []
 
-  const employeeList: EmployeeResponse[] = Array.isArray(employees) ? employees : ((employees as any)?.data ?? [])
+  const employeeList: EmployeeResponse[] = Array.isArray(employees)
+    ? employees
+    : ((employees as any)?.data ?? [])
 
   const displayData = employeeList.filter((e: EmployeeResponse) => {
     const searchLower = searchFilter.toLowerCase()
