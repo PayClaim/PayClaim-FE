@@ -171,37 +171,46 @@ function RouteComponent() {
   }, [proposals])
 
   // Filtered proposals based on active tab and search query
-  const filteredProposals = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+ const filteredProposals = useMemo(() => {
+  const q = searchQuery.trim().toLowerCase()
 
-    return proposals.filter((proposal) => {
-      const norm = normalizeStatus(proposal.status)
+  return proposals.filter((proposal) => {
+    const norm = normalizeStatus(proposal.status)
 
-      // Tab filter
-      if (activeTab === 'WAITING') {
-        if (!['submitted', 'underreview', 'financemanagerreview', 'pending'].includes(norm))
-          return false
-      } else if (activeTab === 'APPROVED') {
-        if (norm !== 'approved') return false
-      } else if (activeTab === 'COMPLETED') {
-        if (norm !== 'completed') return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm)) return false
+    // Tab filter
+    if (activeTab === 'WAITING') {
+      if (
+        ![
+          'submitted',
+          'underreview',
+          'financemanagerreview',
+          'pending',
+        ].includes(norm)
+      ) {
+        return false
       }
-
-      // Search query
-      if (q) {
-        const dest = (proposal.destination || '').toLowerCase()
-        const pic = (proposal.picName || '').toLowerCase()
-        const desc = (proposal.description || '').toLowerCase()
-        const id = (proposal.id || '').toLowerCase()
-
-        return dest.includes(q) || pic.includes(q) || desc.includes(q) || id.includes(q)
+    } else if (activeTab === 'APPROVED') {
+      if (norm !== 'approved') return false
+    } else if (activeTab === 'COMPLETED') {
+      if (norm !== 'completed') return false
+    } else if (activeTab === 'REVISION_OR_REJECTED') {
+      if (!['needsrevision', 'rejected', 'cancelled'].includes(norm)) {
+        return false
       }
+    }
 
-      return true
-    })
-  }, [proposals, activeTab, searchQuery])
+    // Search query
+    if (q) {
+      const dest = (proposal.destination || '').toLowerCase()
+      const pic = (proposal.picName || '').toLowerCase()
+      const id = (proposal.id || '').toLowerCase()
+
+      return dest.includes(q) || pic.includes(q) || id.includes(q)
+    }
+
+    return true
+  })
+}, [proposals, activeTab, searchQuery])
 
   if (isError) {
     return (
