@@ -4,6 +4,8 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
@@ -47,6 +49,23 @@ function formatDate(date: string) {
   })
 }
 
+function getDateDistanceFromToday(date: string) {
+  if (!date) return -1
+
+  const [year, month, day] = date.slice(0, 10).split('-').map(Number)
+
+  if (![year, month, day].every(Number.isFinite)) {
+    return -1
+  }
+
+  const tripDate = new Date(year, month - 1, day)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return Math.abs(tripDate.getTime() - today.getTime())
+}
+
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -65,62 +84,100 @@ function getInitials(name?: string | null): string {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
-
-function getProposalStatusConfig(status: string) {
+function getApprovalStatusConfig(
+  status: string,
+  roles: string[],
+  isOwnProposal: boolean,
+) {
   const norm = normalizeStatus(status)
+  const roleLower = roles.map((role) => role.toLowerCase())
+
+  const isAdmin = roleLower.includes('admin')
+  const isFinanceManager = roleLower.includes('finance manager')
+
+  const isFinance =
+    roleLower.includes('finance') && !isFinanceManager
+
+  const isManager =
+    (roleLower.includes('manager') ||
+      roleLower.includes('project manager')) &&
+    !isFinanceManager
+
+  // Determine whether this proposal is waiting for the current user's action.
+  const needsMyApproval =
+    (!isOwnProposal || isAdmin) &&
+    (
+      (norm === 'submitted' && (isAdmin || isManager)) ||
+      (norm === 'underreview' && (isAdmin || isFinance)) ||
+      (norm === 'financemanagerreview' &&
+        (isAdmin || isFinanceManager))
+    )
+
+  if (needsMyApproval) {
+    return {
+      label: 'Need Your Approval',
+      className:
+        'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+      dotColor: 'bg-amber-500',
+    }
+  }
+
   switch (norm) {
     case 'submitted':
-      return {
-        label: 'Submitted',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      }
     case 'underreview':
-      return {
-        label: 'Under Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
-      }
     case 'financemanagerreview':
       return {
-        label: 'Finance Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60',
-        dotColor: 'bg-amber-500',
+        label: 'Waiting for Approval',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
       }
+
     case 'approved':
       return {
         label: 'Approved',
-        className: 'bg-blue-50 text-blue-700 border-blue-200/60',
-        dotColor: 'bg-blue-600',
+        className:
+          'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+        dotColor: 'bg-emerald-500',
       }
+
     case 'completed':
       return {
         label: 'Completed',
-        className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-        dotColor: 'bg-emerald-600',
+        className:
+          'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
       }
+
     case 'needsrevision':
       return {
         label: 'Needs Revision',
-        className: 'bg-orange-50 text-orange-700 border-orange-200/60',
-        dotColor: 'bg-orange-500',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800',
+        dotColor: 'bg-amber-500',
       }
+
     case 'rejected':
       return {
         label: 'Rejected',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60',
+        className:
+          'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800',
         dotColor: 'bg-rose-500',
       }
+
     case 'cancelled':
       return {
         label: 'Cancelled',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60',
-        dotColor: 'bg-rose-500',
+        className:
+          'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
       }
+
     default:
       return {
         label: status,
-        className: 'bg-slate-100 text-slate-700 border-slate-200',
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
         dotColor: 'bg-slate-500',
       }
   }
@@ -128,9 +185,35 @@ function getProposalStatusConfig(status: string) {
 
 type TripStatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'REVISION_OR_REJECTED'
 
-function ProposalRow({ proposal }: { proposal: TripProposal }) {
+function ProposalRow({
+  proposal,
+  roles,
+  currentEmployeeId,
+  currentFullName,
+}: {
+  proposal: TripProposal
+  roles: string[]
+  currentEmployeeId?: string
+  currentFullName?: string
+}) {
+
   const navigate = useNavigate()
-  const statusConfig = getProposalStatusConfig(proposal.status)
+const isOwnProposal = Boolean(
+  (proposal.picEmployeeId &&
+    currentEmployeeId &&
+    proposal.picEmployeeId.toLowerCase() ===
+      currentEmployeeId.toLowerCase()) ||
+    (currentFullName &&
+      proposal.picName &&
+      currentFullName.trim().toLowerCase() ===
+        proposal.picName.trim().toLowerCase()),
+)
+
+const statusConfig = getApprovalStatusConfig(
+  proposal.status,
+  roles,
+  isOwnProposal,
+)
 
   return (
     <tr
@@ -214,6 +297,8 @@ function ProposalRow({ proposal }: { proposal: TripProposal }) {
 }
 
 function RouteComponent() {
+  const { data: user } = useQuery(getCurrentUser())
+const roles = user?.roles || []
   const {
     data: proposals = [],
     isLoading,
@@ -292,6 +377,45 @@ function RouteComponent() {
       return true
     })
   }, [proposals, searchQuery, activeTab])
+
+  const sortedProposals = useMemo(() => {
+  const isOwnProposal = (proposal: TripProposal) =>
+    Boolean(
+      (proposal.picEmployeeId &&
+        user?.employeeId &&
+        proposal.picEmployeeId.toLowerCase() ===
+          user.employeeId.toLowerCase()) ||
+        (user?.fullName &&
+          proposal.picName &&
+          user.fullName.trim().toLowerCase() ===
+            proposal.picName.trim().toLowerCase()),
+    )
+
+  return [...filteredProposals].sort((a, b) => {
+    const aNeedsApproval =
+      getApprovalStatusConfig(
+        a.status,
+        roles,
+        isOwnProposal(a),
+      ).label === 'Need Your Approval'
+
+    const bNeedsApproval =
+      getApprovalStatusConfig(
+        b.status,
+        roles,
+        isOwnProposal(b),
+      ).label === 'Need Your Approval'
+
+    if (aNeedsApproval !== bNeedsApproval) {
+      return aNeedsApproval ? -1 : 1
+    }
+
+    return (
+      getDateDistanceFromToday(b.startDate) -
+      getDateDistanceFromToday(a.startDate)
+    )
+  })
+}, [filteredProposals, roles, user?.employeeId, user?.fullName])
 
   return (
     <main className="min-w-0 space-y-6">
@@ -493,10 +617,13 @@ function RouteComponent() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {filteredProposals.map((proposal) => (
+               {sortedProposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
                     proposal={proposal}
+                    roles={roles}
+                    currentEmployeeId={user?.employeeId}
+                    currentFullName={user?.fullName}
                   />
                 ))}
               </tbody>

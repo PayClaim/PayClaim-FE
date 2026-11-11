@@ -126,12 +126,6 @@ function CreateTripProposalPage({
     )
   }
 
-  const formattedAccommodationAmount = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(Number(accommodationAmountInput) || 0)
-
   // Validasi tampilan setelah pengguna mencoba submit.
   const isAccommodationAmountInvalid =
     hasAttemptedSubmit &&
@@ -225,58 +219,49 @@ function CreateTripProposalPage({
         </div>
 
         {/* Accommodation Amount */}
-        <div className="mt-5">
-          <label
-            htmlFor="accommodationAmount"
-            className={cn(
-              'mb-2 block text-sm font-semibold transition-colors',
-              isAccommodationAmountInvalid
-                ? 'text-rose-600 dark:text-rose-400'
-                : 'text-(--sea-ink)',
-            )}
-          >
-            Accommodation Amount (Hotel, Ticket)
-          </label>
+          <div className="mt-5">
+            <label
+              htmlFor="accommodationAmount"
+              className={cn(
+                'mb-2 block text-sm font-semibold transition-colors',
+                isAccommodationAmountInvalid
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-(--sea-ink)',
+              )}
+            >
+              Accommodation Amount (Hotel, Ticket)
+            </label>
 
-          <input
-            id="accommodationAmount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            aria-invalid={isAccommodationAmountInvalid}
-            className={cn(
-              'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
-              isAccommodationAmountInvalid &&
-                'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
-            )}
-            value={accommodationAmountInput}
-            placeholder="Enter accommodation amount"
-            onChange={(event) =>
-              handleAccommodationAmountChange(event.target.value)
-            }
-          />
+            <input
+              id="accommodationAmount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              aria-invalid={isAccommodationAmountInvalid}
+              className={cn(
+                'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
+                isAccommodationAmountInvalid &&
+                  'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
+              )}
+              value={accommodationAmountInput}
+              placeholder="Enter accommodation amount"
+              onChange={(event) =>
+                handleAccommodationAmountChange(event.target.value)
+              }
+            />
 
-          {isAccommodationAmountInvalid && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-              <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-              <span>Accommodation amount must be greater than 0</span>
+            {isAccommodationAmountInvalid && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                <span>Accommodation amount must be greater than 0</span>
+              </p>
+            )}
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Total biaya akomodasi dan perjalanan untuk seluruh proposal,
+              seperti hotel dan tiket. Bukan limit reimbursement per peserta.
             </p>
-          )}
-
-          <p className="mt-2 text-xs text-muted-foreground">
-            Total biaya akomodasi dan perjalanan untuk seluruh proposal,
-            seperti hotel dan tiket. Bukan limit reimbursement per peserta.
-          </p>
-
-          <div className="mt-3 flex justify-between rounded-lg bg-muted p-4">
-            <span className="font-semibold">Accommodation Amount</span>
-
-            <span className="font-bold">
-              {formattedAccommodationAmount}
-            </span>
           </div>
-        </div>
-
         <form.AppField name="description">
           {(field) => (
             <field.TextArea

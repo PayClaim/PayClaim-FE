@@ -77,9 +77,7 @@ export function TripProposalDetailWorkspace({
     Record<string, string>
   >({})
 
-  // Opsi untuk menyamakan nominal seluruh peserta.
-  const [useSameAmount, setUseSameAmount] = useState(false)
-  const [sameAmount, setSameAmount] = useState('')
+  const [isSameAmountApplied, setIsSameAmountApplied] = useState(false)
 
   // Mengisi input dengan nominal yang sudah tersimpan dari backend.
   useEffect(() => {
@@ -162,39 +160,54 @@ const isManager =
     }).format(amount)
 
   // Mengubah nominal untuk satu peserta.
-  const handleParticipantAmountChange = (
-    employeeId: string,
-    amount: string,
-  ) => {
-    setParticipantAmounts((current) => ({
-      ...current,
-      [employeeId]: amount,
-    }))
+const handleParticipantAmountChange = (
+  employeeId: string,
+  amount: string,
+) => {
+  setParticipantAmounts((current) => ({
+    ...current,
+    [employeeId]: amount,
+  }))
+
+  // Show Apply to All again when the first participant's amount changes.
+  if (proposal?.participants[0]?.employeeId === employeeId) {
+    setIsSameAmountApplied(false)
   }
+}
 
   // Menerapkan satu nominal ke seluruh peserta.
-  const handleApplySameAmount = () => {
-    if (!proposal) return
+  // Apply the first participant's amount to all participants.
+const handleApplySameAmount = () => {
+  if (!proposal || proposal.participants.length === 0) return
 
-    const amount = Number(sameAmount)
+  const firstParticipant = proposal.participants[0]
+  const amount = participantAmounts[firstParticipant.employeeId] ?? ''
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error('Amount must be greater than zero.')
-      return
-    }
+  const numericAmount = Number(amount)
 
-    setParticipantAmounts((current) => {
-      const updatedAmounts = { ...current }
-
-      proposal.participants.forEach((participant) => {
-        updatedAmounts[participant.employeeId] = sameAmount
-      })
-
-      return updatedAmounts
-    })
-
-    toast.success('Amount applied to all participants.')
+  if (
+    amount.trim() === '' ||
+    !Number.isFinite(numericAmount) ||
+    numericAmount <= 0
+  ) {
+    toast.error('Enter a valid amount for the first participant first.')
+    return
   }
+
+setParticipantAmounts((current) => {
+  const updatedAmounts = { ...current }
+
+  proposal.participants.forEach((participant) => {
+    updatedAmounts[participant.employeeId] = amount
+  })
+
+  return updatedAmounts
+})
+
+setIsSameAmountApplied(true)
+
+toast.success('Amount applied to all participants.')
+}
 
   // Memastikan semua peserta sudah mendapatkan limit.
   const hasValidParticipantAmounts = Boolean(
@@ -289,8 +302,6 @@ const exceedsFinanceLimit =
       setDialogOpen(false)
       setActionType(null)
       setNotes('')
-      setSameAmount('')
-      setUseSameAmount(false)
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -461,8 +472,7 @@ const exceedsFinanceLimit =
   const openApprovalDialog = () => {
     setActionType('Approved')
     setNotes('')
-    setSameAmount('')
-    setUseSameAmount(false)
+    setIsSameAmountApplied(false)
     setDialogOpen(true)
   }
 
@@ -570,61 +580,6 @@ const exceedsFinanceLimit =
           {actionType === 'Approved' &&
             isFinanceApprovalStage && (
               <div className="space-y-5 py-2">
-                {/* Apply the same amount to all participants */}
-                  <div className="rounded-lg border border-border p-4">
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={useSameAmount}
-                        onChange={(event) => setUseSameAmount(event.target.checked)}
-                        className="h-4 w-4 accent-primary"
-                      />
-
-                      <span className="text-sm font-semibold">
-                        Apply the same amount to all participants
-                      </span>
-                    </label>
-
-                    {useSameAmount && (
-                      <div className="mt-4 space-y-3">
-                        <div>
-                          <Label htmlFor="same-participant-amount">
-                            Amount for all participants
-                          </Label>
-
-                          <input
-                            id="same-participant-amount"
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            value={sameAmount}
-                            onChange={(event) => setSameAmount(event.target.value)}
-                            placeholder="Enter amount"
-                            className="mt-2 h-10 w-full rounded-md border border-border bg-input px-3 text-sm"
-                          />
-                        </div>
-
-                        <Button
-                          type="button"
-                          className="w-full bg-blue-600 font-semibold text-white hover:bg-blue-700"
-                          disabled={
-                            !sameAmount ||
-                            !Number.isFinite(Number(sameAmount)) ||
-                            Number(sameAmount) <= 0
-                          }
-                          onClick={handleApplySameAmount}
-                        >
-                          Apply to All Participants
-                        </Button>
-
-                        <p className="text-xs text-muted-foreground">
-                          The amount will be applied to all participants. You can still
-                          edit each participant's amount individually afterward.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
                 {/* Input nominal per peserta */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -645,7 +600,7 @@ const exceedsFinanceLimit =
                     </span>
                   </div>
 
-                  {proposal.participants.map((participant) => {
+                  {proposal.participants.map((participant, index) => {
                     const amount =
                       participantAmounts[participant.employeeId] ?? ''
 
@@ -657,7 +612,7 @@ const exceedsFinanceLimit =
                     return (
                       <div
                         key={participant.employeeId}
-                        className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_220px] sm:items-center"
+                        className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-[minmax(0,1fr)_300px] sm:items-center"
                       >
                         <div>
                           <p className="text-sm font-semibold">
@@ -679,41 +634,85 @@ const exceedsFinanceLimit =
                           )}
                         </div>
 
-                        <div>
-                          <Label
-                            htmlFor={`amount-${participant.employeeId}`}
-                            className="sr-only"
-                          >
-                            Reimbursement limit for{' '}
-                            {participant.employeeName || 'participant'}
-                          </Label>
+                       <div>
+  <Label
+    htmlFor={`amount-${participant.employeeId}`}
+    className="sr-only"
+  >
+    Reimbursement limit for{' '}
+    {participant.employeeName || 'participant'}
+  </Label>
 
-                          <input
-                            id={`amount-${participant.employeeId}`}
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            value={amount}
-                            placeholder="Enter amount"
-                            onChange={(event) =>
-                              handleParticipantAmountChange(
-                                participant.employeeId,
-                                event.target.value,
-                              )
-                            }
-                            className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
-                              isInvalid
-                                ? 'border-destructive'
-                                : 'border-border'
-                            }`}
-                          />
+  {index === 0 ? (
+    <div className="flex items-start gap-2">
+      <div className="min-w-0 flex-1">
+        <input
+          id={`amount-${participant.employeeId}`}
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={amount}
+          placeholder="Enter amount"
+          onChange={(event) =>
+            handleParticipantAmountChange(
+              participant.employeeId,
+              event.target.value,
+            )
+          }
+          className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
+            isInvalid ? 'border-destructive' : 'border-border'
+          }`}
+        />
 
-                          {isInvalid && (
-                            <p className="mt-1 text-xs text-destructive">
-                              Amount must be greater than zero.
-                            </p>
-                          )}
-                        </div>
+        {isInvalid && (
+          <p className="mt-1 text-xs text-destructive">
+            Amount must be greater than zero.
+          </p>
+        )}
+      </div>
+
+          {amount.trim() !== '' &&
+            Number.isFinite(Number(amount)) &&
+            Number(amount) > 0 && !isSameAmountApplied && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-0.5 h-10 shrink-0 border-primary/30 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
+                onClick={handleApplySameAmount}
+              >
+                Apply to all
+              </Button>
+            )}
+                </div>
+              ) : (
+                <>
+                  <input
+                    id={`amount-${participant.employeeId}`}
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={amount}
+                    placeholder="Enter amount"
+                    onChange={(event) =>
+                      handleParticipantAmountChange(
+                        participant.employeeId,
+                        event.target.value,
+                      )
+                    }
+                    className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
+                      isInvalid ? 'border-destructive' : 'border-border'
+                    }`}
+                  />
+
+                  {isInvalid && (
+                    <p className="mt-1 text-xs text-destructive">
+                      Amount must be greater than zero.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
                       </div>
                     )
                                     })}

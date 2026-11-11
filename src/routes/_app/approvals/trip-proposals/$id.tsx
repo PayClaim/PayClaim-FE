@@ -8,11 +8,11 @@ export const Route = createFileRoute('/_app/approvals/trip-proposals/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
 
-  return (
-    <TripProposalDetailWorkspace
-      id={id}
-      backTo="/trip-proposals"
-      backLabel="Back to My Trip Proposals"
-    />
-  )
-}
+    return (
+      <TripProposalDetailWorkspace
+        id={id}
+        backTo="/approvals/trip-proposals"
+        backLabel="Back to Approval Trip Proposals"
+      />
+    )
+} 
