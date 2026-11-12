@@ -72,6 +72,7 @@ export const useGetTripProposalByIdQuery = useGetProposalByIdQuery
 type TripProposalApprovalBody = {
   decision: 'Approved' | 'Rejected' | 'NeedsRevision'
   notes?: string
+  totalAmount?: number
   participants?: {
     employeeId: string
     amount: number

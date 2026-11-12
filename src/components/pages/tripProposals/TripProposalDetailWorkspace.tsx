@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -73,6 +74,18 @@ export function TripProposalDetailWorkspace({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [notes, setNotes] = useState('')
 
+  // Accommodation Budget yang sedang diedit.
+  const [accommodationAmountInput, setAccommodationAmountInput] =
+    useState('')
+
+  // Accommodation Budget yang sudah disimpan sementara untuk approval.
+  const [approvedAccommodationAmount, setApprovedAccommodationAmount] =
+    useState(0)
+
+  // Menentukan apakah Finance sedang mengubah Accommodation Budget.
+  const [isChangingAccommodationBudget, setIsChangingAccommodationBudget] =
+    useState(false)
+
   // Nominal yang diinput untuk masing-masing peserta.
   const [participantAmounts, setParticipantAmounts] = useState<
     Record<string, string>
@@ -80,7 +93,23 @@ export function TripProposalDetailWorkspace({
 
   const [isSameAmountApplied, setIsSameAmountApplied] = useState(false)
 
-  // Mengisi input dengan nominal yang sudah tersimpan dari backend.
+  // Melacak apakah Accommodation Budget sudah disentuh.
+  const [isAccommodationAmountTouched, setIsAccommodationAmountTouched] =
+    useState(false)
+
+  // Melacak apakah input peserta sudah disentuh.
+  const [touchedParticipantAmounts, setTouchedParticipantAmounts] =
+    useState<Record<string, boolean>>({})
+
+  // Melacak apakah Finance sudah mencoba melakukan approval.
+  const [hasAttemptedFinanceApproval, setHasAttemptedFinanceApproval] =
+    useState(false)
+
+  // Accommodation Budget awal yang tersimpan di backend.
+  const currentAccommodationAmount =
+    proposal?.accommodationAmount ?? 0
+
+  // Mengisi input menggunakan nominal yang sudah tersimpan dari backend.
   useEffect(() => {
     if (!proposal) return
 
@@ -90,26 +119,45 @@ export function TripProposalDetailWorkspace({
       initialAmounts[participant.employeeId] =
         participant.amount > 0
           ? String(participant.amount)
-          : ''
+          : '0'
     })
 
     setParticipantAmounts(initialAmounts)
+
+    // Nominal awal dari backend menjadi nominal yang dipilih.
+    setApprovedAccommodationAmount(
+      proposal.accommodationAmount ?? 0,
+    )
+
+    setAccommodationAmountInput(
+      proposal.accommodationAmount > 0
+        ? String(proposal.accommodationAmount)
+        : '0',
+    )
+
+    setIsChangingAccommodationBudget(false)
   }, [proposal])
 
-const roles = user?.roles || []
-const roleLower = roles.map((role: string) => role.toLowerCase())
+  const roles = user?.roles || []
 
-const isAdmin = roleLower.includes('admin')
+  const roleLower = roles.map((role: string) =>
+    role.toLowerCase(),
+  )
 
-const isFinanceManager = roleLower.includes('finance manager')
+  const isAdmin = roleLower.includes('admin')
 
-const isFinance =
-  roleLower.includes('finance') && !isFinanceManager
+  const isFinanceManager =
+    roleLower.includes('finance manager')
 
-const isManager =
-  (roleLower.includes('manager') ||
-    roleLower.includes('project manager')) &&
-  !isFinanceManager
+  const isFinance =
+    roleLower.includes('finance') && !isFinanceManager
+
+  const isManager =
+    (
+      roleLower.includes('manager') ||
+      roleLower.includes('project manager')
+    ) &&
+    !isFinanceManager
 
   const isPic = Boolean(
     proposal?.participants?.some(
@@ -143,7 +191,11 @@ const isManager =
     (!isPic || isAdmin) &&
     (
       (isAdmin &&
-        (isSubmitted || isUnderReview || isFinanceManagerReview)) ||
+        (
+          isSubmitted ||
+          isUnderReview ||
+          isFinanceManagerReview
+        )) ||
       (isManager && isSubmitted) ||
       (isFinance && isUnderReview) ||
       (isFinanceManager && isFinanceManagerReview)
@@ -160,57 +212,135 @@ const isManager =
       maximumFractionDigits: 0,
     }).format(amount)
 
+  // Nominal Accommodation Budget yang sedang diedit.
+  const draftAccommodationAmount = Number(
+    accommodationAmountInput,
+  )
+
+  const hasValidAccommodationDraft =
+    accommodationAmountInput.trim() !== '' &&
+    Number.isFinite(draftAccommodationAmount) &&
+    draftAccommodationAmount > 0
+
+  // Accommodation Budget yang sudah disimpan sementara harus lebih dari nol.
+  // Finance juga harus menyelesaikan mode edit sebelum approval.
+  const hasValidAccommodationAmount =
+    !isChangingAccommodationBudget &&
+    Number.isFinite(approvedAccommodationAmount) &&
+    approvedAccommodationAmount > 0
+
+  // Error hanya muncul setelah input disentuh atau approval dicoba.
+  const showAccommodationAmountError =
+    (
+      isAccommodationAmountTouched ||
+      hasAttemptedFinanceApproval
+    ) &&
+    (
+      isChangingAccommodationBudget
+        ? !hasValidAccommodationDraft
+        : !hasValidAccommodationAmount
+    )
+
+  // Mengubah nominal Accommodation Budget.
+const handleAccommodationAmountChange = (amount: string) => {
+  // Hanya izinkan angka 0-9.
+  setAccommodationAmountInput(amount.replace(/\D/g, ''))
+}
+
+  // Menyimpan Accommodation Budget sementara.
+  const handleSaveAccommodationBudget = () => {
+    if (!hasValidAccommodationDraft) {
+      setIsAccommodationAmountTouched(true)
+
+      toast.error(
+        'Accommodation Budget must be greater than zero.',
+      )
+
+      return
+    }
+
+    setApprovedAccommodationAmount(draftAccommodationAmount)
+
+    setIsChangingAccommodationBudget(false)
+    setIsAccommodationAmountTouched(false)
+
+    toast.success(
+      'Accommodation Budget saved for this approval.',
+    )
+  }
+
+  // Mengembalikan Accommodation Budget ke nominal awal dari backend.
+  const handleResetAccommodationBudget = () => {
+    setApprovedAccommodationAmount(currentAccommodationAmount)
+
+    setAccommodationAmountInput(
+      String(currentAccommodationAmount),
+    )
+
+    setIsChangingAccommodationBudget(false)
+    setIsAccommodationAmountTouched(false)
+
+    toast.success(
+      'Accommodation Budget has been reset to the original amount.',
+    )
+  }
+
   // Mengubah nominal untuk satu peserta.
 const handleParticipantAmountChange = (
   employeeId: string,
   amount: string,
 ) => {
+  // Hanya izinkan angka 0-9.
+  const numericAmount = amount.replace(/\D/g, '')
+
   setParticipantAmounts((current) => ({
     ...current,
-    [employeeId]: amount,
+    [employeeId]: numericAmount,
   }))
 
-  // Show Apply to All again when the first participant's amount changes.
   if (proposal?.participants[0]?.employeeId === employeeId) {
     setIsSameAmountApplied(false)
   }
 }
 
   // Menerapkan satu nominal ke seluruh peserta.
-  // Apply the first participant's amount to all participants.
-const handleApplySameAmount = () => {
-  if (!proposal || proposal.participants.length === 0) return
+  const handleApplySameAmount = () => {
+    if (!proposal || proposal.participants.length === 0) return
 
-  const firstParticipant = proposal.participants[0]
-  const amount = participantAmounts[firstParticipant.employeeId] ?? ''
+    const firstParticipant = proposal.participants[0]
 
-  const numericAmount = Number(amount)
+    const amount =
+      participantAmounts[firstParticipant.employeeId] ?? ''
 
-  if (
-    amount.trim() === '' ||
-    !Number.isFinite(numericAmount) ||
-    numericAmount <= 0
-  ) {
-    toast.error('Enter a valid amount for the first participant first.')
-    return
+    const numericAmount = Number(amount)
+
+    if (
+      amount.trim() === '' ||
+      !Number.isFinite(numericAmount) ||
+      numericAmount <= 0
+    ) {
+      toast.error(
+        'Enter a valid amount for the first participant first.',
+      )
+      return
+    }
+
+    setParticipantAmounts((current) => {
+      const updatedAmounts = { ...current }
+
+      proposal.participants.forEach((participant) => {
+        updatedAmounts[participant.employeeId] = amount
+      })
+
+      return updatedAmounts
+    })
+
+    setIsSameAmountApplied(true)
+
+    toast.success('Amount applied to all participants.')
   }
 
-setParticipantAmounts((current) => {
-  const updatedAmounts = { ...current }
-
-  proposal.participants.forEach((participant) => {
-    updatedAmounts[participant.employeeId] = amount
-  })
-
-  return updatedAmounts
-})
-
-setIsSameAmountApplied(true)
-
-toast.success('Amount applied to all participants.')
-}
-
-  // Memastikan semua peserta sudah mendapatkan limit.
+  // Memastikan semua peserta sudah mendapatkan limit lebih dari nol.
   const hasValidParticipantAmounts = Boolean(
     proposal &&
       proposal.participants.length > 0 &&
@@ -223,34 +353,83 @@ toast.success('Amount applied to all participants.')
       }),
   )
 
-// Total reimbursement limit for all participants.
-const totalParticipantLimit = proposal
-  ? proposal.participants.reduce((total, participant) => {
-      const amount = Number(
-        participantAmounts[participant.employeeId] ?? '',
-      )
+  // Total reimbursement limit untuk seluruh peserta.
+  const totalParticipantLimit = proposal
+    ? proposal.participants.reduce((total, participant) => {
+        const amount = Number(
+          participantAmounts[participant.employeeId] ?? '',
+        )
 
-      return total + (Number.isFinite(amount) ? amount : 0)
-    }, 0)
-  : 0
+        return (
+          total +
+          (
+            Number.isFinite(amount) && amount > 0
+              ? amount
+              : 0
+          )
+        )
+      }, 0)
+    : 0
 
-// Projected proposal total = accommodation + participant limits.
-const projectedTotalAmount = proposal
-  ? proposal.accommodationAmount + totalParticipantLimit
-  : 0
+  // Nominal yang digunakan untuk menampilkan total.
+  // Saat edit, gunakan draft. Setelah Save, gunakan nominal yang disimpan.
+  const accommodationAmountForTotal =
+    isChangingAccommodationBudget
+      ? (
+          hasValidAccommodationDraft
+            ? draftAccommodationAmount
+            : 0
+        )
+      : approvedAccommodationAmount
 
-// Check the Finance approval limit provided by the backend.
-const exceedsFinanceLimit =
-  Boolean(proposal) &&
-  (proposal?.financeLimit ?? 0) > 0 &&
-  projectedTotalAmount > (proposal?.financeLimit ?? 0)
+  // Total Proposal Budget = Accommodation Budget + seluruh Participant Limit.
+  const projectedTotalAmount =
+    accommodationAmountForTotal + totalParticipantLimit
 
+  // Finance Limit berlaku untuk total keseluruhan proposal.
+  const exceedsFinanceLimit =
+    Boolean(proposal) &&
+    (
+      isChangingAccommodationBudget
+        ? hasValidAccommodationDraft
+        : hasValidAccommodationAmount
+    ) &&
+    hasValidParticipantAmounts &&
+    (proposal?.financeLimit ?? 0) > 0 &&
+    projectedTotalAmount > (proposal?.financeLimit ?? 0)
 
   const handleAction = async () => {
     if (!actionType || !proposal) return
 
     try {
       if (actionType === 'Approved') {
+        if (isFinanceApprovalStage) {
+          setHasAttemptedFinanceApproval(true)
+        }
+
+        // Finance harus menyimpan perubahan budget terlebih dahulu.
+        if (
+          isFinanceApprovalStage &&
+          isChangingAccommodationBudget
+        ) {
+          toast.error(
+            'Please save the Accommodation Budget before confirming approval.',
+          )
+          return
+        }
+
+        // Validasi Accommodation Budget.
+        if (
+          isFinanceApprovalStage &&
+          !hasValidAccommodationAmount
+        ) {
+          toast.error(
+            'Accommodation Budget must be greater than zero.',
+          )
+          return
+        }
+
+        // Validasi seluruh reimbursement limit peserta.
         if (
           isFinanceApprovalStage &&
           !hasValidParticipantAmounts
@@ -261,7 +440,7 @@ const exceedsFinanceLimit =
           return
         }
 
-        // Kirim limit per peserta hanya pada approval Finance.
+        // Kirim data peserta hanya pada approval Finance.
         const participants = isFinanceApprovalStage
           ? proposal.participants.map((participant) => ({
               employeeId: participant.employeeId,
@@ -274,7 +453,15 @@ const exceedsFinanceLimit =
         await approveMutation.mutateAsync({
           decision: 'Approved',
           notes: notes.trim() || undefined,
-          ...(participants ? { participants } : {}),
+
+          // Finance mengirim Accommodation Budget yang sudah disimpan
+          // dan limit reimbursement setiap peserta.
+          ...(isFinanceApprovalStage
+            ? {
+                totalAmount: approvedAccommodationAmount,
+                participants,
+              }
+            : {}),
         })
 
         if (isFinanceApprovalStage && exceedsFinanceLimit) {
@@ -282,7 +469,9 @@ const exceedsFinanceLimit =
             'Proposal forwarded to Finance Manager for final review.',
           )
         } else {
-          toast.success('Trip proposal has been approved successfully.')
+          toast.success(
+            'Trip proposal has been approved successfully.',
+          )
         }
       } else if (actionType === 'NeedsRevision') {
         await rejectMutation.mutateAsync({
@@ -303,6 +492,7 @@ const exceedsFinanceLimit =
       setDialogOpen(false)
       setActionType(null)
       setNotes('')
+      setIsChangingAccommodationBudget(false)
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -348,6 +538,7 @@ const exceedsFinanceLimit =
     : ''
 
   const attachmentFileName = getFileName(filePath)
+
   const isPdf = /\.pdf(?:$|[?#])/i.test(filePath)
 
   const approvalHistory = proposal.approvalHistory || []
@@ -367,7 +558,9 @@ const exceedsFinanceLimit =
   }
 
   const managerApproval = getLatestApproval(1)
+
   const financeApproval = getLatestApproval(2)
+
   const financeManagerApproval = getLatestApproval(3)
 
   const showFinanceStage =
@@ -406,16 +599,27 @@ const exceedsFinanceLimit =
     roleName: string,
     approval: (typeof approvalHistory)[number] | undefined,
     isPending: boolean,
-  ): ProposalTimelineItem => ({
-    id: `level-${level}`,
-    title,
-    approverName: approval?.approverName || roleName,
-    decision: approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
-    approvalLevel: level,
-    decidedAt: approval?.decidedAt || '',
-    notes: approval?.notes || null,
-    isPending: !approval && isPending,
-  })
+  ): ProposalTimelineItem => {
+    const parsedNotes = parseAccommodationBudgetNotes(
+      approval?.notes,
+    )
+
+    return {
+      id: `level-${level}`,
+      title,
+      approverName: approval?.approverName || roleName,
+      decision:
+        approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
+      approvalLevel: level,
+      decidedAt: approval?.decidedAt || '',
+      notes: parsedNotes.notes,
+      accommodationAmountBefore:
+        parsedNotes.accommodationAmountBefore,
+      accommodationAmountAfter:
+        parsedNotes.accommodationAmountAfter,
+      isPending: !approval && isPending,
+    }
+  }
 
   const timelineStages: ProposalTimelineItem[] = []
 
@@ -474,6 +678,23 @@ const exceedsFinanceLimit =
     setActionType('Approved')
     setNotes('')
     setIsSameAmountApplied(false)
+
+    // Mulai dari nominal asli yang tersimpan di backend.
+    setApprovedAccommodationAmount(currentAccommodationAmount)
+
+    setAccommodationAmountInput(
+      currentAccommodationAmount > 0
+        ? String(currentAccommodationAmount)
+        : '0',
+    )
+
+    setIsChangingAccommodationBudget(false)
+
+    // Reset status validasi setiap kali modal dibuka.
+    setIsAccommodationAmountTouched(false)
+    setTouchedParticipantAmounts({})
+    setHasAttemptedFinanceApproval(false)
+
     setDialogOpen(true)
   }
 
@@ -520,23 +741,23 @@ const exceedsFinanceLimit =
     </>
   ) : null
 
-  const isApprovedOrCompleted = isTripStatus(proposal?.status, [
+  const isApprovedOrCompleted = isTripStatus(proposal.status, [
     TripProposalStatus.Approved,
     TripProposalStatus.Completed,
   ])
 
-  const myParticipant = proposal?.participants.find(
-    (p) =>
-      (user?.employeeId &&
-        String(p.employeeId).toLowerCase() ===
-          String(user.employeeId).toLowerCase()) ||
-      (user?.employeeNumber &&
-        p.employeeNumber?.trim().toLowerCase() ===
-          user.employeeNumber.trim().toLowerCase()) ||
-      (user?.fullName &&
-        p.employeeName?.trim().toLowerCase() ===
-          user.fullName.trim().toLowerCase()),
-  )
+const myParticipant = proposal.participants.find(
+  (participant) =>
+    (user?.employeeId &&
+      String(participant.employeeId).toLowerCase() ===
+        String(user.employeeId).toLowerCase()) ||
+    (user?.employeeNumber &&
+      participant.employeeNumber?.trim().toLowerCase() ===
+        user.employeeNumber.trim().toLowerCase()) ||
+    (user?.fullName &&
+      participant.employeeName?.trim().toLowerCase() ===
+        user.fullName.trim().toLowerCase()),
+)
 
   const myTotalBudget =
     proposal?.myParticipantAmount ?? myParticipant?.amount ?? 0
@@ -654,13 +875,13 @@ const exceedsFinanceLimit =
       {/* Approval / Rejection Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
-          className={
-            actionType === 'Approved' && isFinanceApprovalStage
-              ? 'max-h-[90vh] overflow-y-auto sm:max-w-2xl'
-              : 'sm:max-w-md'
-          }
-        >
-          <DialogHeader>
+            className={
+              actionType === 'Approved' && isFinanceApprovalStage
+                ? 'flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl'
+                : 'sm:max-w-md'
+            }
+          >
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {actionType === 'Approved'
                 ? isFinanceApprovalStage
@@ -674,52 +895,189 @@ const exceedsFinanceLimit =
             <DialogDescription>
               {actionType === 'Approved'
                 ? isFinanceApprovalStage
-                  ? 'Set the reimbursement limit for each participant before approving this proposal.'
-                  : `Confirm approval for proposal "${proposal.destination}" (Total Amount: ${formatCurrency(Number(proposal.totalAmount || 0))}).`
+                  ? ''
+                  : `Confirm approval for proposal "${proposal.destination}" (Accommodation Budget: ${formatCurrency(Number(proposal.accommodationAmount || 0))}).`
                 : actionType === 'NeedsRevision'
                   ? 'Return this proposal to the employee with revision instructions.'
                   : 'Confirm that you want to reject this trip proposal.'}
             </DialogDescription>
           </DialogHeader>
+          {/* Hanya bagian isi modal yang boleh di-scroll */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2">
 
           {/* Form limit reimbursement Finance */}
           {actionType === 'Approved' &&
             isFinanceApprovalStage && (
               <div className="space-y-5 py-2">
-                {/* Input nominal per peserta */}
+
+                {/* Accommodation Budget */}
+                <div className="space-y-3 rounded-lg border border-border p-4">
+                  <div>
+                    <h3 className="font-semibold text-heading">
+                      Accommodation Budget
+                    </h3>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Total budget for accommodation, tickets, and other
+                      trip arrangements.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    {isChangingAccommodationBudget ? (
+                      <div className="min-w-0 flex-1">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                            Rp
+                          </span>
+
+                         <input
+                              id="accommodation-budget"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={accommodationAmountInput}
+                              placeholder="0"
+                              onChange={(event) =>
+                                handleAccommodationAmountChange(event.target.value)
+                              }
+                              onFocus={() => {
+                                if (accommodationAmountInput === '0') {
+                                  setAccommodationAmountInput('')
+                                }
+                              }}
+                              onBlur={() => setIsAccommodationAmountTouched(true)}
+                              className={`h-10 w-full rounded-md border bg-input pl-10 pr-3 text-sm ${
+                                showAccommodationAmountError
+                                  ? 'border-destructive'
+                                  : 'border-border'
+                              }`}
+                            />
+                        </div>
+
+                        {showAccommodationAmountError && (
+                          <p className="mt-1 text-xs text-destructive">
+                            Accommodation Budget must be greater than zero.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xl font-bold text-heading">
+                        {formatCurrency(approvedAccommodationAmount)}
+                      </p>
+                    )}
+
+                    {isChangingAccommodationBudget ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={handleSaveAccommodationBudget}
+                      >
+                        Save
+                      </Button>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 border-primary/40 text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            setAccommodationAmountInput('0')
+                            setIsAccommodationAmountTouched(false)
+                            setIsChangingAccommodationBudget(true)
+                          }}
+                        >
+                          Change Budget
+                        </Button>
+
+                        {approvedAccommodationAmount !==
+                          currentAccommodationAmount && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={handleResetAccommodationBudget}
+                          >
+                            Reset Budget
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Informasi setelah budget berhasil disimpan */}
+                  {!isChangingAccommodationBudget &&
+                    approvedAccommodationAmount !==
+                      currentAccommodationAmount && (
+                      <p className="text-xs text-muted-foreground">
+                        Budget updated for this approval. You can reset
+                        it to the original amount at any time.
+                      </p>
+                    )}
+
+                  {/* Error jika nominal awal memang tidak valid */}
+                  {!isChangingAccommodationBudget &&
+                    showAccommodationAmountError && (
+                      <p className="text-xs text-destructive">
+                        Accommodation Budget must be greater than zero.
+                        Click Change Budget to enter a valid amount.
+                      </p>
+                    )}
+
+                  {isChangingAccommodationBudget && (
+                    <p className="text-xs text-muted-foreground">
+                      Enter the new budget and click Save to apply it
+                      to this approval.
+                    </p>
+                  )}
+                </div>
+
+                {/* Reimbursement Limit per Employee */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold">
+                      <h3 className="font-semibold text-heading">
                         Reimbursement Limit per Employee
                       </h3>
 
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Set the total reimbursement limit for each participant for the
-                        entire trip, not per day.
+                        Set the total reimbursement limit for each
+                        participant for the entire trip.
                       </p>
                     </div>
 
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Users className="h-4 w-4" />
+                    <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                      <Users className="h-5 w-5" />
                       {proposal.participants.length} Participants
                     </span>
                   </div>
 
                   {proposal.participants.map((participant, index) => {
                     const amount =
-                      participantAmounts[participant.employeeId] ?? ''
+                      participantAmounts[participant.employeeId] ?? '0'
+
+                    const numericAmount = Number(amount)
 
                     const isInvalid =
-                      amount !== '' &&
-                      (!Number.isFinite(Number(amount)) ||
-                        Number(amount) <= 0)
+                      amount.trim() === '' ||
+                      !Number.isFinite(numericAmount) ||
+                      numericAmount <= 0
+
+                    const showAmountError =
+                      (
+                        touchedParticipantAmounts[participant.employeeId] ||
+                        hasAttemptedFinanceApproval
+                      ) && isInvalid
 
                     return (
                       <div
                         key={participant.employeeId}
                         className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-[minmax(0,1fr)_300px] sm:items-center"
                       >
+                        {/* Participant Information */}
                         <div>
                           <p className="text-sm font-semibold">
                             {participant.employeeName ||
@@ -740,91 +1098,143 @@ const exceedsFinanceLimit =
                           )}
                         </div>
 
-                       <div>
-  <Label
-    htmlFor={`amount-${participant.employeeId}`}
-    className="sr-only"
-  >
-    Reimbursement limit for{' '}
-    {participant.employeeName || 'participant'}
-  </Label>
+                        {/* Participant Amount Input */}
+                        <div>
+                          <Label
+                            htmlFor={`amount-${participant.employeeId}`}
+                            className="sr-only"
+                          >
+                            Reimbursement limit for{' '}
+                            {participant.employeeName || 'participant'}
+                          </Label>
 
-  {index === 0 ? (
-    <div className="flex items-start gap-2">
-      <div className="min-w-0 flex-1">
-        <input
-          id={`amount-${participant.employeeId}`}
-          type="number"
-          min="0.01"
-          step="0.01"
-          value={amount}
-          placeholder="Enter amount"
-          onChange={(event) =>
-            handleParticipantAmountChange(
-              participant.employeeId,
-              event.target.value,
-            )
-          }
-          className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
-            isInvalid ? 'border-destructive' : 'border-border'
-          }`}
-        />
+                          {index === 0 ? (
+                            <div className="flex items-start gap-2">
+                              <div className="min-w-0 flex-1">
+                                <input
+                                  id={`amount-${participant.employeeId}`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={amount}
+                                  placeholder="0"
+                                  onChange={(event) =>
+                                    handleParticipantAmountChange(
+                                      participant.employeeId,
+                                      event.target.value,
+                                    )
+                                  }
+                                  onFocus={() => {
+                                    if (amount === '0') {
+                                      handleParticipantAmountChange(
+                                        participant.employeeId,
+                                        '',
+                                      )
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    setTouchedParticipantAmounts((current) => ({
+                                      ...current,
+                                      [participant.employeeId]: true,
+                                    }))
+                                  }}
+                                  className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
+                                    showAmountError
+                                      ? 'border-destructive'
+                                      : 'border-border'
+                                  }`}
+                                />
 
-        {isInvalid && (
-          <p className="mt-1 text-xs text-destructive">
-            Amount must be greater than zero.
-          </p>
-        )}
-      </div>
+                                {showAmountError && (
+                                  <p className="mt-1 text-xs text-destructive">
+                                    Amount must be greater than zero.
+                                  </p>
+                                )}
+                              </div>
 
-          {amount.trim() !== '' &&
-            Number.isFinite(Number(amount)) &&
-            Number(amount) > 0 && !isSameAmountApplied && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-0.5 h-10 shrink-0 border-primary/30 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
-                onClick={handleApplySameAmount}
-              >
-                Apply to all
-              </Button>
-            )}
-                </div>
-              ) : (
-                <>
-                  <input
-                    id={`amount-${participant.employeeId}`}
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={amount}
-                    placeholder="Enter amount"
-                    onChange={(event) =>
-                      handleParticipantAmountChange(
-                        participant.employeeId,
-                        event.target.value,
-                      )
-                    }
-                    className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
-                      isInvalid ? 'border-destructive' : 'border-border'
-                    }`}
-                  />
+                              {proposal.participants.length > 1 &&
+                                !isInvalid &&
+                                !isSameAmountApplied && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-0.5 h-10 shrink-0 border-primary/30 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
+                                    onClick={handleApplySameAmount}
+                                  >
+                                    Apply to all
+                                  </Button>
+                                )}
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                  id={`amount-${participant.employeeId}`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={amount}
+                                  placeholder="0"
+                                  onChange={(event) =>
+                                    handleParticipantAmountChange(
+                                      participant.employeeId,
+                                      event.target.value,
+                                    )
+                                  }
+                                  onFocus={() => {
+                                    if (amount === '0') {
+                                      handleParticipantAmountChange(
+                                        participant.employeeId,
+                                        '',
+                                      )
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    setTouchedParticipantAmounts((current) => ({
+                                      ...current,
+                                      [participant.employeeId]: true,
+                                    }))
+                                  }}
+                                  className={`h-10 w-full rounded-md border bg-input px-3 text-sm ${
+                                    showAmountError
+                                      ? 'border-destructive'
+                                      : 'border-border'
+                                  }`}
+                                />
 
-                  {isInvalid && (
-                    <p className="mt-1 text-xs text-destructive">
-                      Amount must be greater than zero.
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
+                              {showAmountError && (
+                                <p className="mt-1 text-xs text-destructive">
+                                  Amount must be greater than zero.
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     )
-                                    })}
+                  })}
                 </div>
 
-                {/* Finance approval limit warning */}
+                {/* Total Proposal Budget */}
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-4">
+                  <div>
+                    <p className="text-base font-semibold text-heading">
+                      Total Proposal Budget
+                    </p>
+                  </div>
+
+                  <p className="shrink-0 text-lg font-bold text-heading">
+                    {(
+                      isChangingAccommodationBudget
+                        ? hasValidAccommodationDraft
+                        : hasValidAccommodationAmount
+                    )
+                      ? formatCurrency(projectedTotalAmount)
+                      : '-'}
+                  </p>
+                </div>
+
+                {/* Finance Approval Limit Warning */}
                 {exceedsFinanceLimit && (
                   <div className="flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                     <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
@@ -843,24 +1253,25 @@ const exceedsFinanceLimit =
                         <strong>
                           {formatCurrency(proposal.financeLimit)}
                         </strong>
-                        . This proposal will be automatically forwarded to
-                        the Finance Manager when you confirm.
+                        . This proposal will be automatically forwarded
+                        to the Finance Manager when you confirm.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Participant validation warning */}
-                {!hasValidParticipantAmounts && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Please enter a reimbursement limit greater than zero
-                    for every participant before approving.
-                  </p>
-                )}
+                {/* Participant Validation Warning */}
+                {hasAttemptedFinanceApproval &&
+                  !hasValidParticipantAmounts && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Please enter a reimbursement limit greater than
+                      zero for every participant before approving.
+                    </p>
+                  )}
               </div>
             )}
 
-          {/* Catatan approval */}
+          {/* Approval Notes */}
           <div className="space-y-2 py-2">
             <Label htmlFor="trip-approval-notes">
               {actionType === 'Rejected' ||
@@ -888,8 +1299,9 @@ const exceedsFinanceLimit =
               {notes.length}/500 characters
             </p>
           </div>
+        </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="shrink-0 gap-2 border-t border-border pt-4 sm:gap-0">
             <DialogClose asChild>
               <Button type="button" variant="outline">
                 Cancel
@@ -900,12 +1312,11 @@ const exceedsFinanceLimit =
               type="button"
               disabled={
                 isMutationPending ||
-                ((actionType === 'Rejected' ||
-                  actionType === 'NeedsRevision') &&
-                  !notes.trim()) ||
-                (actionType === 'Approved' &&
-                  isFinanceApprovalStage &&
-                  !hasValidParticipantAmounts)
+                (
+                  (actionType === 'Rejected' ||
+                    actionType === 'NeedsRevision') &&
+                  !notes.trim()
+                )
               }
               className={
                 actionType === 'Rejected'
@@ -929,6 +1340,43 @@ const exceedsFinanceLimit =
       </Dialog>
     </main>
   )
+}
+
+// Membaca marker perubahan Accommodation Budget dari Notes.
+// Format marker dari backend:
+// [ACCOMMODATION_BUDGET:nominalLama|nominalBaru]
+function parseAccommodationBudgetNotes(
+  notes: string | null | undefined,
+): {
+  notes: string | null
+  accommodationAmountBefore?: number
+  accommodationAmountAfter?: number
+} {
+  if (!notes) {
+    return {
+      notes: null,
+    }
+  }
+
+  const markerRegex =
+    /^\[ACCOMMODATION_BUDGET:([0-9]+(?:\.[0-9]+)?)\|([0-9]+(?:\.[0-9]+)?)\]\r?\n?/
+
+  const match = notes.match(markerRegex)
+
+  if (!match) {
+    return {
+      notes,
+    }
+  }
+
+  const accommodationAmountBefore = Number(match[1])
+  const accommodationAmountAfter = Number(match[2])
+
+  return {
+    notes: notes.slice(match[0].length).trim() || null,
+    accommodationAmountBefore,
+    accommodationAmountAfter,
+  }
 }
 
 function getFileName(path: string) {

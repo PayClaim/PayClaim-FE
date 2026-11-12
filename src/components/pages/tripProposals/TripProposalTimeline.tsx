@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 
 import {
@@ -31,6 +32,8 @@ export type ProposalTimelineItem = {
   approvalLevel: number | null
   decidedAt: string
   notes: string | null
+  accommodationAmountBefore?: number
+  accommodationAmountAfter?: number
   isPending?: boolean
   isSubmission?: boolean
 }
@@ -69,7 +72,11 @@ export function TripProposalTimeline({
 
   const handleDownload = async () => {
     if (!attachmentUrl) return
-    await downloadFile(attachmentUrl, attachmentFileName || 'proposal-attachment')
+
+    await downloadFile(
+      attachmentUrl,
+      attachmentFileName || 'proposal-attachment',
+    )
   }
 
   return (
@@ -80,6 +87,7 @@ export function TripProposalTimeline({
             <h2 className="text-xl font-extrabold text-heading">
               Trip Process
             </h2>
+
             {status && (
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border ${statusConfig.className}`}
@@ -87,6 +95,7 @@ export function TripProposalTimeline({
                 <span
                   className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`}
                 />
+
                 {statusConfig.label}
               </span>
             )}
@@ -130,9 +139,18 @@ export function TripProposalTimeline({
 
             const dateInfo = getDateParts(stage.decidedAt)
 
+            const hasAccommodationAdjustment =
+              stage.accommodationAmountBefore !== undefined &&
+              stage.accommodationAmountAfter !== undefined
+
+            const accommodationDifference =
+              hasAccommodationAdjustment
+                ? stage.accommodationAmountAfter! -
+                  stage.accommodationAmountBefore!
+                : 0
+
             return (
               <div key={stage.id} className="relative">
-
                 {/* Garis hanya menghubungkan node ke aktivitas berikutnya. */}
                 {index < stages.length - 1 && (
                   <div
@@ -211,6 +229,7 @@ export function TripProposalTimeline({
                                       : 'bg-muted-foreground'
                           }`}
                         />
+
                         {isPending
                           ? 'Pending'
                           : isSubmitted
@@ -230,8 +249,7 @@ export function TripProposalTimeline({
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-start gap-4 p-5 sm:flex-row">
-
+                  <div className="flex flex-col items-start gap-4 p-5">
                     {/* Tanggal atau status pending. */}
                     <div
                       className={`w-full shrink-0 rounded-lg border p-3 text-center sm:w-28 ${
@@ -266,7 +284,6 @@ export function TripProposalTimeline({
                     </div>
 
                     <div className="w-full flex-1 space-y-3">
-
                       {/* Detail aktivitas. */}
                       <div className="flex items-center gap-2.5">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-primary">
@@ -301,6 +318,61 @@ export function TripProposalTimeline({
                           </p>
                         </div>
                       </div>
+
+                      {/* Informasi perubahan Accommodation Budget oleh Finance. */}
+                      {hasAccommodationAdjustment && (
+                        <div className="space-y-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3.5 dark:border-sky-900 dark:bg-sky-950/30">
+                          <div>
+                            <p className="text-sm font-semibold text-sky-900 dark:text-sky-200">
+                              Accommodation Budget Adjustment
+                            </p>
+
+                            <p className="mt-1 text-xs text-sky-800 dark:text-sky-300">
+                              Finance changed the Accommodation Budget
+                              during approval.
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="rounded-md border border-sky-200/80 bg-white/70 p-3 dark:border-sky-900 dark:bg-slate-950/30">
+                              <p className="text-xs text-muted-foreground">
+                                Previous Budget
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-heading">
+                                {formatCurrency(
+                                  stage.accommodationAmountBefore!,
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="rounded-md border border-sky-200/80 bg-white/70 p-3 dark:border-sky-900 dark:bg-slate-950/30">
+                              <p className="text-xs text-muted-foreground">
+                                Approved Budget
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-heading">
+                                {formatCurrency(
+                                  stage.accommodationAmountAfter!,
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 border-t border-sky-200 pt-2 text-xs dark:border-sky-900">
+                            <span className="text-sky-800 dark:text-sky-300">
+                              Budget Difference
+                            </span>
+
+                            <span className="font-bold text-sky-900 dark:text-sky-200">
+                              {accommodationDifference >= 0 ? '+' : '-'}
+                              {formatCurrency(
+                                Math.abs(accommodationDifference),
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Attachment pada aktivitas submission. */}
                       {isSubmitted && (
@@ -342,7 +414,7 @@ export function TripProposalTimeline({
                         </div>
                       )}
 
-                      {/* Catatan reviewer. */}
+                      {/* Catatan reviewer tanpa marker internal. */}
                       {stage.notes && (
                         <div className="space-y-1 rounded-lg border border-border/60 bg-muted/40 p-3.5">
                           <p className="text-xs text-muted-foreground">
@@ -410,6 +482,14 @@ export function TripProposalTimeline({
   )
 }
 
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 function getInitials(name?: string | null) {
   if (!name) return 'U'
 
@@ -424,9 +504,11 @@ function getInitials(name?: string | null) {
 
 function formatDecision(decision: string) {
   const norm = decision.toLowerCase().replace(/[\s_-]/g, '')
+
   if (norm === 'needsrevision') {
     return 'Needs Revision'
   }
+
   if (norm === 'forwardedtofinancemanager') {
     return 'Forwarded to Finance Manager'
   }
@@ -436,13 +518,16 @@ function formatDecision(decision: string) {
 
 function parseDateUtc(value: string): Date | null {
   if (!value) return null
+
   const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
   const d = new Date(hasTz ? value : `${value}Z`)
+
   return Number.isNaN(d.getTime()) ? null : d
 }
 
 function getDateParts(value: string) {
   const date = parseDateUtc(value)
+
   if (!date) {
     return {
       day: '-',
@@ -456,16 +541,20 @@ function getDateParts(value: string) {
       day: 'numeric',
       timeZone: 'Asia/Jakarta',
     }),
+
     monthYear: date.toLocaleDateString('id-ID', {
       month: 'short',
       year: 'numeric',
       timeZone: 'Asia/Jakarta',
     }),
-    time: date.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Jakarta',
-    }).replace('.', ':'),
+
+    time: date
+      .toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Jakarta',
+      })
+      .replace('.', ':'),
   }
-} 
+}
