@@ -47,8 +47,11 @@ const formatCurrency = (val: number) => {
 function BenefitPlansIndexPage() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
-  const { data: plansResponse, isError } =
-    useGetAllBenefitPlansQuery(searchRoute)
+  const {
+    data: plansResponse,
+    isFetching,
+    isError,
+  } = useGetAllBenefitPlansQuery(searchRoute)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
   const { data: benefits } = useGetAllBenefitsQuery()
@@ -114,7 +117,7 @@ function BenefitPlansIndexPage() {
     )
   }
 
-  if (!plansResponse) {
+  if (!plansResponse || isFetching) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -142,7 +145,7 @@ function BenefitPlansIndexPage() {
                 Benefit Plans
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {planList.length}
+                {plansResponse.totalCount}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">

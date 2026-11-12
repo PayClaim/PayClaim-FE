@@ -56,6 +56,6 @@ export const getCurrentUser = () =>
     queryFn: () => {
       return api.get<UserProfile>('/auth/me')
     },
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   })
