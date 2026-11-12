@@ -8,7 +8,8 @@
     XCircle,
     Users,
     AlertCircle,
-    Pencil,
+    AlertTriangle,
+    SquarePen,
 } from 'lucide-react'
 
   import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -853,15 +854,15 @@ const isProposalPic = Boolean(
 )
 
   const reviseAction =
-    isNeedsRevision && isProposalPic ? (
+    isNeedsRevision && isPic ? (
       <Link to="/trip-proposals/$id/edit" params={{ id: proposal.id }}>
         <Button
           type="button"
           size="sm"
-          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-1.5"
+          className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold gap-1.5 shadow-2xs cursor-pointer"
         >
-          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-          Revisi Proposal
+          <SquarePen className="h-4 w-4" aria-hidden="true" />
+          Edit & Resubmit Proposal
         </Button>
       </Link>
     ) : null

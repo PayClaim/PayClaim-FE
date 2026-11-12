@@ -1,5 +1,7 @@
 import z from 'zod'
 
+export const MAX_TRIP_AMOUNT = 100000000
+
 const baseTripProposalFields = {
   destination: z
     .string()
@@ -12,7 +14,8 @@ const baseTripProposalFields = {
 
   accommodationAmount: z
     .number()
-    .positive('Accommodation amount must be greater than 0'),
+    .positive('Accommodation amount must be greater than 0')
+    .max(MAX_TRIP_AMOUNT, 'Maximum Accommodation Amount is Rp 100.000.000.'),
 
   description: z
     .string()
