@@ -843,16 +843,6 @@ const isPic = Boolean(myParticipant?.isPic)
   TripProposalStatus.NeedsRevision,
 )
 
-const isProposalPic = Boolean(
-  proposal?.participants?.some(
-    (participant) =>
-      participant.isPic &&
-      user?.employeeId &&
-      String(participant.employeeId).toLowerCase() ===
-        String(user.employeeId).toLowerCase(),
-  ),
-)
-
   const reviseAction =
     isNeedsRevision && isPic ? (
       <Link to="/trip-proposals/$id/edit" params={{ id: proposal.id }}>
