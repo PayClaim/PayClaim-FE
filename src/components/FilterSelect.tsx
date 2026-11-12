@@ -11,12 +11,12 @@ import {
 
 interface FilterSelectProps<T extends string | number> {
   filterLabel: string
-  val: T | null
+  val: T | undefined
   options: {
     label: string
     optionValue: T
   }[]
-  setValue: (v: T | null) => void
+  setValue: (v: T | undefined) => void
   nullable?: boolean
   nullLabel?: string
   className?: string
@@ -25,7 +25,7 @@ interface FilterSelectProps<T extends string | number> {
 const NULL_VALUE = '__null__'
 
 export function FilterSelect({
-  className,
+  // className,
   filterLabel,
   val,
   options,
@@ -34,7 +34,7 @@ export function FilterSelect({
   nullable = false,
 }: FilterSelectProps<string>) {
   const radixValue =
-    val === null
+    val === undefined
       ? nullable
         ? NULL_VALUE // null terpilih -> item "None" tampil
         : '' // tidak nullable -> placeholder
@@ -48,7 +48,7 @@ export function FilterSelect({
       <Select
         value={radixValue}
         onValueChange={(raw) => {
-          setValue(raw === NULL_VALUE ? null : raw)
+          setValue(raw === NULL_VALUE ? undefined : raw)
         }}
       >
         <SelectTrigger className="">
@@ -83,7 +83,7 @@ export function FilterSelectNumber({
   nullable = false,
 }: FilterSelectProps<number>) {
   const radixValue =
-    val === null
+    val === undefined
       ? nullable
         ? NULL_VALUE // null terpilih -> item "None" tampil
         : '' // tidak nullable -> placeholder
@@ -97,7 +97,7 @@ export function FilterSelectNumber({
       <Select
         value={radixValue}
         onValueChange={(raw) => {
-          setValue(raw === NULL_VALUE ? null : Number(raw))
+          setValue(raw === NULL_VALUE ? undefined : Number(raw))
         }}
       >
         <SelectTrigger>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useGetAllBenefitPlansQuery } from '#/features/benefit-plans/queries/queries'
+import type { BenefitPlanFilterParams } from '#/features/benefit-plans/queries/queries'
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import { deleteBenefitPlanForm } from '#/features/benefit-plans/forms/forms'
@@ -27,9 +28,12 @@ import {
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
 import { Layers, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
+import { PaginationSection } from '#/components/PaginationSection'
+import { useGetAllBenefitsQuery } from '#/features/benefits/queries/queries'
 
 export const Route = createFileRoute('/_app/admin/benefit-plans/')({
   component: BenefitPlansIndexPage,
+  validateSearch: (s) => s as BenefitPlanFilterParams,
 })
 
 const formatCurrency = (val: number) => {
@@ -41,17 +45,37 @@ const formatCurrency = (val: number) => {
 }
 
 function BenefitPlansIndexPage() {
-  const { data: plans = [], isLoading, isError } = useGetAllBenefitPlansQuery()
+  const searchRoute = Route.useSearch()
+  const navigate = useNavigate()
+  const { data: plansResponse, isError } =
+    useGetAllBenefitPlansQuery(searchRoute)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
+  const { data: benefits } = useGetAllBenefitsQuery()
 
-  const [searchFilter, setSearchFilter] = useState<string>('')
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null)
-  const [positionFilter, setPositionFilter] = useState<string | null>(null)
+  const plans = plansResponse?.data || []
+
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    searchRoute.search,
+  )
+  const [departmentFilter, setDepartmentFilter] = useState<string | undefined>(
+    searchRoute.departmentId,
+  )
+  const [positionFilter, setPositionFilter] = useState<string | undefined>(
+    searchRoute.positionId,
+  )
+  const [benefitFilter, setBenefitFilter] = useState<string | undefined>(
+    searchRoute.benefitId,
+  )
 
   const departmentOptions = departments.map((d) => ({
     label: d.name,
     optionValue: d.id,
+  }))
+
+  const benefitOptions = benefits.map((b) => ({
+    label: b.name,
+    optionValue: b.id,
   }))
 
   const positionOptions = positions.map((p) => ({
@@ -59,44 +83,50 @@ function BenefitPlansIndexPage() {
     optionValue: p.id,
   }))
 
-  const planList: BenefitPlanResponse[] = Array.isArray(plans) ? plans : ((plans as any)?.data ?? [])
+  const planList: BenefitPlanResponse[] = Array.isArray(plans)
+    ? plans
+    : ((plans as any)?.data ?? [])
 
-  const displayData = planList.filter((bp: BenefitPlanResponse) => {
-    const s = searchFilter.toLowerCase()
-    const matchSearch =
-      !searchFilter ||
-      bp.benefitName?.toLowerCase().includes(s) ||
-      bp.departmentName?.toLowerCase().includes(s) ||
-      bp.positionTitle?.toLowerCase().includes(s) ||
-      bp.departmentId.toLowerCase().includes(s) ||
-      bp.positionId.toLowerCase().includes(s)
+  const hasActiveFilters = Boolean(
+    searchFilter || departmentFilter || positionFilter || benefitFilter,
+  )
 
-    const matchDept = !departmentFilter || bp.departmentId === departmentFilter
-    const matchPos = !positionFilter || bp.positionId === positionFilter
-
-    return matchSearch && matchDept && matchPos
-  })
-
-  const hasActiveFilters = Boolean(searchFilter || departmentFilter || positionFilter)
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        search: searchFilter,
+        departmentId: departmentFilter,
+        positionId: positionFilter,
+        benefitId: benefitFilter,
+      },
+    })
+  }
 
   if (isError) {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data matriks plafon benefit. Silakan coba kembali nanti.
+          Terjadi kesalahan saat memuat data matriks plafon benefit. Silakan
+          coba kembali nanti.
         </div>
       </main>
     )
   }
 
-  if (isLoading) {
+  if (!plansResponse) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data matriks plafon benefit...</p>
+        <p className="text-sm text-muted-foreground">
+          Memuat data matriks plafon benefit...
+        </p>
       </main>
     )
   }
+  // if (!plansResponse) return <NotFoundPage />
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    plansResponse
 
   return (
     <main className="space-y-6">
@@ -116,7 +146,8 @@ function BenefitPlansIndexPage() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Matriks plafon batas klaim benefit berdasarkan kombinasi Departemen dan Jabatan.
+              Matriks plafon batas klaim benefit berdasarkan kombinasi
+              Departemen dan Jabatan.
             </p>
           </div>
         </div>
@@ -132,9 +163,9 @@ function BenefitPlansIndexPage() {
       {/* Table Card Container */}
       <div className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden">
         {/* Filters Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-64">
+        <div className="p-4 sm:p-5 border-b border-border/70 flex items-center justify-between gap-4 bg-muted/15">
+          <div className="flex grow items-center gap-3">
+            <div className="relative grow max-w-70 sm:w-64">
               <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
@@ -163,14 +194,24 @@ function BenefitPlansIndexPage() {
               nullable
             />
 
+            <FilterSelect
+              val={benefitFilter}
+              setValue={setBenefitFilter}
+              options={benefitOptions}
+              filterLabel="Benefit"
+              nullLabel="All Benefits"
+              nullable
+            />
+
             {hasActiveFilters && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setSearchFilter('')
-                  setDepartmentFilter(null)
-                  setPositionFilter(null)
+                  setDepartmentFilter(undefined)
+                  setPositionFilter(undefined)
+                  setBenefitFilter(undefined)
                 }}
                 className="text-xs text-muted-foreground hover:text-foreground h-9"
               >
@@ -179,19 +220,35 @@ function BenefitPlansIndexPage() {
             )}
           </div>
 
-          <div className="text-xs text-muted-foreground font-medium">
-            Showing {displayData.length} of {planList.length} plans
-          </div>
+          <Button onClick={applyFilterClick}>Apply</Button>
         </div>
 
         {/* Table Content */}
-        {displayData.length > 0 ? (
-          <BenefitPlansTable plans={displayData} />
+        {planList.length > 0 ? (
+          <>
+            <BenefitPlansTable plans={planList} />
+            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>
+                  Menampilkan {planList.length} dari {plansResponse.totalCount}{' '}
+                  total klaim
+                </span>
+              </div>
+              <div className="w-fit grow-0">
+                <PaginationSection pagination={paginationProp} />
+              </div>
+            </div>
+          </>
         ) : (
           <div className="py-16 text-center space-y-3">
-            <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
+            <SearchX
+              className="w-10 h-10 text-muted-foreground/50 mx-auto"
+              strokeWidth={1.5}
+            />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">Tidak ada data plafon ditemukan</p>
+              <p className="text-sm font-semibold text-heading">
+                Tidak ada data plafon ditemukan
+              </p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
                   ? 'Tidak ada aturan plafon yang cocok dengan filter yang dipilih.'
@@ -204,8 +261,8 @@ function BenefitPlansIndexPage() {
                 size="sm"
                 onClick={() => {
                   setSearchFilter('')
-                  setDepartmentFilter(null)
-                  setPositionFilter(null)
+                  setDepartmentFilter(undefined)
+                  setPositionFilter(undefined)
                 }}
                 className="text-xs font-semibold h-8"
               >
@@ -221,7 +278,8 @@ function BenefitPlansIndexPage() {
 
 function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
   const navigate = useNavigate()
-  const thClass = 'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
+  const thClass =
+    'px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground'
 
   return (
     <div className="overflow-x-auto">
@@ -232,7 +290,9 @@ function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
             <TableHead className={thClass}>POSITION / ROLE</TableHead>
             <TableHead className={thClass}>BENEFIT TYPE</TableHead>
             <TableHead className={thClass}>LIMIT AMOUNT</TableHead>
-            <TableHead className={`${thClass} text-right w-28`}>ACTION</TableHead>
+            <TableHead className={`${thClass} text-right w-28`}>
+              ACTION
+            </TableHead>
           </TableRow>
         </TableHeader>
 
@@ -246,7 +306,9 @@ function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
               >
                 <TableCell className="px-5 py-4">
                   <div>
-                    <p className="font-semibold text-heading">{bp.departmentName || bp.departmentId}</p>
+                    <p className="font-semibold text-heading">
+                      {bp.departmentName || bp.departmentId}
+                    </p>
                     <span className="text-[11px] font-mono text-muted-foreground uppercase">
                       Code: {bp.departmentId}
                     </span>
@@ -255,7 +317,9 @@ function BenefitPlansTable({ plans }: { plans: BenefitPlanResponse[] }) {
 
                 <TableCell className="px-5 py-4">
                   <div>
-                    <p className="font-medium text-heading">{bp.positionTitle || bp.positionId}</p>
+                    <p className="font-medium text-heading">
+                      {bp.positionTitle || bp.positionId}
+                    </p>
                     <span className="text-[11px] font-mono text-muted-foreground uppercase">
                       Code: {bp.positionId}
                     </span>
@@ -340,12 +404,18 @@ function DeletePlanDialog({
         <DialogHeader>
           <DialogTitle>Hapus Aturan Plafon Benefit</DialogTitle>
           <DialogDescription className="text-sm pt-1">
-            Apakah Anda yakin ingin menghapus aturan plafon untuk <strong>{plan.benefitName || plan.benefitId}</strong> pada departemen <strong>{plan.departmentName || plan.departmentId}</strong> ({plan.positionTitle || plan.positionId})?
+            Apakah Anda yakin ingin menghapus aturan plafon untuk{' '}
+            <strong>{plan.benefitName || plan.benefitId}</strong> pada
+            departemen{' '}
+            <strong>{plan.departmentName || plan.departmentId}</strong> (
+            {plan.positionTitle || plan.positionId})?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Batal</Button>
+            <Button variant="outline" size="sm">
+              Batal
+            </Button>
           </DialogClose>
           <form
             onSubmit={(e) => {

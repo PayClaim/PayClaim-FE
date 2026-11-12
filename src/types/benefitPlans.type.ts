@@ -1,3 +1,5 @@
+import type { PaginationGeneric } from './pagination.type'
+
 export interface BenefitPlanResponse {
   departmentId: string
   departmentName?: string
@@ -14,3 +16,5 @@ export interface UpsertBenefitPlanRequest {
   benefitId: string
   limitAmount: number
 }
+
+export type BenefitPlanPagination = PaginationGeneric<BenefitPlanResponse>

@@ -1,21 +1,38 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '#/lib/api-client'
 import type {
+  BenefitPlanPagination,
   BenefitPlanResponse,
   UpsertBenefitPlanRequest,
 } from '#/types/benefitPlans.type'
 
-export const useGetAllBenefitPlansQuery = (params?: Record<string, any>) =>
-  useQuery({
+export interface BenefitPlanFilterParams {
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+  departmentId?: string
+  positionId?: string
+  benefitId?: string
+}
+
+export const useGetAllBenefitPlansQuery = (
+  params?: BenefitPlanFilterParams,
+) => {
+  params = params || {}
+  params.pageSize = params.pageSize || 10
+  return useQuery({
     queryKey: ['benefitPlans', params],
     queryFn: async () => {
-      const res = await api.get<any>('/benefitplans', { params })
-      if (Array.isArray(res)) return res as BenefitPlanResponse[]
-      if (Array.isArray(res?.data)) return res.data as BenefitPlanResponse[]
-      return [] as BenefitPlanResponse[]
+      return await api.get<BenefitPlanPagination>('/benefitplans', {
+        params: params as Record<string, string | number>,
+      })
+      // if (Array.isArray(res)) return res as BenefitPlanResponse[]
+      // if (Array.isArray(res?.data)) return res.data as BenefitPlanResponse[]
+      // return [] as BenefitPlanResponse[]
     },
-    initialData: [],
+    initialData: null,
   })
+}
 
 export const useGetBenefitPlanByIdQuery = (
   departmentId: string,
