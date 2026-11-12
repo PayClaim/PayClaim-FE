@@ -11,6 +11,7 @@ export const useGetAllBenefitsQuery = () =>
     queryFn: () => {
       return api.get<BenefitResponse[]>('/benefits')
     },
+    initialData: [],
   })
 
 export const useGetBenefitQuery = (id: string) =>

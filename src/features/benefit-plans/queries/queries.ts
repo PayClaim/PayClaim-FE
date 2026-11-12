@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { api } from '#/lib/api-client'
 import type {
   BenefitPlanPagination,
@@ -18,19 +23,15 @@ export interface BenefitPlanFilterParams {
 export const useGetAllBenefitPlansQuery = (
   params?: BenefitPlanFilterParams,
 ) => {
-  params = params || {}
-  params.pageSize = params.pageSize || 10
+  const normalized = { ...params, pageSize: params?.pageSize ?? 10 }
   return useQuery({
     queryKey: ['benefitPlans', params],
-    queryFn: async () => {
-      return await api.get<BenefitPlanPagination>('/benefitplans', {
-        params: params as Record<string, string | number>,
+    queryFn: () => {
+      return api.get<BenefitPlanPagination>('/benefitplans', {
+        params: normalized,
       })
-      // if (Array.isArray(res)) return res as BenefitPlanResponse[]
-      // if (Array.isArray(res?.data)) return res.data as BenefitPlanResponse[]
-      // return [] as BenefitPlanResponse[]
     },
-    initialData: null,
+    placeholderData: keepPreviousData,
   })
 }
 
