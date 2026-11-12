@@ -42,6 +42,35 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
 
 type StatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
 
+function getSubmittedAtTime(value?: string | null): number {
+  if (!value) return 0
+
+  const timestamp = new Date(value).getTime()
+
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function getClaimPriority(status: string): number {
+  const normalized = (status || '').replace(/[\s_-]/g, '').toLowerCase()
+
+  // Paling urgent: revisi dan menunggu approval.
+  if (
+    ['needsrevision', 'submitted', 'underreview'].includes(normalized)
+  ) {
+    return 0
+  }
+
+  if (['approved', 'paid'].includes(normalized)) {
+    return 1
+  }
+
+  if (['rejected'].includes(normalized)) {
+    return 2
+  }
+
+  return 3
+}
+
 function RouteComponent() {
   const navigate = useNavigate()
 
@@ -122,6 +151,22 @@ function RouteComponent() {
     })
   }, [claims, searchQuery, activeTab])
 
+  const sortedClaims = useMemo(() => {
+  return [...filteredClaims].sort((a, b) => {
+    const priorityDifference =
+      getClaimPriority(a.status) - getClaimPriority(b.status)
+
+    if (priorityDifference !== 0) {
+      return priorityDifference
+    }
+
+    return (
+      getSubmittedAtTime(b.submittedAt) -
+      getSubmittedAtTime(a.submittedAt)
+    )
+  })
+}, [filteredClaims])
+
   return (
     <main className="min-w-0 space-y-6">
       {/* Header */}
@@ -142,7 +187,7 @@ function RouteComponent() {
       </div>
 
       {/* 3 KPI Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {/* KPI 1: Total Claims */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
           <div className="flex items-center justify-between">
@@ -201,24 +246,23 @@ function RouteComponent() {
       {/* Claims Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
-          <div>
-            <h2 className="font-semibold text-foreground text-base">
+      <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
+        <div className="min-w-0">
+          <h2 className="font-semibold text-foreground text-base">
               Claim Requests
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Select a claim to view its details and approval workflow.
             </p>
           </div>
+        
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-              <button
+<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
                 type="button"
                 onClick={() => setActiveTab('ALL')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'ALL'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
                     ? 'bg-card text-foreground shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -228,8 +272,7 @@ function RouteComponent() {
               <button
                 type="button"
                 onClick={() => setActiveTab('WAITING')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'WAITING'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
                     ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -239,8 +282,7 @@ function RouteComponent() {
               <button
                 type="button"
                 onClick={() => setActiveTab('APPROVED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'APPROVED'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
                     ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -250,8 +292,7 @@ function RouteComponent() {
               <button
                 type="button"
                 onClick={() => setActiveTab('PAID')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'PAID'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'PAID'
                     ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -261,8 +302,7 @@ function RouteComponent() {
               <button
                 type="button"
                 onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'REVISION_OR_REJECTED'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
                     ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -331,7 +371,7 @@ function RouteComponent() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {filteredClaims.map((claim) => {
+                {sortedClaims.map((claim) => {
                   const typeBadge = getClaimTypeBadge(claim.claimType)
                   const TypeIcon = typeBadge.icon
                   const statusConfig = getStatusBadgeConfig(claim.status)

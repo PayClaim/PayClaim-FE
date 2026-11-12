@@ -32,14 +32,14 @@ export function ClaimSummaryPane({
         backLabel={backLabel}
         submittedLongDate={formatDateBox(claim.submittedAt).longDate}
         statusLabel={getStatusDisplayLabel(claim.status)}
-        hasReceipt={receipt.hasFile}
-        onPreview={onPreview}
       />
+
       <ClaimInfoSection
         claim={claim}
         claimTypeLabel={getClaimTypeLabel(claim.claimType)}
         transactionLongDate={formatDateBox(claim.transactionDate).longDate}
       />
+
       <div className="p-6 space-y-3">
         <ReceiptAttachmentCard
           claim={claim}

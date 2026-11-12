@@ -10,12 +10,23 @@ import {
   FileCheck,
   FileText,
   Send,
+  ShieldCheck,
+  Wallet,
   XCircle,
 } from 'lucide-react'
 
 import { getProposalStatusConfig } from '#/types/tripProposals.type'
 import { Button } from '#/components/ui/button'
 import { downloadFile } from '#/lib/download'
+import {
+  ChecklistRow,
+  NotesBox,
+  StageBody,
+  StageIconBadge,
+} from '#/components/pages/approvals/timeline-primitives'
+
+import type { StageTone } from '#/components/pages/approvals/timeline-primitives'
+
 import {
   Dialog,
   DialogContent,
@@ -28,6 +39,7 @@ export type ProposalTimelineItem = {
   id: string
   title: string
   approverName: string
+  approverRole?: string
   decision: string
   approvalLevel: number | null
   decidedAt: string
@@ -36,6 +48,11 @@ export type ProposalTimelineItem = {
   accommodationAmountAfter?: number
   isPending?: boolean
   isSubmission?: boolean
+}
+
+type ProcessTask = {
+  title: string
+  status: string
 }
 
 type Props = {
@@ -81,8 +98,9 @@ export function TripProposalTimeline({
 
   return (
     <>
-      <section className="space-y-6 bg-muted/10 p-5 lg:col-span-8 lg:p-8 xl:col-span-9">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
+      <section className="space-y-6 bg-muted/10 p-5 lg:col-span-8 lg:p-8">
+        {/* Trip Process Header */}
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-extrabold text-heading">
               Trip Process
@@ -90,10 +108,10 @@ export function TripProposalTimeline({
 
             {status && (
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border ${statusConfig.className}`}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-semibold ${statusConfig.className}`}
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`}
+                  className={`h-2 w-2 rounded-full ${statusConfig.dotColor}`}
                 />
 
                 {statusConfig.label}
@@ -108,13 +126,13 @@ export function TripProposalTimeline({
           )}
         </div>
 
+        {/* Approval Timeline */}
         <div className="relative space-y-6 pl-10">
+          {/* Claim Card */}
           {claimCard && (
             <div className="relative">
               {stages.length > 0 && (
-                <div
-                  className="pointer-events-none absolute -left-[25px] top-7 h-[calc(100%+24px)] w-0.5 bg-border"
-                />
+                <div className="pointer-events-none absolute -left-[25px] top-7 h-[calc(100%+24px)] w-0.5 bg-border" />
               )}
 
               <div className="absolute -left-10 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950">
@@ -128,16 +146,36 @@ export function TripProposalTimeline({
           {stages.map((stage, index) => {
             const decision = stage.decision
               .toLowerCase()
-              .replace(/\s/g, '')
+              .replace(/[\s_-]/g, '')
 
             const isPending = stage.isPending === true
             const isSubmitted = stage.isSubmission === true
             const isApproved = decision === 'approved'
             const isRejected = decision === 'rejected'
             const isNeedsRevision = decision === 'needsrevision'
-            const isForwarded = decision === 'forwardedtofinancemanager'
+            const isForwarded =
+              decision === 'forwardedtofinancemanager'
 
-            const dateInfo = getDateParts(stage.decidedAt)
+            const stageStatus = isPending
+              ? 'Pending'
+              : isSubmitted
+                ? 'Submitted'
+                : formatDecision(stage.decision)
+
+            const tone: StageTone =
+              isApproved || isSubmitted
+                ? 'success'
+                : isRejected || isNeedsRevision
+                  ? 'danger'
+                  : 'warning'
+
+            const approverName =
+              stage.approverName?.trim() ||
+              (isPending
+                ? stage.approverRole || 'Pending approver'
+                : 'Approver name unavailable')
+
+            const processTasks = getProcessTasks(stage)
 
             const hasAccommodationAdjustment =
               stage.accommodationAmountBefore !== undefined &&
@@ -151,27 +189,19 @@ export function TripProposalTimeline({
 
             return (
               <div key={stage.id} className="relative">
-                {/* Garis hanya menghubungkan node ke aktivitas berikutnya. */}
+                {/* Timeline Connector */}
                 {index < stages.length - 1 && (
-                  <div
-                    className="pointer-events-none absolute -left-[25px] top-7 h-[calc(100%+24px)] w-0.5 bg-border"
-                  />
+                  <div className="pointer-events-none absolute -left-[25px] top-7 h-[calc(100%+1.5rem)] w-0.5 bg-border" />
                 )}
 
-                {/* Node timeline. */}
+                {/* Timeline Node */}
                 <div
                   className={`absolute -left-10 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 ${
-                    isPending
-                      ? 'border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-700 dark:bg-amber-950'
-                      : isApproved || isSubmitted
-                        ? 'border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950'
-                        : isRejected
-                          ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-700 dark:bg-rose-950'
-                          : isNeedsRevision
-                            ? 'border-purple-300 bg-purple-50 text-purple-600 dark:border-purple-700 dark:bg-purple-950'
-                            : isForwarded
-                              ? 'border-sky-300 bg-sky-50 text-sky-600 dark:border-sky-700 dark:bg-sky-950'
-                              : 'border-border bg-muted text-muted-foreground'
+                    tone === 'success'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                      : tone === 'danger'
+                        ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-400'
+                        : 'border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400'
                   }`}
                 >
                   {isPending ? (
@@ -191,243 +221,180 @@ export function TripProposalTimeline({
                   )}
                 </div>
 
-                {/* Card aktivitas. */}
+                {/* Activity Card */}
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+                  {/* Card Header - Sama dengan Claims */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <h3 className="text-sm font-bold text-heading">
                         {stage.title}
                       </h3>
 
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                          isPending
-                            ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
-                            : isApproved || isSubmitted
-                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
-                              : isRejected
-                                ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
-                                : isNeedsRevision
-                                  ? 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700/60 dark:bg-purple-950/60 dark:text-purple-300'
-                                  : isForwarded
-                                    ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-950/60 dark:text-sky-300'
-                                    : 'border-border bg-muted text-muted-foreground'
-                        }`}
-                      >
+                      <StatusBadge
+                        status={stageStatus}
+                        isPending={isPending}
+                        isApproved={isApproved || isSubmitted}
+                        isRejected={isRejected}
+                        isNeedsRevision={isNeedsRevision}
+                        isForwarded={isForwarded}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            isPending
-                              ? 'bg-amber-500'
-                              : isApproved || isSubmitted
-                                ? 'bg-emerald-500'
-                                : isRejected
-                                  ? 'bg-rose-500'
-                                  : isNeedsRevision
-                                    ? 'bg-purple-500'
-                                    : isForwarded
-                                      ? 'bg-sky-500'
-                                      : 'bg-muted-foreground'
-                          }`}
-                        />
+                          className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary"
+                          aria-hidden="true"
+                        >
+                          {getInitials(approverName)}
+                        </span>
 
-                        {isPending
-                          ? 'Pending'
-                          : isSubmitted
-                            ? 'Submitted'
-                            : formatDecision(stage.decision)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-                        {getInitials(stage.approverName)}
-                      </span>
-
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {stage.approverName}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-4 p-5">
-                    {/* Tanggal atau status pending. */}
-                    <div
-                      className={`w-full shrink-0 rounded-lg border p-3 text-center sm:w-28 ${
-                        isPending
-                          ? 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40'
-                          : 'border-sky-200 bg-sky-50/90 dark:border-sky-900 dark:bg-sky-950/40'
-                      }`}
-                    >
-                      {isPending ? (
-                        <>
-                          <Clock className="mx-auto h-6 w-6 text-amber-600 dark:text-amber-400" />
-
-                          <p className="mt-2 text-xs font-bold text-amber-700 dark:text-amber-300">
-                            Pending
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-2xl font-extrabold leading-none text-sky-950 dark:text-sky-200">
-                            {dateInfo.day}
-                          </p>
-
-                          <p className="mt-1 border-b border-sky-200 pb-2 text-sm font-semibold text-sky-800 dark:border-sky-800 dark:text-sky-300">
-                            {dateInfo.monthYear}
-                          </p>
-
-                          <p className="pt-2 text-xs font-semibold text-sky-950 dark:text-sky-200">
-                            {dateInfo.time}
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="w-full flex-1 space-y-3">
-                      {/* Detail aktivitas. */}
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-primary">
-                          {isSubmitted ? (
-                            <FileCheck className="h-4 w-4" />
-                          ) : isPending ? (
-                            <Clock className="h-4 w-4" />
-                          ) : isApproved ? (
-                            <CheckCircle2 className="h-4 w-4" />
-                          ) : isRejected ? (
-                            <XCircle className="h-4 w-4" />
-                          ) : isNeedsRevision ? (
-                            <AlertTriangle className="h-4 w-4" />
-                          ) : isForwarded ? (
-                            <Send className="h-4 w-4 text-sky-600" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-heading">
-                            {isSubmitted
-                              ? 'Proposal successfully submitted'
-                              : isPending
-                                ? `Waiting for ${stage.approverName}`
-                                : isApproved
-                                  ? `Approved by ${stage.approverName}`
-                                  : isRejected
-                                    ? `Rejected by ${stage.approverName}`
-                                    : formatDecision(stage.decision)}
-                          </p>
-                        </div>
+                        <span className="max-w-[180px] truncate">
+                          {approverName}
+                        </span>
                       </div>
 
-                      {/* Informasi perubahan Accommodation Budget oleh Finance. */}
-                      {hasAccommodationAdjustment && (
-                        <div className="space-y-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3.5 dark:border-sky-900 dark:bg-sky-950/30">
-                          <div>
-                            <p className="text-sm font-semibold text-sky-900 dark:text-sky-200">
-                              Accommodation Budget Adjustment
-                            </p>
-
-                            <p className="mt-1 text-xs text-sky-800 dark:text-sky-300">
-                              Finance changed the Accommodation Budget
-                              during approval.
-                            </p>
-                          </div>
-
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="rounded-md border border-sky-200/80 bg-white/70 p-3 dark:border-sky-900 dark:bg-slate-950/30">
-                              <p className="text-xs text-muted-foreground">
-                                Previous Budget
-                              </p>
-
-                              <p className="mt-1 text-sm font-semibold text-heading">
-                                {formatCurrency(
-                                  stage.accommodationAmountBefore!,
-                                )}
-                              </p>
-                            </div>
-
-                            <div className="rounded-md border border-sky-200/80 bg-white/70 p-3 dark:border-sky-900 dark:bg-slate-950/30">
-                              <p className="text-xs text-muted-foreground">
-                                Approved Budget
-                              </p>
-
-                              <p className="mt-1 text-sm font-semibold text-heading">
-                                {formatCurrency(
-                                  stage.accommodationAmountAfter!,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-3 border-t border-sky-200 pt-2 text-xs dark:border-sky-900">
-                            <span className="text-sky-800 dark:text-sky-300">
-                              Budget Difference
-                            </span>
-
-                            <span className="font-bold text-sky-900 dark:text-sky-200">
-                              {accommodationDifference >= 0 ? '+' : '-'}
-                              {formatCurrency(
-                                Math.abs(accommodationDifference),
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Attachment pada aktivitas submission. */}
-                      {isSubmitted && (
-                        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/20 p-2">
-                          <div className="shrink-0 rounded-md bg-primary/10 p-2 text-primary">
-                            <FileText className="h-5 w-5" />
-                          </div>
-
-                          <p className="min-w-0 flex-1 truncate text-xs font-medium">
-                            {attachmentFileName || 'No attachment uploaded'}
-                          </p>
-
-                          {attachmentUrl && (
-                            <div className="flex shrink-0 items-center gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Preview document"
-                                disabled={!canPreview}
-                                onClick={() => setPreviewOpen(true)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Download document"
-                                onClick={() => void handleDownload()}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Catatan reviewer tanpa marker internal. */}
-                      {stage.notes && (
-                        <div className="space-y-1 rounded-lg border border-border/60 bg-muted/40 p-3.5">
-                          <p className="text-xs text-muted-foreground">
-                            Reviewer Notes
-                          </p>
-
-                          <p className="whitespace-pre-wrap text-xs font-medium leading-relaxed">
-                            {stage.notes}
-                          </p>
-                        </div>
+                      {isSubmitted && attachmentUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewOpen(true)}
+                          disabled={!canPreview}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-heading transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View
+                        </button>
                       )}
                     </div>
                   </div>
+
+                  {/* Card Body - Menggunakan StageBody milik Claims */}
+                  <StageBody date={stage.decidedAt}>
+                    {/* Main Activity Information */}
+                    <div className="flex min-h-8 items-center gap-2.5">
+                      <StageIconBadge
+                        icon={
+                          isSubmitted
+                            ? FileText
+                            : stage.approvalLevel === 2
+                              ? Wallet
+                              : stage.approvalLevel === 3
+                                ? ShieldCheck
+                                : FileCheck
+                        }
+                      />
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold leading-tight text-heading">
+                          {getStageDepartment(stage)}
+                        </p>
+
+                        {stage.approverRole && (
+                          <p className="text-xs text-muted-foreground">
+                            {stage.approverRole}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Compact Process Checklist */}
+                    {processTasks.map((task) => (
+                      <ChecklistRow
+                        key={task.title}
+                        dotClass={getTaskDotClass(task.status)}
+                        label={task.title}
+                      >
+                        <TaskStatusLabel status={task.status} />
+                      </ChecklistRow>
+                    ))}
+
+                    {/* Submission Attachment */}
+                    {isSubmitted && (
+                      <ChecklistRow
+                        dotClass={
+                          attachmentUrl ? 'bg-emerald-600' : 'bg-rose-600'
+                        }
+                        label={
+                          <span className="truncate">
+                            {attachmentFileName || 'Proposal Letter'}
+                          </span>
+                        }
+                        truncate
+                      >
+                        {attachmentUrl ? (
+                          <div className="flex shrink-0 items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => void handleDownload()}
+                              className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Download
+                            </button>
+
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            No file
+                          </span>
+                        )}
+                      </ChecklistRow>
+                    )}
+
+                    {/* Accommodation Budget Adjustment */}
+                    {hasAccommodationAdjustment && (
+                      <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/70 p-3 dark:border-sky-900 dark:bg-sky-950/30">
+                        <p className="text-xs font-bold text-sky-900 dark:text-sky-200">
+                          Accommodation Budget Adjustment
+                        </p>
+
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="text-muted-foreground">
+                            Previous Budget
+                          </span>
+
+                          <span className="font-semibold text-heading">
+                            {formatCurrency(
+                              stage.accommodationAmountBefore!,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="text-muted-foreground">
+                            Approved Budget
+                          </span>
+
+                          <span className="font-semibold text-heading">
+                            {formatCurrency(
+                              stage.accommodationAmountAfter!,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 border-t border-sky-200 pt-2 text-xs dark:border-sky-900">
+                          <span className="text-muted-foreground">
+                            Budget Difference
+                          </span>
+
+                          <span className="font-bold text-heading">
+                            {accommodationDifference >= 0 ? '+' : '-'}
+                            {formatCurrency(
+                              Math.abs(accommodationDifference),
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reviewer Notes - Sama dengan Claims */}
+                    {stage.notes && (
+                      <NotesBox label="Reviewer Notes">
+                        {stage.notes}
+                      </NotesBox>
+                    )}
+                  </StageBody>
                 </div>
               </div>
             )
@@ -435,7 +402,7 @@ export function TripProposalTimeline({
         </div>
       </section>
 
-      {/* Modal preview dari timeline. */}
+      {/* Document Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="flex h-[92vh] w-[96vw] !max-w-[1400px] flex-col gap-3">
           <DialogHeader>
@@ -449,8 +416,9 @@ export function TripProposalTimeline({
           </DialogHeader>
 
           <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/20">
-            {previewOpen && attachmentUrl && (
-              isPdf ? (
+            {previewOpen &&
+              attachmentUrl &&
+              (isPdf ? (
                 <iframe
                   src={previewUrl}
                   title="Trip Proposal PDF Preview"
@@ -462,8 +430,7 @@ export function TripProposalTimeline({
                   alt="Trip proposal attachment"
                   className="h-full w-full object-contain"
                 />
-              ) : null
-            )}
+              ) : null)}
           </div>
 
           <div className="flex justify-end">
@@ -482,12 +449,188 @@ export function TripProposalTimeline({
   )
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(amount)
+/* Status Badge */
+function StatusBadge({
+  status,
+  isPending,
+  isApproved,
+  isRejected,
+  isNeedsRevision,
+  isForwarded,
+}: {
+  status: string
+  isPending: boolean
+  isApproved: boolean
+  isRejected: boolean
+  isNeedsRevision: boolean
+  isForwarded: boolean
+}) {
+  const className = isPending
+    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+    : isApproved
+      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+      : isRejected
+        ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+        : isNeedsRevision
+          ? 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700/60 dark:bg-purple-950/60 dark:text-purple-300'
+          : isForwarded
+            ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-950/60 dark:text-sky-300'
+            : 'border-border bg-muted text-muted-foreground'
+
+  const dotClass = isPending
+    ? 'bg-amber-500'
+    : isApproved
+      ? 'bg-emerald-500'
+      : isRejected
+        ? 'bg-rose-500'
+        : isNeedsRevision
+          ? 'bg-purple-500'
+          : isForwarded
+            ? 'bg-sky-500'
+            : 'bg-muted-foreground'
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${className}`}
+    >
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {status}
+    </span>
+  )
+}
+
+/* Process Checklist */
+function getProcessTasks(stage: ProposalTimelineItem): ProcessTask[] {
+  if (stage.isSubmission) {
+    return []
+  }
+
+  const decision = stage.decision
+    .toLowerCase()
+    .replace(/[\s_-]/g, '')
+
+  let currentStatus = 'Pending Approval'
+
+  if (stage.isPending) {
+    currentStatus =
+      stage.approvalLevel === 2 ? 'In Review' : 'Pending Approval'
+  } else if (decision === 'approved') {
+    currentStatus = 'Completed'
+  } else if (decision === 'rejected') {
+    currentStatus = 'Rejected'
+  } else if (decision === 'needsrevision') {
+    currentStatus = 'Needs Revision'
+  } else if (decision === 'forwardedtofinancemanager') {
+    currentStatus = 'Forwarded'
+  }
+
+  if (stage.approvalLevel === 1) {
+    return [
+      {
+        title: 'Proposal Document Collection',
+        status: 'Completed',
+      },
+      {
+        title: 'Manager Approval',
+        status: currentStatus,
+      },
+    ]
+  }
+
+  if (stage.approvalLevel === 2) {
+    return [
+      {
+        title: 'Accommodation & Travel Budget Verification',
+        status: currentStatus,
+      },
+      {
+        title: 'Participant Reimbursement Limit Allocation',
+        status: currentStatus,
+      },
+    ]
+  }
+
+  if (stage.approvalLevel === 3) {
+    return [
+      {
+        title: 'Final Budget Review',
+        status: currentStatus,
+      },
+    ]
+  }
+
+  return []
+}
+
+function getStageDepartment(stage: ProposalTimelineItem): string {
+  if (stage.isSubmission) {
+    return 'Proposal Submission'
+  }
+
+  if (stage.approvalLevel === 2 || stage.approvalLevel === 3) {
+    return 'Finance & Accounting Department'
+  }
+
+  return 'Manager Review'
+}
+
+function getTaskDotClass(status: string): string {
+  switch (status) {
+    case 'Completed':
+      return 'bg-emerald-600'
+    case 'Rejected':
+      return 'bg-rose-600'
+    case 'Needs Revision':
+      return 'bg-purple-600'
+    case 'Forwarded':
+      return 'bg-sky-600'
+    default:
+      return 'bg-amber-500'
+  }
+}
+
+function TaskStatusLabel({ status }: { status: string }) {
+  if (status === 'Completed') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
+        <CheckCircle2 className="h-4 w-4" />
+        Completed
+      </span>
+    )
+  }
+
+  if (status === 'Rejected') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-rose-700 dark:text-rose-400">
+        <XCircle className="h-4 w-4" />
+        Rejected
+      </span>
+    )
+  }
+
+  if (status === 'Needs Revision') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-purple-700 dark:text-purple-400">
+        <AlertTriangle className="h-4 w-4" />
+        Needs Revision
+      </span>
+    )
+  }
+
+  if (status === 'Forwarded') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-sky-700 dark:text-sky-400">
+        <Send className="h-4 w-4" />
+        Forwarded
+      </span>
+    )
+  }
+
+  return (
+    <span className="shrink-0 font-semibold text-amber-700 dark:text-amber-400">
+      {status}
+    </span>
+  )
 }
 
 function getInitials(name?: string | null) {
@@ -502,6 +645,14 @@ function getInitials(name?: string | null) {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
 }
 
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 function formatDecision(decision: string) {
   const norm = decision.toLowerCase().replace(/[\s_-]/g, '')
 
@@ -514,51 +665,4 @@ function formatDecision(decision: string) {
   }
 
   return decision
-}
-
-function parseDateUtc(value: string): Date | null {
-  if (!value) return null
-
-  const localDate = value.replace(
-    /(?:Z|[+-]\d{2}:?\d{2})$/i,
-    '',
-  )
-
-  const d = new Date(`${localDate}+07:00`)
-
-  return Number.isNaN(d.getTime()) ? null : d
-}
-
-function getDateParts(value: string) {
-  const date = parseDateUtc(value)
-
-  if (!date) {
-    return {
-      day: '-',
-      monthYear: '-',
-      time: '-',
-    }
-  }
-
-  return {
-    day: date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      timeZone: 'Asia/Jakarta',
-    }),
-
-    monthYear: date.toLocaleDateString('id-ID', {
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'Asia/Jakarta',
-    }),
-
-    time: date
-      .toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Jakarta',
-      })
-      .replace('.', ':'),
-  }
 }

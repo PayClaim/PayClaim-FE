@@ -687,34 +687,43 @@ const isPic = Boolean(myParticipant?.isPic)
       submittedActivity?.decidedAt ||
       proposal.submittedAt
 
-    const createApprovalStage = (
-      level: number,
-      title: string,
-      roleName: string,
-      approval: (typeof approvalHistory)[number] | undefined,
-      isPending: boolean,
-    ): ProposalTimelineItem => {
-      const parsedNotes = parseAccommodationBudgetNotes(
-        approval?.notes,
-      )
+const createApprovalStage = (
+  level: number,
+  title: string,
+  roleName: string,
+  approval: (typeof approvalHistory)[number] | undefined,
+  isPending: boolean,
+): ProposalTimelineItem => {
+  const parsedNotes = parseAccommodationBudgetNotes(
+    approval?.notes,
+  )
 
-      return {
-        id: `level-${level}`,
-        title,
-        approverName: approval?.approverName || roleName,
-        decision:
-          approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
-        approvalLevel: level,
-        decidedAt: approval?.decidedAt || '',
-        notes: parsedNotes.notes,
-        accommodationAmountBefore:
-          parsedNotes.accommodationAmountBefore,
-        accommodationAmountAfter:
-          parsedNotes.accommodationAmountAfter,
-        isPending: !approval && isPending,
-      }
-    }
+  return {
+    id: `level-${level}`,
+    title,
 
+    approverName:
+      approval?.approverName?.trim() ||
+      (isPending ? roleName : 'Approver name unavailable'),
+
+    approverRole: roleName,
+
+    decision:
+      approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
+
+    approvalLevel: level,
+    decidedAt: approval?.decidedAt || '',
+    notes: parsedNotes.notes,
+
+    accommodationAmountBefore:
+      parsedNotes.accommodationAmountBefore,
+
+    accommodationAmountAfter:
+      parsedNotes.accommodationAmountAfter,
+
+    isPending: !approval && isPending,
+  }
+}
     const timelineStages: ProposalTimelineItem[] = []
 
     if (showFinanceManagerStage) {
@@ -751,16 +760,17 @@ const isPic = Boolean(myParticipant?.isPic)
       ),
     )
 
-    timelineStages.push({
-      id: 'submission',
-      title: 'Proposal Submission',
-      approverName: submittedBy,
-      decision: 'Submitted',
-      approvalLevel: null,
-      decidedAt: submittedAt,
-      notes: null,
-      isSubmission: true,
-    })
+timelineStages.push({
+  id: 'submission',
+  title: 'Proposal Submission',
+  approverName: submittedBy,
+  approverRole: 'Employee / PIC',
+  decision: 'Submitted',
+  approvalLevel: null,
+  decidedAt: submittedAt,
+  notes: null,
+  isSubmission: true,
+})
 
     const approvalButtonLabel = isSubmitted
       ? 'Approve (Manager)'

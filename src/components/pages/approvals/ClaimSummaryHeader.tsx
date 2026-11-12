@@ -1,7 +1,5 @@
-
-import { Button } from '#/components/ui/button'
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Eye, Flag } from 'lucide-react'
+import { ArrowLeft, Flag } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import type { Claim } from '#/types/approval-action.type'
 
@@ -11,8 +9,6 @@ interface ClaimSummaryHeaderProps {
   backLabel: string
   submittedLongDate: string
   statusLabel: string
-  hasReceipt: boolean
-  onPreview: () => void
 }
 
 export function ClaimSummaryHeader({
@@ -21,14 +17,12 @@ export function ClaimSummaryHeader({
   backLabel,
   submittedLongDate,
   statusLabel,
-  hasReceipt,
-  onPreview,
 }: ClaimSummaryHeaderProps) {
   const normalizedClaimType = String(claim.claimType)
     .replace(/[\s_-]/g, '')
     .toLowerCase()
 
-const claimReferenceId = claim.id.slice(0, 4).toLowerCase()
+  const claimReferenceId = claim.id.slice(0, 4).toLowerCase()
 
   const claimTitle =
     normalizedClaimType === 'operationalreimbursement'
@@ -40,58 +34,41 @@ const claimReferenceId = claim.id.slice(0, 4).toLowerCase()
 
   return (
     <div className="border-b border-border p-6 space-y-4">
-      {/* Header: Back Button, Claim Title, Preview */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          {/* Back Button */}
-          <Link
-            to={backTo}
-            aria-label={backLabel}
-            title={backLabel}
-            className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-heading transition-colors hover:bg-muted hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          </Link>
+      <div className="flex items-start gap-3">
+        {/* Back Button */}
+        <Link
+          to={backTo}
+          aria-label={backLabel}
+          title={backLabel}
+          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-heading transition-colors hover:bg-muted hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        </Link>
 
-          {/* Claim Information */}
-          <div className="min-w-0 space-y-2">
-            <div className="flex items-start gap-2">
-              <h2 className="break-words text-2xl font-extrabold leading-tight tracking-tight text-heading">
-                {claimTitle}
-              </h2>
+        {/* Claim Information */}
+        <div className="min-w-0 space-y-2">
+          <div className="flex items-start gap-2">
+            <h2 className="break-words text-2xl font-extrabold leading-tight tracking-tight text-heading">
+              {claimTitle}
+            </h2>
 
-              <Flag
-                className="mt-1 h-4 w-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </div>
-
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-              Submitted on {submittedLongDate}
-            </p>
-
-            <StatusBadge
-              status={claim.status}
-              label={statusLabel}
-              size="sm"
+            <Flag
+              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground"
+              aria-hidden="true"
             />
           </div>
-        </div>
 
-        {/* Receipt Preview */}
-        {hasReceipt && (
-          <Button
-            type="button"
-            variant="outline"
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+            Submitted on {submittedLongDate}
+          </p>
+
+          <StatusBadge
+            status={claim.status}
+            label={statusLabel}
             size="sm"
-            className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
-            onClick={onPreview}
-          >
-            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            Preview
-          </Button>
-        )}
+          />
+        </div>
       </div>
     </div>
   )

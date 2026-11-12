@@ -317,6 +317,7 @@ function CreateTripProposalPage({
                 <field.CurrencyField
                   label="Accommodation Amount (Hotel, Ticket)"
                   placeholder="0"
+                  max={MAX_TRIP_AMOUNT}
                 />
               )}
             </form.AppField>

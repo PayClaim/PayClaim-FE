@@ -78,6 +78,14 @@ function normalizeStatus(status: string) {
   return (status || '').replace(/[\s_-]/g, '').toLowerCase()
 }
 
+function getSubmittedAtTime(value?: string | null): number {
+  if (!value) return 0
+
+  const timestamp = new Date(value).getTime()
+
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
 function getInitials(name?: string | null): string {
   if (!name) return '?'
   const parts = name.trim().split(/\s+/)
@@ -391,28 +399,59 @@ const roles = user?.roles || []
             proposal.picName.trim().toLowerCase()),
     )
 
+  const getProposalPriority = (proposal: TripProposal): number => {
+    const normalized = normalizeStatus(proposal.status)
+
+    // Urgent: perlu revisi.
+    if (normalized === 'needsrevision') {
+      return 0
+    }
+
+    // Urgent: memerlukan tindakan pengguna yang login.
+    const statusConfig = getApprovalStatusConfig(
+      proposal.status,
+      roles,
+      isOwnProposal(proposal),
+    )
+
+    if (statusConfig.label === 'Need Your Approval') {
+      return 0
+    }
+
+    // Masih menunggu proses approval lainnya.
+    if (
+      [
+        'submitted',
+        'underreview',
+        'financemanagerreview',
+        'pending',
+      ].includes(normalized)
+    ) {
+      return 1
+    }
+
+    if (['approved', 'completed'].includes(normalized)) {
+      return 2
+    }
+
+    if (['rejected', 'cancelled'].includes(normalized)) {
+      return 3
+    }
+
+    return 4
+  }
+
   return [...filteredProposals].sort((a, b) => {
-    const aNeedsApproval =
-      getApprovalStatusConfig(
-        a.status,
-        roles,
-        isOwnProposal(a),
-      ).label === 'Need Your Approval'
+    const priorityDifference =
+      getProposalPriority(a) - getProposalPriority(b)
 
-    const bNeedsApproval =
-      getApprovalStatusConfig(
-        b.status,
-        roles,
-        isOwnProposal(b),
-      ).label === 'Need Your Approval'
-
-    if (aNeedsApproval !== bNeedsApproval) {
-      return aNeedsApproval ? -1 : 1
+    if (priorityDifference !== 0) {
+      return priorityDifference
     }
 
     return (
-      getDateDistanceFromToday(b.startDate) -
-      getDateDistanceFromToday(a.startDate)
+      getSubmittedAtTime(b.submittedAt) -
+      getSubmittedAtTime(a.submittedAt)
     )
   })
 }, [filteredProposals, roles, user?.employeeId, user?.fullName])
@@ -436,7 +475,7 @@ const roles = user?.roles || []
       </div>
 
       {/* 3 KPI Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {/* KPI 1: Total Proposals */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
           <div className="flex items-center justify-between">
@@ -495,8 +534,7 @@ const roles = user?.roles || []
       {/* Proposal Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
-          <div>
+<div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
             <h2 className="font-semibold text-foreground text-base">
               Trip Proposal Requests
             </h2>
@@ -507,12 +545,10 @@ const roles = user?.roles || []
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-              <button
+<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
                 type="button"
                 onClick={() => setActiveTab('ALL')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'ALL'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
                     ? 'bg-card text-foreground shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -522,8 +558,7 @@ const roles = user?.roles || []
               <button
                 type="button"
                 onClick={() => setActiveTab('WAITING')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'WAITING'
+className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
                     ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -533,8 +568,7 @@ const roles = user?.roles || []
               <button
                 type="button"
                 onClick={() => setActiveTab('APPROVED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'APPROVED'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
                     ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -544,8 +578,7 @@ const roles = user?.roles || []
               <button
                 type="button"
                 onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'REVISION_OR_REJECTED'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
                     ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}

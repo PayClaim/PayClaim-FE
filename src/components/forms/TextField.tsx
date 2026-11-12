@@ -138,12 +138,12 @@ export function NumberField({ label, placeholder }: TextFieldProps) {
     </div>
   )
 }
-
 interface CurrencyFieldProps {
   label: string
   placeholder?: string
   disabled?: boolean
   className?: string
+  max?: number
 }
 
 export function CurrencyField({
@@ -151,9 +151,11 @@ export function CurrencyField({
   placeholder = '0',
   disabled,
   className,
+  max,
 }: CurrencyFieldProps) {
   const field = useFieldContext<number>()
   const { hasError, errors } = useFieldStatus(field)
+  const [limitWarning, setLimitWarning] = useState(false)
 
   const formatDots = (n: number | null | undefined): string => {
     if (n === null || n === undefined || n === 0 || isNaN(n)) return ''
@@ -166,27 +168,41 @@ export function CurrencyField({
 
   useEffect(() => {
     const formatted = formatDots(field.state.value)
+
     if (field.state.value === 0 && displayValue === '') {
       return
     }
+
     if (formatted !== displayValue) {
       setDisplayValue(formatted)
     }
   }, [field.state.value])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawDigits = e.target.value.replace(/\D/g, '')
-    if (!rawDigits) {
-      setDisplayValue('')
-      field.handleChange(0)
-      return
-    }
+  const rawDigits = e.target.value.replace(/\D/g, '')
 
-    const num = parseInt(rawDigits, 10)
-    const formatted = new Intl.NumberFormat('id-ID').format(num)
-    setDisplayValue(formatted)
-    field.handleChange(num)
+  if (!rawDigits) {
+    setLimitWarning(false)
+    setDisplayValue('')
+    field.handleChange(0)
+    return
   }
+
+  const num = Number(rawDigits)
+
+  // Tolak input jika melebihi batas maksimal.
+  if (max !== undefined && num > max) {
+    setLimitWarning(true)
+    return
+  }
+
+  setLimitWarning(false)
+
+  const formatted = new Intl.NumberFormat('id-ID').format(num)
+
+  setDisplayValue(formatted)
+  field.handleChange(num)
+}
 
   return (
     <div className="my-4">
@@ -199,6 +215,7 @@ export function CurrencyField({
       >
         {label}
       </Label>
+
       <div className="relative">
         <span
           className={cn(
@@ -208,6 +225,7 @@ export function CurrencyField({
         >
           Rp
         </span>
+
         <Input
           className={cn(
             'bg-input border border-border ps-10 font-medium transition-all',
@@ -223,8 +241,17 @@ export function CurrencyField({
           onChange={handleInputChange}
         />
       </div>
+
+      {limitWarning && max !== undefined && (
+        <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+          Maximum Accommodation Amount is Rp{' '}
+          {new Intl.NumberFormat('id-ID').format(max)}.
+        </p>
+      )}
+
       {hasError && <ErrorMessages errors={errors} />}
     </div>
+    
   )
 }
 
