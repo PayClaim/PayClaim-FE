@@ -7,9 +7,11 @@ import {
   XCircle,
   Users,
   AlertCircle,
+  Pencil,
 } from 'lucide-react'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
+
 
 import {
   useApproveTripProposalMutation,
@@ -520,6 +522,45 @@ const exceedsFinanceLimit =
     </>
   ) : null
 
+  
+  const isNeedsRevision = isTripStatus(
+  proposal?.status,
+  TripProposalStatus.NeedsRevision,
+)
+
+const isProposalPic = Boolean(
+  proposal?.participants?.some(
+    (participant) =>
+      participant.isPic &&
+      user?.employeeId &&
+      String(participant.employeeId).toLowerCase() ===
+        String(user.employeeId).toLowerCase(),
+  ),
+)
+
+  const reviseAction =
+    isNeedsRevision && isProposalPic ? (
+      <Link to="/trip-proposals/$id/edit" params={{ id: proposal.id }}>
+        <Button
+          type="button"
+          size="sm"
+          className="bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-1.5"
+        >
+          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+          Revisi Proposal
+        </Button>
+      </Link>
+    ) : null
+
+  const headerActions =
+    approvalActions || reviseAction ? (
+      <>
+        {reviseAction}
+        {approvalActions}
+      </>
+    ) : null
+    
+    
   const isApprovedOrCompleted = isTripStatus(proposal?.status, [
     TripProposalStatus.Approved,
     TripProposalStatus.Completed,
@@ -646,7 +687,7 @@ const exceedsFinanceLimit =
           attachmentFileName={attachmentFileName}
           isPdf={isPdf}
           status={proposal.status}
-          actions={approvalActions}
+          actions={headerActions}
           claimCard={claimCard}
         />
       </div>

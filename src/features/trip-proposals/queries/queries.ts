@@ -78,6 +78,22 @@ type TripProposalApprovalBody = {
   }[]
 }
 
+export const useUpdateTripProposalMutation = (id: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (formData: FormData) => {
+      return api.put(`/trip-proposals/${id}`, formData)
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['trip-proposals'],
+      })
+    },
+  })
+}
+
 // Approve Trip Proposal
 export const useApproveTripProposalMutation = (id: string) => {
   const queryClient = useQueryClient()
