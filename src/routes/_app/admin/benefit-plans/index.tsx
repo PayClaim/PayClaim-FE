@@ -43,7 +43,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
-import { Select, SelectContent, SelectValue } from '#/components/ui/select'
 import { ButtonGroup } from '#/components/ui/button-group'
 
 export const Route = createFileRoute('/_app/admin/benefit-plans/')({
@@ -69,7 +68,7 @@ function BenefitPlansIndexPage() {
   } = useGetAllBenefitPlansQuery(searchRoute)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
-  const { data: benefits } = useGetAllBenefitsQuery()
+  const { data: benefits = [] } = useGetAllBenefitsQuery()
 
   const plans = plansResponse?.data || []
 
@@ -199,7 +198,7 @@ function BenefitPlansIndexPage() {
           </div>
 
           <Popover>
-            <PopoverTrigger>
+            <PopoverTrigger asChild>
               <Button>
                 <Filter /> Filter
               </Button>
