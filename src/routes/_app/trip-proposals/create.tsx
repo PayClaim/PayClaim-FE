@@ -29,19 +29,20 @@ export const Route = createFileRoute('/_app/trip-proposals/create')({
 
 function RouteComponent() {
   const { user } = useAuth()
-  const { data: employees = [], isLoading } = useGetAllEmployeeQuery()
+  const { data: employeesResponse, isLoading } = useGetAllEmployeeQuery()
 
-  if (!user) {
-    return <p>Loading user information...</p>
-  }
+  const employees = employeesResponse?.data || []
+
+  // if (!user) {
+  //   return <p>Loading user information...</p>
+  // }
 
   if (isLoading) {
     return <p>Loading employees...</p>
   }
 
   const currentEmployee = employees.find(
-    (employee) =>
-      employee.email.toLowerCase() === user.email.toLowerCase(),
+    (employee) => employee.email.toLowerCase() === user.email.toLowerCase(),
   )
 
   if (!currentEmployee) {
@@ -348,8 +349,7 @@ function CreateTripProposalPage({
                 <h2
                   className={cn(
                     'text-lg font-semibold',
-                    isParticipantsInvalid &&
-                      'text-rose-600 dark:text-rose-400',
+                    isParticipantsInvalid && 'text-rose-600 dark:text-rose-400',
                   )}
                 >
                   Participants

@@ -844,7 +844,7 @@ const isPic = Boolean(myParticipant?.isPic)
 )
 
   const reviseAction =
-    isNeedsRevision && isPic ? (
+    isNeedsRevision && isPic && !isAdmin? (
       <Link to="/trip-proposals/$id/edit" params={{ id: proposal.id }}>
         <Button
           type="button"
@@ -969,13 +969,29 @@ const isPic = Boolean(myParticipant?.isPic)
         )
       ) : null
 
-    return (
-      <main className="mx-auto w-full max-w-[1600px] space-y-4">
-        <TripProposalHeader
-          proposal={proposal}
-          backTo={backTo}
-          backLabel={backLabel}
-        />
+      return (
+        <main className="mx-auto w-full max-w-[1600px] space-y-4">
+          {isNeedsRevision && isPic && !isAdmin && (
+            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 flex items-start gap-3">
+              <AlertTriangle
+                className="h-5 w-5 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400"
+                aria-hidden="true"
+              />
+              <div className="text-sm">
+                <p className="font-semibold">Revisi Diperlukan</p>
+                <p className="text-xs mt-0.5">
+                  Proposal ini dikembalikan oleh reviewer untuk diperbaiki. Silakan periksa catatan pada kartu proses, lalu klik tombol{' '}
+                  <strong>Edit &amp; Resubmit Proposal</strong> untuk mengajukan ulang.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <TripProposalHeader
+            proposal={proposal}
+            backTo={backTo}
+            backLabel={backLabel}
+          />
 
         <div className="grid min-h-[720px] grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12">
           <TripProposalSidebar

@@ -1,21 +1,30 @@
 import { api } from '#/lib/api-client'
 import type {
   CreateEmployeeRequest,
+  EmployeePagination,
   EmployeeResponse,
   UpdateEmployeeRequest,
 } from '#/types/employee.type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-export const useGetAllEmployeeQuery = (params?: Record<string, any>) =>
-  useQuery({
+export interface EmployeeFilterParams {
+  pageNumber?: number
+  pageSize?: number
+  search?: string
+  departmentId?: string
+  positionId?: string
+  isActive?: boolean
+}
+
+export const useGetAllEmployeeQuery = (params?: Record<string, any>) => {
+  const normalized = { ...params, pageSize: params?.pageSize ?? 10 }
+  return useQuery({
     queryKey: ['employees', params],
-    queryFn: async () => {
-      const res = await api.get<any>('/employees', { params })
-      if (Array.isArray(res)) return res as EmployeeResponse[]
-      if (Array.isArray(res?.data)) return res.data as EmployeeResponse[]
-      return [] as EmployeeResponse[]
+    queryFn: () => {
+      return api.get<EmployeePagination>('/employees', { params: normalized })
     },
   })
+}
 
 export const useGetEmployeeQuery = (id: string) =>
   useQuery({

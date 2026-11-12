@@ -1,3 +1,5 @@
+import type { PaginationGeneric } from './pagination.type'
+
 export interface EmployeeResponse {
   id: string
   number: string
@@ -12,6 +14,8 @@ export interface EmployeeResponse {
   managerId: string | null
   managerName: string | null
 }
+
+export type EmployeePagination = PaginationGeneric<EmployeeResponse>
 
 export interface CreateEmployeeRequest {
   fullName: string

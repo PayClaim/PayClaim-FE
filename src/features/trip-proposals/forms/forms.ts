@@ -60,7 +60,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
           value.participants.map((participant) => ({
             EmployeeId: participant.employeeId,
             IsPic: participant.isPic,
-            Amount: 0,
+            Amount: participant.amount ?? 0,
           })),
         ),
       )

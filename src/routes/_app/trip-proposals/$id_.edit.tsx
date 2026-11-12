@@ -27,7 +27,6 @@ import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queri
 import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 import { downloadFile } from '#/lib/download'
-import { toDateOnly } from '#/lib/utils'
 import {
   TripProposalStatus,
   isTripStatus,
@@ -132,9 +131,6 @@ function EditTripProposalFormContent({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
-  // Tanggal hari ini dalam format YYYY-MM-DD.
-  const today = toDateOnly(new Date())
-
   // Pastikan PIC berada di urutan pertama.
   const sortedInitialParticipants: TripProposalParticipantInput[] = [
     ...(proposal.participants || []),
@@ -143,7 +139,7 @@ function EditTripProposalFormContent({
     .map((p) => ({
       employeeId: p.employeeId,
       isPic: p.isPic,
-      amount: 0,
+      amount: p.amount ?? 0,   // pertahankan limit yang ada
     }))
 
   const initialAccommodationAmount =
@@ -280,16 +276,6 @@ function EditTripProposalFormContent({
 
     const values = form.state.values
 
-    if (values.startDate && values.startDate < today) {
-      toast.error('Start Date cannot be earlier than today.')
-      return
-    }
-
-    if (values.endDate && values.endDate < today) {
-      toast.error('End Date cannot be earlier than today.')
-      return
-    }
-
     if (
       values.startDate &&
       values.endDate &&
@@ -409,23 +395,15 @@ function EditTripProposalFormContent({
                 name="startDate"
                 validators={{
                   onChange: ({ value }) => {
-                    if (value && value < today) {
-                      return 'Start Date cannot be earlier than today.'
-                    }
-
                     const endDate = form.state.values.endDate
-
                     if (value && endDate && value > endDate) {
                       return 'Start Date cannot be after End Date.'
                     }
-
                     return undefined
                   },
                 }}
               >
-                {(field) => (
-                  <field.DatePicker label="Start Date" minDate={today} />
-                )}
+                {(field) => <field.DatePicker label="Start Date" />}
               </form.AppField>
 
               {/* End Date */}
@@ -433,16 +411,10 @@ function EditTripProposalFormContent({
                 name="endDate"
                 validators={{
                   onChange: ({ value }) => {
-                    if (value && value < today) {
-                      return 'End Date cannot be earlier than today.'
-                    }
-
                     const startDate = form.state.values.startDate
-
                     if (value && startDate && value < startDate) {
                       return 'End Date cannot be before Start Date.'
                     }
-
                     return undefined
                   },
                 }}
@@ -450,7 +422,7 @@ function EditTripProposalFormContent({
                 {(field) => (
                   <field.DatePicker
                     label="End Date"
-                    minDate={form.state.values.startDate || today}
+                    minDate={form.state.values.startDate || undefined}
                   />
                 )}
               </form.AppField>
