@@ -27,9 +27,24 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
-import { Layers, Pencil, Plus, Search, SearchX, Trash2 } from 'lucide-react'
+import {
+  Filter,
+  Layers,
+  Pencil,
+  Plus,
+  Search,
+  SearchX,
+  Trash2,
+} from 'lucide-react'
 import { PaginationSection } from '#/components/PaginationSection'
 import { useGetAllBenefitsQuery } from '#/features/benefits/queries/queries'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { Select, SelectContent, SelectValue } from '#/components/ui/select'
+import { ButtonGroup } from '#/components/ui/button-group'
 
 export const Route = createFileRoute('/_app/admin/benefit-plans/')({
   component: BenefitPlansIndexPage,
@@ -168,62 +183,76 @@ function BenefitPlansIndexPage() {
         {/* Filters Toolbar */}
         <div className="p-4 sm:p-5 border-b border-border/70 flex items-center justify-between gap-4 bg-muted/15">
           <div className="flex grow items-center gap-3">
-            <div className="relative grow max-w-70 sm:w-64">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search plan or benefit..."
-                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-              />
-            </div>
-
-            <FilterSelect
-              val={departmentFilter}
-              setValue={setDepartmentFilter}
-              options={departmentOptions}
-              filterLabel="Department"
-              nullLabel="All Departments"
-              nullable
-            />
-
-            <FilterSelect
-              val={positionFilter}
-              setValue={setPositionFilter}
-              options={positionOptions}
-              filterLabel="Position"
-              nullLabel="All Positions"
-              nullable
-            />
-
-            <FilterSelect
-              val={benefitFilter}
-              setValue={setBenefitFilter}
-              options={benefitOptions}
-              filterLabel="Benefit"
-              nullLabel="All Benefits"
-              nullable
-            />
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchFilter('')
-                  setDepartmentFilter(undefined)
-                  setPositionFilter(undefined)
-                  setBenefitFilter(undefined)
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground h-9"
-              >
-                Reset Filter
-              </Button>
-            )}
+            <ButtonGroup>
+              <div className="relative grow max-w-70 sm:w-64">
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search plan or benefit..."
+                  className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                />
+              </div>
+              <Button onClick={applyFilterClick}>Search</Button>
+            </ButtonGroup>
           </div>
 
-          <Button onClick={applyFilterClick}>Apply</Button>
+          <Popover>
+            <PopoverTrigger>
+              <Button>
+                <Filter /> Filter
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="grid grid-cols-1 gap-4 w-fit"
+            >
+              <FilterSelect
+                val={departmentFilter}
+                setValue={setDepartmentFilter}
+                options={departmentOptions}
+                filterLabel="Department"
+                nullLabel="All Departments"
+                nullable
+              />
+
+              <FilterSelect
+                val={positionFilter}
+                setValue={setPositionFilter}
+                options={positionOptions}
+                filterLabel="Position"
+                nullLabel="All Positions"
+                nullable
+              />
+
+              <FilterSelect
+                className="w-full"
+                val={benefitFilter}
+                setValue={setBenefitFilter}
+                options={benefitOptions}
+                filterLabel="Benefit"
+                nullLabel="All Benefits"
+                nullable
+              />
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchFilter('')
+                    setDepartmentFilter(undefined)
+                    setPositionFilter(undefined)
+                    setBenefitFilter(undefined)
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                >
+                  Reset Filter
+                </Button>
+              )}
+              <Button onClick={applyFilterClick}>Apply</Button>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Table Content */}
