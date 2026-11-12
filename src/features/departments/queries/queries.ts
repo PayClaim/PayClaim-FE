@@ -10,7 +10,6 @@ export const useGetAllDepartmentsQuery = () =>
   useQuery({
     queryKey: ['departments'],
     queryFn: async () => api.get<DepartmentResponse[]>('/departments'),
-    initialData: [],
   })
 
 export const useGetDepartmentQuery = (id: string) =>

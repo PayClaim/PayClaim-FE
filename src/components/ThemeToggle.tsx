@@ -65,7 +65,7 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-card hover:bg-slate-100/80 dark:hover:bg-slate-800/80 text-slate-600 dark:text-slate-300 transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0"
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 dark:border-border bg-card hover:bg-slate-100/80 dark:hover:bg-secondary text-slate-600 dark:text-foreground transition-colors shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0"
     >
       <Sun className="h-4.5 w-4.5 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0 text-amber-500" />
       <Moon className="absolute h-4.5 w-4.5 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100 text-blue-400" />

@@ -21,7 +21,7 @@ export const loginMutation = () => {
 
     onSuccess: (res) => {
       storage.set('token', res.data.token)
-      queryClient.invalidateQueries({ queryKey: ['authUser'] })
+      queryClient.clear()
     },
   })
 }
@@ -56,6 +56,6 @@ export const getCurrentUser = () =>
     queryFn: () => {
       return api.get<UserProfile>('/auth/me')
     },
-    staleTime: Infinity,
+    staleTime: 0,
     retry: false,
   })

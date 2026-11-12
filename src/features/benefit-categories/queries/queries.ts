@@ -11,7 +11,6 @@ export const useGetAllCategoriesQuery = () =>
     queryFn: () => {
       return api.get<BenefitCategoryResponse[]>('/benefitCategories')
     },
-    initialData: [],
   })
 
 export const useGetCategoryQuery = (id: number) =>

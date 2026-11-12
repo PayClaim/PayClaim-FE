@@ -18,6 +18,7 @@ export const createClaimBlurSchema = z
   })
   .refine(
     (data) => {
+      if (data.claimType === 'BusinessTripReimbursement') return true
       return data.transactionDate <= toDateOnly(new Date())
     },
     {

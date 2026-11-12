@@ -174,7 +174,6 @@ export function Sidebar({
   className = '',
 }: {
   className?: string
-  links?: TLink[]
 }) {
   const { pathname } = useLocation()
   const { data: user } = useQuery(getCurrentUser())
@@ -245,13 +244,13 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'w-75 h-screen bg-slate-50/70 dark:bg-slate-900/60 border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between backdrop-blur-sm z-30 select-none',
+        'w-75 h-screen bg-slate-50/80 dark:bg-sidebar border-r border-slate-200/80 dark:border-sidebar-border flex flex-col justify-between backdrop-blur-sm z-30 select-none',
         className,
       )}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-200/80 dark:border-slate-800/80 shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 p-1 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center shadow-2xs shrink-0">
+      <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-200/80 dark:border-sidebar-border shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-white dark:bg-secondary p-1 border border-slate-200/70 dark:border-border flex items-center justify-center shadow-2xs shrink-0">
           <img
             src="/logo-mii.png"
             alt="Mitra Integrasi Informatika"
@@ -259,7 +258,7 @@ export function Sidebar({
           />
         </div>
 
-        <span className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">
+        <span className="font-bold text-slate-900 dark:text-foreground text-lg tracking-tight">
           PayClaim
         </span>
       </div>
@@ -286,7 +285,7 @@ export function Sidebar({
               {/* Category Header */}
               <div
                 className={cn(
-                  'text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-3 mb-2',
+                  'text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-muted-foreground px-3 mb-2',
                   catIndex === 0 ? 'mt-1' : 'mt-4',
                 )}
               >
@@ -323,16 +322,16 @@ export function Sidebar({
                       className={cn(
                         'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all group my-0.5',
                         active
-                          ? 'bg-blue-50/90 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold shadow-2xs'
-                          : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100',
+                          ? 'bg-blue-50/90 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold shadow-2xs'
+                          : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground',
                       )}
                     >
                       <div
                         className={cn(
                           'w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors',
                           active
-                            ? 'bg-blue-100/80 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200/80 dark:group-hover:bg-slate-700/80 group-hover:text-slate-700 dark:group-hover:text-slate-200',
+                            ? 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                            : 'bg-slate-100 dark:bg-secondary text-slate-500 dark:text-muted-foreground group-hover:bg-slate-200/80 dark:group-hover:bg-muted group-hover:text-slate-700 dark:group-hover:text-foreground',
                         )}
                       >
                         <Icon
@@ -356,7 +355,7 @@ export function Sidebar({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 text-xs text-slate-400 shrink-0 text-center">
+      <div className="p-4 border-t border-slate-200/80 dark:border-sidebar-border text-xs text-slate-400 dark:text-muted-foreground shrink-0 text-center">
         &copy; {new Date().getFullYear()} PayClaim. All rights reserved.
       </div>
     </aside>
@@ -393,8 +392,8 @@ function ApprovalDropdown({
         className={cn(
           'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group cursor-pointer',
           isActive
-            ? 'bg-blue-50/90 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100',
+            ? 'bg-blue-50/90 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold'
+            : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground',
         )}
       >
         <div className="flex items-center gap-3">
@@ -402,8 +401,8 @@ function ApprovalDropdown({
             className={cn(
               'w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors',
               isActive
-                ? 'bg-blue-100/80 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200/80 dark:group-hover:bg-slate-700/80 group-hover:text-slate-700 dark:group-hover:text-slate-200',
+                ? 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                : 'bg-slate-100 dark:bg-secondary text-slate-500 dark:text-muted-foreground group-hover:bg-slate-200/80 dark:group-hover:bg-muted group-hover:text-slate-700 dark:group-hover:text-foreground',
             )}
           >
             <CheckCircle2
@@ -417,7 +416,7 @@ function ApprovalDropdown({
 
         <ChevronDown
           className={cn(
-            'w-4 h-4 text-slate-400 transition-transform duration-200',
+            'w-4 h-4 text-slate-400 dark:text-muted-foreground transition-transform duration-200',
             open && 'rotate-180',
           )}
           strokeWidth={1.75}
@@ -425,7 +424,7 @@ function ApprovalDropdown({
       </button>
 
       {open && (
-        <div className="border-l-2 border-slate-200 dark:border-slate-800 ml-5 pl-3 py-1 space-y-1 mt-1">
+        <div className="border-l-2 border-slate-200 dark:border-border ml-5 pl-3 py-1 space-y-1 mt-1">
           {items.map((item) => {
             const active = matchesPath(pathname, item.to)
 
@@ -436,8 +435,8 @@ function ApprovalDropdown({
                 className={cn(
                   'block px-2.5 py-1.5 text-xs rounded-md transition-colors',
                   active
-                    ? 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-slate-800/60',
+                    ? 'bg-blue-50/80 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold'
+                    : 'text-slate-500 dark:text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-secondary/60',
                 )}
               >
                 {item.label}

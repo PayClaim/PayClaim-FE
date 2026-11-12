@@ -5,7 +5,6 @@ import {
 } from '@tanstack/react-query'
 
 import { api } from '#/lib/api-client'
-import { getToken } from '#/hooks/auth.hook'
 
 import type {
   TripProposal,
@@ -28,41 +27,10 @@ type PagedResponse<T> = {
 const getAllProposals = async (
   employeeId?: string,
 ): Promise<TripProposal[]> => {
-  const token = getToken()
-
-  if (!token) {
-    throw new Error('Authentication token not found. Please login again.')
-  }
-
-  const apiUrl = import.meta.env.VITE_API_URL
-
-  const queryParam = employeeId
-    ? `?employeeId=${encodeURIComponent(employeeId)}`
-    : ''
-
-  const response = await fetch(`${apiUrl}/trip-proposals${queryParam}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+  const result = await api.get<PagedResponse<TripProposal>>('/trip-proposals', {
+    params: employeeId ? { employeeId } : undefined,
   })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-
-    throw new Error(
-      `HTTP ${response.status} ${response.statusText}: ${errorText}`,
-    )
-  }
-
-  const result: PagedResponse<TripProposal> = await response.json()
-
-  if (!result.success) {
-    throw new Error(result.message || 'Failed to fetch trip proposals.')
-  }
-
-  return result.data
+  return result.data ?? []
 }
 
 export const useGetAllProposalsQuery = (employeeId?: string) =>

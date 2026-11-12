@@ -27,6 +27,6 @@ export function useClaimPermissions(claim?: Claim | null) {
   return {
     showApprovalActions: canManagerApprove || canFinanceApprove,
     canDisburseAndPay: status === 'Approved' && (isFinance || isAdmin),
-    canResubmitClaim: status === 'NeedsRevision' && (isOwnClaim || isAdmin),
+    canResubmitClaim: status === 'NeedsRevision' && isOwnClaim && !isAdmin,
   }
 }

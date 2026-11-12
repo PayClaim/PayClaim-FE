@@ -47,7 +47,9 @@ export function ClaimDetailWorkspace({
 
   return (
     <main className="w-full max-w-[1600px] mx-auto space-y-4">
-      {claim.status === 'NeedsRevision' && <RevisionBanner />}
+      {claim.status === 'NeedsRevision' && permissions.canResubmitClaim && (
+        <RevisionBanner />
+      )}
 
       <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-180">
         <ClaimSummaryPane
