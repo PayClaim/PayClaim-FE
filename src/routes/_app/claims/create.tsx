@@ -1,3 +1,4 @@
+
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
@@ -9,7 +10,7 @@ import { useGetAllTripProposalsQuery } from '#/features/trip-proposals/queries/q
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateOnly } from '#/lib/utils'
 import { toast } from 'sonner'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, CircleAlert, Send } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -27,6 +28,8 @@ interface ClaimCreateSearchParams {
   claimType?: string
 }
 
+const MAX_CLAIM_AMOUNT = 100000000
+
 export const Route = createFileRoute('/_app/claims/create')({
   validateSearch: (
     search: Record<string, unknown>,
@@ -42,6 +45,7 @@ export const Route = createFileRoute('/_app/claims/create')({
     claimType:
       typeof search.claimType === 'string' ? search.claimType : undefined,
   }),
+
   beforeLoad: ({ context }) => {
     if (context.isAdmin || context.isDirector) {
       throw redirect({
@@ -49,6 +53,7 @@ export const Route = createFileRoute('/_app/claims/create')({
       })
     }
   },
+
   component: RouteComponent,
 })
 
@@ -58,17 +63,26 @@ function RouteComponent() {
     tripProposalId: searchTripId,
     claimType: searchClaimType,
   } = Route.useSearch()
+
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
   const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
+
+  const form = createClaimForm(searchBenefitId)
+
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const [currentClaimType, setClaimType] = useState('Benefit')
+
   const [selectedBenefitId, setSelectedBenefitId] = useState<string | null>(
     searchBenefitId ?? null,
   )
+
   const [selectedTripId, setSelectedTripId] = useState<string | null>(
     searchTripId ?? null,
   )
+
+  const [isAmountLimitExceeded, setIsAmountLimitExceeded] =
+    useState(false)
 
   const claimTypeSelect = [
     { label: 'Benefit', value: 'Benefit' },
@@ -76,48 +90,81 @@ function RouteComponent() {
     { label: 'Trip', value: 'BusinessTripReimbursement' },
   ]
 
+  // Menghapus peringatan dan error Amount sebelumnya.
+  const resetAmountValidation = () => {
+    setIsAmountLimitExceeded(false)
+
+    form.setFieldMeta('amount', (prev) => ({
+      ...prev,
+      isTouched: false,
+      errorMap: {
+        ...prev.errorMap,
+        onChange: undefined,
+        onSubmit: undefined,
+      },
+    }))
+  }
+
   const handleClaimTypeClick = (value: string) => {
     setClaimType(value)
+
     form.setFieldValue('claimType', value)
     form.setFieldValue('employeeBenefitId', null)
     form.setFieldValue('tripProposalId', null)
+
     setSelectedBenefitId(null)
     setSelectedTripId(null)
+
+    resetAmountValidation()
+
     if (value !== 'BusinessTripReimbursement') {
       form.setFieldValue('transactionDate', toDateOnly(new Date()))
     }
   }
 
-  const approvedTrips = tripProposals.filter((t) => {
-    const s = String(t.status).toLowerCase()
+  // Hanya gunakan sisa plafon reimbursement milik karyawan.
+  // totalAmount tidak digunakan karena merupakan anggaran akomodasi Trip.
+  const approvedTrips = tripProposals.filter((trip) => {
+    const status = String(trip.status).toLowerCase()
+
     const isApproved =
-      s === 'approved' || s === 'completed' || s === '4' || s === '6'
-    const hasParticipantBudget =
-      t.myParticipantAmount !== undefined && t.myParticipantAmount !== null
-        ? t.myParticipantAmount > 0
-        : true
-    return isApproved && hasParticipantBudget
+      status === 'approved' ||
+      status === 'completed' ||
+      status === '4' ||
+      status === '6'
+
+    const remainingBudget = getTripRemainingBudget(trip)
+
+    return isApproved && remainingBudget > 0
   })
 
-  const tripSelect = approvedTrips.map((t) => {
-    const budget = t.myRemainingBudget ?? t.myParticipantAmount ?? t.totalAmount
-    return {
-      label: `${t.destination} (Plafon: ${idNumberFormatter.format(budget)})`,
-      value: t.id,
-    }
-  })
+  const tripSelect = approvedTrips.map((trip) => ({
+    label: `${trip.destination} (Plafon: ${idNumberFormatter.format(
+      getTripRemainingBudget(trip),
+    )})`,
+    value: trip.id,
+  }))
 
-  // Kelompokkan Benefit berdasarkan Kategori
+  // Kelompokkan Benefit berdasarkan kategori.
   const benefitGroups: SelectOptionGroup[] = useMemo(() => {
-    const groupMap = new Map<string, Array<{ label: string; value: string }>>()
-    empBenefits.forEach((b) => {
-      const category = b.categoryName.trim() || 'General Benefits'
+    const groupMap = new Map<
+      string,
+      Array<{ label: string; value: string }>
+    >()
+
+    empBenefits.forEach((benefit) => {
+      const category =
+        benefit.categoryName.trim() || 'General Benefits'
+
       if (!groupMap.has(category)) {
         groupMap.set(category, [])
       }
+
       groupMap.get(category)!.push({
-        label: `${b.benefitName} (Sisa: ${idNumberFormatter.format(b.balance)})`,
-        value: b.employeeBenefitId,
+        label: `${benefit.benefitName} (Sisa: ${idNumberFormatter.format(
+          benefit.balance,
+        )})`,
+        value: benefit.employeeBenefitId,
       })
     })
 
@@ -127,21 +174,24 @@ function RouteComponent() {
     }))
   }, [empBenefits])
 
-  const form = createClaimForm(searchBenefitId)
-
+  // Mengisi pilihan awal dari URL.
   useEffect(() => {
     if (searchTripId) {
       setClaimType('BusinessTripReimbursement')
+
       form.setFieldValue('claimType', 'BusinessTripReimbursement')
       form.setFieldValue('tripProposalId', searchTripId)
       form.setFieldValue('employeeBenefitId', null)
+
       setSelectedTripId(searchTripId)
       setSelectedBenefitId(null)
     } else if (searchBenefitId) {
       setClaimType('Benefit')
+
       form.setFieldValue('claimType', 'Benefit')
       form.setFieldValue('employeeBenefitId', searchBenefitId)
       form.setFieldValue('tripProposalId', null)
+
       setSelectedBenefitId(searchBenefitId)
       setSelectedTripId(null)
     } else if (searchClaimType) {
@@ -150,19 +200,71 @@ function RouteComponent() {
     }
   }, [searchBenefitId, searchTripId, searchClaimType])
 
-  const selectedTrip = approvedTrips.find(
-    (t) => t.id === (form.state.values.tripProposalId || selectedTripId),
+  // Gunakan ID pilihan terbaru sebagai sumber utama.
+  const selectedBenefit = empBenefits.find(
+    (benefit) => benefit.employeeBenefitId === selectedBenefitId,
   )
 
+  const selectedTrip = approvedTrips.find(
+    (trip) => trip.id === selectedTripId,
+  )
+
+  // Sisa saldo Benefit yang dipilih.
+  const selectedBenefitBudget = selectedBenefit
+    ? getNonNegativeAmount(selectedBenefit.balance)
+    : undefined
+
+  // Sisa reimbursement Trip milik karyawan yang login.
+  const selectedTripBudget = selectedTrip
+    ? getTripRemainingBudget(selectedTrip)
+    : undefined
+
+  // Batas nominal mengikuti plafon yang dipilih,
+  // tetapi tidak pernah melebihi Rp100 juta.
+  const claimAmountLimit =
+    currentClaimType === 'Benefit' &&
+    selectedBenefitBudget !== undefined
+      ? Math.min(MAX_CLAIM_AMOUNT, selectedBenefitBudget)
+      : currentClaimType === 'BusinessTripReimbursement' &&
+          selectedTripBudget !== undefined
+        ? Math.min(MAX_CLAIM_AMOUNT, selectedTripBudget)
+        : MAX_CLAIM_AMOUNT
+
+  // Pesan mengikuti batas yang sedang berlaku.
+  const claimAmountLimitMessage =
+    currentClaimType === 'Benefit' &&
+    selectedBenefitBudget !== undefined &&
+    selectedBenefitBudget <= MAX_CLAIM_AMOUNT
+      ? `Maksimal klaim untuk benefit ini adalah ${idNumberFormatter.format(
+          selectedBenefitBudget,
+        )}.`
+      : currentClaimType === 'BusinessTripReimbursement' &&
+          selectedTripBudget !== undefined &&
+          selectedTripBudget <= MAX_CLAIM_AMOUNT
+        ? `Maksimal klaim untuk perjalanan ini adalah ${idNumberFormatter.format(
+            selectedTripBudget,
+          )}.`
+        : `Maximum claim amount is ${idNumberFormatter.format(
+            MAX_CLAIM_AMOUNT,
+          )}.`
+
+  // Menyesuaikan tanggal invoice dengan periode perjalanan.
   useEffect(() => {
-    if (currentClaimType === 'BusinessTripReimbursement' && selectedTrip) {
-      const curDate = form.state.values.transactionDate
+    if (
+      currentClaimType === 'BusinessTripReimbursement' &&
+      selectedTrip
+    ) {
+      const currentDate = form.state.values.transactionDate
+
       if (
-        !curDate ||
-        curDate < selectedTrip.startDate ||
-        curDate > selectedTrip.endDate
+        !currentDate ||
+        currentDate < selectedTrip.startDate ||
+        currentDate > selectedTrip.endDate
       ) {
-        form.setFieldValue('transactionDate', selectedTrip.startDate)
+        form.setFieldValue(
+          'transactionDate',
+          selectedTrip.startDate,
+        )
       }
     }
   }, [selectedTripId, currentClaimType, selectedTrip, form])
@@ -170,83 +272,93 @@ function RouteComponent() {
   const handleReview = async () => {
     const values = form.state.values
 
-    if (values.amount <= 0) {
-      const msg = 'Nominal klaim harus lebih besar dari 0'
+    // Validasi nominal dengan plafon yang sedang dipilih.
+    if (
+      !Number.isFinite(values.amount) ||
+      values.amount > claimAmountLimit
+    ) {
+      const message = claimAmountLimitMessage
+
+      setIsAmountLimitExceeded(true)
+
       form.setFieldMeta('amount', (prev) => ({
         ...prev,
         isTouched: true,
-        errorMap: { ...prev.errorMap, onSubmit: msg },
+        errorMap: {
+          ...prev.errorMap,
+          onSubmit: message,
+        },
       }))
-      toast.error(msg)
+
+      toast.error(message)
       return
     }
 
-    if (values.claimType === 'Benefit' && values.employeeBenefitId) {
-      const selected = empBenefits.find(
-        (b) => b.employeeBenefitId === values.employeeBenefitId,
-      )
-      if (selected && values.amount > selected.balance) {
-        const msg = `Saldo plafon benefit tidak mencukupi. Sisa saldo saat ini ${idNumberFormatter.format(selected.balance)}, namun permohonan klaim sebesar ${idNumberFormatter.format(values.amount)}.`
-        form.setFieldMeta('amount', (prev) => ({
-          ...prev,
-          isTouched: true,
-          errorMap: { ...prev.errorMap, onSubmit: msg },
-        }))
-        toast.error(msg)
-        return
-      }
+    setIsAmountLimitExceeded(false)
+
+    if (values.amount <= 0) {
+      const message = 'Nominal klaim harus lebih besar dari 0'
+
+      form.setFieldMeta('amount', (prev) => ({
+        ...prev,
+        isTouched: true,
+        errorMap: {
+          ...prev.errorMap,
+          onSubmit: message,
+        },
+      }))
+
+      toast.error(message)
+      return
     }
 
+    // Validasi tanggal invoice untuk Business Trip.
     if (
       values.claimType === 'BusinessTripReimbursement' &&
-      values.tripProposalId
+      values.tripProposalId &&
+      selectedTrip
     ) {
-      const selected = approvedTrips.find((t) => t.id === values.tripProposalId)
-      if (selected) {
-        if (!values.transactionDate) {
-          const msg = 'Tanggal invoice wajib diisi.'
-          form.setFieldMeta('transactionDate', (prev) => ({
-            ...prev,
-            isTouched: true,
-            errorMap: { ...prev?.errorMap, onSubmit: msg },
-          }))
-          toast.error(msg)
-          return
-        }
-        if (
-          values.transactionDate < selected.startDate ||
-          values.transactionDate > selected.endDate
-        ) {
-          const msg = `Tanggal invoice harus berada di dalam periode perjalanan dinas (${selected.startDate} s/d ${selected.endDate}).`
-          form.setFieldMeta('transactionDate', (prev) => ({
-            ...prev,
-            isTouched: true,
-            errorMap: { ...prev?.errorMap, onSubmit: msg },
-          }))
-          toast.error(msg)
-          return
-        }
-      }
+      if (!values.transactionDate) {
+        const message = 'Tanggal invoice wajib diisi.'
 
-      const maxBudget =
-        selected?.myRemainingBudget ??
-        selected?.myParticipantAmount ??
-        selected?.totalAmount ??
-        0
-      if (selected && values.amount > maxBudget) {
-        const msg = `Nominal klaim (${idNumberFormatter.format(values.amount)}) melebihi sisa alokasi perjalanan dinas Anda (${idNumberFormatter.format(maxBudget)}).`
-        form.setFieldMeta('amount', (prev) => ({
+        form.setFieldMeta('transactionDate', (prev) => ({
           ...prev,
           isTouched: true,
-          errorMap: { ...prev.errorMap, onSubmit: msg },
+          errorMap: {
+            ...prev?.errorMap,
+            onSubmit: message,
+          },
         }))
-        toast.error(msg)
+
+        toast.error(message)
+        return
+      }
+
+      if (
+        values.transactionDate < selectedTrip.startDate ||
+        values.transactionDate > selectedTrip.endDate
+      ) {
+        const message = `Tanggal invoice harus berada di dalam periode perjalanan dinas (${selectedTrip.startDate} s/d ${selectedTrip.endDate}).`
+
+        form.setFieldMeta('transactionDate', (prev) => ({
+          ...prev,
+          isTouched: true,
+          errorMap: {
+            ...prev?.errorMap,
+            onSubmit: message,
+          },
+        }))
+
+        toast.error(message)
         return
       }
     }
 
     await form.validateAllFields('submit')
-    if (form.state.isValid) setDialogOpen(true)
+
+    if (form.state.isValid) {
+      setDialogOpen(true)
+    }
   }
 
   const handleConfirm = async () => {
@@ -256,7 +368,7 @@ function RouteComponent() {
 
   return (
     <main className="max-w-4xl mx-auto space-y-6">
-      {/* Header dengan tombol kembali & badge status */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div className="flex items-center gap-3.5">
           <Link
@@ -266,15 +378,18 @@ function RouteComponent() {
           >
             <ArrowLeft className="w-5 h-5" strokeWidth={2} />
           </Link>
+
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-heading tracking-tight">
                 New Claim
               </h1>
+
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
                 Formulir Pengajuan
               </span>
             </div>
+
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
               Lengkapi rincian pengeluaran dan lampirkan bukti kuitansi sah
               untuk diproses reviewer.
@@ -283,12 +398,12 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Main Form Card Container */}
+      {/* Main Form Card */}
       <div className="bg-card rounded-2xl border border-border/80 shadow-xs p-6 sm:p-8">
         <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
+          onSubmit={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
             handleReview()
           }}
           className="space-y-7"
@@ -302,28 +417,30 @@ function RouteComponent() {
                 </Label>
 
                 <ButtonGroup className="w-full">
-                  {claimTypeSelect.map((t) => (
+                  {claimTypeSelect.map((type) => (
                     <Button
-                      key={t.value}
+                      key={type.value}
                       type="button"
                       variant={
-                        currentClaimType === t.value ? 'default' : 'outline'
+                        currentClaimType === type.value
+                          ? 'default'
+                          : 'outline'
                       }
                       className={`grow h-10 cursor-pointer font-semibold transition-all ${
-                        currentClaimType === t.value
+                        currentClaimType === type.value
                           ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
                           : 'bg-transparent text-foreground hover:bg-muted'
                       }`}
-                      onClick={() => handleClaimTypeClick(t.value)}
+                      onClick={() => handleClaimTypeClick(type.value)}
                     >
-                      {t.label}
+                      {type.label}
                     </Button>
                   ))}
                 </ButtonGroup>
               </div>
 
               {currentClaimType === 'Benefit' && (
-                <div>
+                <div className="min-w-0 w-full">
                   <form.AppField name="employeeBenefitId">
                     {(field) => (
                       <field.FormSelect
@@ -334,7 +451,11 @@ function RouteComponent() {
                         }
                         label="Benefit"
                         groups={benefitGroups}
-                        onCustomChange={(val) => setSelectedBenefitId(val)}
+                        onCustomChange={(value) => {
+                          setSelectedBenefitId(value)
+                          form.setFieldValue('employeeBenefitId', value)
+                          resetAmountValidation()
+                        }}
                       />
                     )}
                   </form.AppField>
@@ -342,7 +463,7 @@ function RouteComponent() {
               )}
 
               {currentClaimType === 'BusinessTripReimbursement' && (
-                <div>
+                <div className="min-w-0 w-full">
                   <form.AppField name="tripProposalId">
                     {(field) => (
                       <field.FormSelect
@@ -353,11 +474,21 @@ function RouteComponent() {
                         }
                         label="Trip Proposal"
                         values={tripSelect}
-                        onCustomChange={(val) => {
-                          setSelectedTripId(val)
-                          const chosen = approvedTrips.find((t) => t.id === val)
+                        onCustomChange={(value) => {
+                          setSelectedTripId(value)
+                          form.setFieldValue('tripProposalId', value)
+
+                          resetAmountValidation()
+
+                          const chosen = approvedTrips.find(
+                            (trip) => trip.id === value,
+                          )
+
                           if (chosen) {
-                            form.setFieldValue('transactionDate', chosen.startDate)
+                            form.setFieldValue(
+                              'transactionDate',
+                              chosen.startDate,
+                            )
                           }
                         }}
                       />
@@ -371,6 +502,7 @@ function RouteComponent() {
                   <label className="mb-2 text-sm font-semibold text-muted-foreground block">
                     Benefit / Allocation
                   </label>
+
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
                     Penggantian operasional langsung diajukan tanpa penautan
                     benefit atau trip.
@@ -379,7 +511,7 @@ function RouteComponent() {
               )}
             </div>
 
-            {/* BENEFIT / TRIP INFO SUMMARY CARD (BALANCED & INTEGRATED) */}
+            {/* Benefit Info */}
             {currentClaimType === 'Benefit' && selectedBenefitId && (
               <BenefitInfoBanner
                 benefitId={selectedBenefitId}
@@ -387,9 +519,13 @@ function RouteComponent() {
               />
             )}
 
+            {/* Trip Info */}
             {currentClaimType === 'BusinessTripReimbursement' &&
               selectedTripId && (
-                <TripInfoBanner tripId={selectedTripId} trips={approvedTrips} />
+                <TripInfoBanner
+                  tripId={selectedTripId}
+                  trips={approvedTrips}
+                />
               )}
           </div>
 
@@ -398,98 +534,188 @@ function RouteComponent() {
           {/* SECTION 2: TRANSACTION DETAILS */}
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-              <form.AppField
-                name="transactionDate"
-                validators={{
-                  onChange: ({ value }) => {
-                    if (
-                      currentClaimType === 'BusinessTripReimbursement' &&
-                      selectedTrip
-                    ) {
-                      if (!value) return 'Tanggal invoice wajib diisi'
-                      if (value < selectedTrip.startDate) {
-                        return `Tanggal invoice tidak boleh sebelum tanggal mulai perjalanan (${selectedTrip.startDate}).`
-                      }
-                      if (value > selectedTrip.endDate) {
-                        return `Tanggal invoice tidak boleh setelah tanggal selesai perjalanan (${selectedTrip.endDate}).`
-                      }
-                    }
-                    return undefined
-                  },
-                }}
+              {/* Invoice Date */}
+              <div
+                className="
+                  min-w-0 w-full
+                  [&_label]:mb-2
+                  [&_label]:block
+                  [&_label]:leading-5
+                  [&_button]:h-10
+                  [&_button]:w-full
+                "
               >
-                {(field) => (
-                  <field.DatePicker
-                    label="Invoice Date"
-                    minDate={
-                      currentClaimType === 'BusinessTripReimbursement'
-                        ? selectedTrip?.startDate
-                        : undefined
-                    }
-                    maxDate={
-                      currentClaimType === 'BusinessTripReimbursement'
-                        ? selectedTrip?.endDate
-                        : undefined
-                    }
-                    helperText={
-                      currentClaimType === 'BusinessTripReimbursement' &&
-                      selectedTrip
-                        ? `Periode perjalanan dinas: ${selectedTrip.startDate} s/d ${selectedTrip.endDate}`
-                        : undefined
-                    }
-                  />
-                )}
-              </form.AppField>
+                <form.AppField
+                  name="transactionDate"
+                  validators={{
+                    onChange: ({ value }) => {
+                      if (
+                        currentClaimType === 'BusinessTripReimbursement' &&
+                        selectedTrip
+                      ) {
+                        if (!value) {
+                          return 'Tanggal invoice wajib diisi'
+                        }
 
-              <form.AppField
-                name="amount"
-                validators={{
-                  onChange: ({ value }) => {
-                    if (
-                      currentClaimType === 'Benefit' &&
-                      form.state.values.employeeBenefitId
-                    ) {
-                      const selected = empBenefits.find(
-                        (b) =>
-                          b.employeeBenefitId ===
-                          form.state.values.employeeBenefitId,
-                      )
-                      if (selected && value > selected.balance) {
-                        return `Saldo plafon tidak mencukupi (Sisa: ${idNumberFormatter.format(selected.balance)}).`
+                        if (value < selectedTrip.startDate) {
+                          return `Tanggal invoice tidak boleh sebelum tanggal mulai perjalanan (${selectedTrip.startDate}).`
+                        }
+
+                        if (value > selectedTrip.endDate) {
+                          return `Tanggal invoice tidak boleh setelah tanggal selesai perjalanan (${selectedTrip.endDate}).`
+                        }
                       }
-                    }
-                    if (
-                      currentClaimType === 'BusinessTripReimbursement' &&
-                      form.state.values.tripProposalId
-                    ) {
-                      const selected = approvedTrips.find(
-                        (t) => t.id === form.state.values.tripProposalId,
-                      )
-                      const maxBudget =
-                        selected?.myRemainingBudget ??
-                        selected?.myParticipantAmount ??
-                        selected?.totalAmount ??
-                        0
-                      if (selected && value > maxBudget) {
-                        return `Nominal melebihi plafon alokasi perjalanan (${idNumberFormatter.format(maxBudget)}).`
+
+                      return undefined
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <field.DatePicker
+                      label="Invoice Date"
+                      minDate={
+                        currentClaimType === 'BusinessTripReimbursement'
+                          ? selectedTrip?.startDate
+                          : undefined
                       }
-                    }
-                    return undefined
-                  },
-                  onSubmit: ({ value }) => {
-                    if (value <= 0) {
-                      return 'Nominal klaim harus lebih besar dari 0'
-                    }
-                    return undefined
-                  },
-                }}
-              >
-                {(field) => (
-                  <field.CurrencyField label="Amount" placeholder="0" />
-                )}
-              </form.AppField>
+                      maxDate={
+                        currentClaimType === 'BusinessTripReimbursement'
+                          ? selectedTrip?.endDate
+                          : undefined
+                      }
+                      helperText={
+                        currentClaimType === 'BusinessTripReimbursement' &&
+                        selectedTrip
+                          ? `Periode perjalanan dinas: ${selectedTrip.startDate} s/d ${selectedTrip.endDate}`
+                          : undefined
+                      }
+                    />
+                  )}
+                </form.AppField>
+              </div>
+
+              {/* Amount */}
+              <div className="min-w-0 w-full pt-4"> 
+                <form.AppField
+                  name="amount"
+                  validators={{
+                    onChange: ({ value }) => {
+                      if (value > claimAmountLimit) {
+                        return claimAmountLimitMessage
+                      }
+
+                      return undefined
+                    },
+
+                    onSubmit: ({ value }) => {
+                      if (value <= 0) {
+                        return 'Nominal klaim harus lebih besar dari 0'
+                      }
+
+                      if (value > claimAmountLimit) {
+                        return claimAmountLimitMessage
+                      }
+
+                      return undefined
+                    },
+                  }}
+                >
+                  {(field) => {
+                    const currentAmount = Number(field.state.value) || 0
+
+                    const isCurrentAmountOverLimit =
+                      currentAmount > claimAmountLimit
+
+                    const showAmountLimitWarning =
+                      isAmountLimitExceeded || isCurrentAmountOverLimit
+
+                    return (
+                      <div className="w-full space-y-2">
+                        <Label
+                          htmlFor="claim-amount"
+                          className="mb-2 block text-sm font-semibold leading-5 text-(--sea-ink)"
+                        >
+                          Amount
+                        </Label>
+
+                        <div className="relative w-full">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                            Rp
+                          </span>
+
+                          <input
+                            id="claim-amount"
+                            type="text"
+                            inputMode="numeric"
+                            value={
+                              currentAmount > 0
+                                ? formatAmountInput(currentAmount)
+                                : ''
+                            }
+                            placeholder="0"
+                            onChange={(event) => {
+                              const digits = event.target.value.replace(
+                                /\D/g,
+                                '',
+                              )
+
+                              const numericAmount = digits
+                                ? Number(digits)
+                                : 0
+
+                              // Tolak nominal yang melewati plafon.
+                              // Tetap izinkan pengurangan nominal lama
+                              // jika plafon baru lebih kecil.
+                              if (numericAmount > claimAmountLimit) {
+                                setIsAmountLimitExceeded(true)
+
+                                if (numericAmount < currentAmount) {
+                                  field.handleChange(numericAmount)
+                                }
+
+                                return
+                              }
+
+                              setIsAmountLimitExceeded(false)
+                              field.handleChange(numericAmount)
+                            }}
+                            onFocus={() => {
+                              if (Number(field.state.value) === 0) {
+                                field.handleChange(0)
+                              }
+                            }}
+                            onBlur={field.handleBlur}
+                            className={`h-10 w-full rounded-md border bg-input pl-10 pr-3 text-sm transition-all focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${
+                              showAmountLimitWarning
+                                ? 'border-destructive'
+                                : 'border-border'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Peringatan batas nominal */}
+                        {showAmountLimitWarning && (
+                          <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                            <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                            {claimAmountLimitMessage}
+                          </p>
+                        )}
+
+                        {/* Error validasi lainnya */}
+                        {!showAmountLimitWarning &&
+                          field.state.meta.errors.length > 0 && (
+                            <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                              {String(field.state.meta.errors[0])}
+                            </p>
+                          )}
+                      </div>
+                    )
+                  }}
+                </form.AppField>
+              </div>
             </div>
 
+            {/* Description */}
             <form.AppField name="description">
               {(field) => (
                 <field.TextArea
@@ -503,7 +729,7 @@ function RouteComponent() {
 
           <div className="h-px bg-border/70" />
 
-          {/* SECTION 3: PROOF OF PAYMENT DROPZONE */}
+          {/* SECTION 3: PROOF OF PAYMENT */}
           <form.AppField name="receiptFile">
             {(field) => (
               <field.FileInput label="Receipt File (Proof of Payment)" />
@@ -521,49 +747,62 @@ function RouteComponent() {
                 Batal
               </Button>
             </Link>
+
             <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 cursor-pointer gap-2"
               disabled={form.state.isSubmitting}
             >
               <Send className="w-4 h-4" />
+
               <span>
-                {form.state.isSubmitting ? 'Mengirimkan...' : 'Submit Claim'}
+                {form.state.isSubmitting
+                  ? 'Mengirimkan...'
+                  : 'Submit Claim'}
               </span>
             </Button>
           </div>
 
-          {/* CONFIRMATION DIALOG MODAL */}
+          {/* CONFIRMATION DIALOG */}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Konfirmasi Pengajuan Klaim</DialogTitle>
+
                 <DialogDescription className="text-sm pt-1">
-                  Pastikan rincian data pengajuan klaim Anda sudah benar sebelum
-                  diteruskan ke reviewer.
+                  Pastikan rincian data pengajuan klaim Anda sudah benar
+                  sebelum diteruskan ke reviewer.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-4 bg-muted/30 border border-border rounded-xl text-xs space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Tipe Klaim:</span>
+                  <span className="text-muted-foreground">
+                    Tipe Klaim:
+                  </span>
+
                   <span className="font-semibold text-foreground">
-                    {claimTypeSelect.find((c) => c.value === currentClaimType)
-                      ?.label || currentClaimType}
+                    {claimTypeSelect.find(
+                      (type) => type.value === currentClaimType,
+                    )?.label || currentClaimType}
                   </span>
                 </div>
+
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">
                     Tanggal Invoice:
                   </span>
+
                   <span className="font-semibold text-foreground">
                     {form.state.values.transactionDate}
                   </span>
                 </div>
+
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">
                     Nominal Pengajuan:
                   </span>
+
                   <span className="font-bold text-base text-blue-600 dark:text-blue-400 font-mono">
                     {idNumberFormatter.format(form.state.values.amount)}
                   </span>
@@ -580,6 +819,7 @@ function RouteComponent() {
                     Periksa Kembali
                   </Button>
                 </DialogClose>
+
                 <Button
                   disabled={form.state.isSubmitting}
                   onClick={handleConfirm}
@@ -599,6 +839,36 @@ function RouteComponent() {
   )
 }
 
+// Mengambil sisa plafon reimbursement karyawan.
+// Tidak menggunakan totalAmount karena itu anggaran akomodasi Trip.
+function getTripRemainingBudget(trip: {
+  myRemainingBudget?: number | null
+  myParticipantAmount?: number | null
+}) {
+  const amount = Number(
+    trip.myRemainingBudget ??
+      trip.myParticipantAmount ??
+      0,
+  )
+
+  return Number.isFinite(amount) ? Math.max(0, amount) : 0
+}
+
+// Memastikan nominal tidak negatif dan berupa angka valid.
+function getNonNegativeAmount(
+  value: number | string | null | undefined,
+) {
+  const amount = Number(value ?? 0)
+
+  return Number.isFinite(amount) ? Math.max(0, amount) : 0
+}
+
+// Formatter angka untuk input.
+// Prefix Rp sudah ditampilkan terpisah di input.
+function formatAmountInput(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value)
+}
+
 function BenefitInfoBanner({
   benefitId,
   empBenefits,
@@ -607,7 +877,7 @@ function BenefitInfoBanner({
   empBenefits: any[]
 }) {
   const selectedBenefit = empBenefits.find(
-    (b) => b.employeeBenefitId === benefitId,
+    (benefit) => benefit.employeeBenefitId === benefitId,
   )
 
   if (!selectedBenefit) return null
@@ -619,10 +889,12 @@ function BenefitInfoBanner({
           <span className="font-bold text-sm text-heading">
             {selectedBenefit.benefitName}
           </span>
+
           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
             {selectedBenefit.categoryName || 'General'}
           </span>
         </div>
+
         <p className="text-[11px] text-muted-foreground mt-0.5">
           Periode aktif:{' '}
           <span className="font-medium text-foreground">
@@ -639,6 +911,7 @@ function BenefitInfoBanner({
         <span className="text-[11px] text-muted-foreground block">
           Sisa Kuota Tersedia
         </span>
+
         <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
           {idNumberFormatter.format(selectedBenefit.balance)}
         </span>
@@ -647,14 +920,18 @@ function BenefitInfoBanner({
   )
 }
 
-function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
-  const selectedTrip = trips.find((t) => t.id === tripId)
+function TripInfoBanner({
+  tripId,
+  trips,
+}: {
+  tripId: string
+  trips: any[]
+}) {
+  const selectedTrip = trips.find((trip) => trip.id === tripId)
+
   if (!selectedTrip) return null
 
-  const budget =
-    selectedTrip.myRemainingBudget ??
-    selectedTrip.myParticipantAmount ??
-    selectedTrip.totalAmount
+  const budget = getTripRemainingBudget(selectedTrip)
 
   return (
     <div className="p-4 rounded-xl border border-sky-200/80 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/20 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
@@ -663,10 +940,12 @@ function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
           <span className="font-bold text-sm text-heading">
             Perjalanan Dinas: {selectedTrip.destination}
           </span>
+
           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">
             Trip Proposal
           </span>
         </div>
+
         <p className="text-[11px] text-muted-foreground mt-0.5">
           Jadwal:{' '}
           <span className="font-medium text-foreground">
@@ -681,8 +960,9 @@ function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
 
       <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
         <span className="text-[11px] text-muted-foreground block">
-          Plafon Alokasi Perjalanan
+          Sisa Plafon Reimbursement
         </span>
+
         <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
           {idNumberFormatter.format(budget)}
         </span>
