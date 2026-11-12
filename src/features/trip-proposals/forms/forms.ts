@@ -21,7 +21,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
         {
           employeeId: currentEmployeeId,
           isPic: true,
-          amount: 0,
+          Amount: participant.amount ?? 0,
         },
       ] as TripProposalParticipantInput[],
       file: null as File | null,
@@ -60,7 +60,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
           value.participants.map((participant) => ({
             EmployeeId: participant.employeeId,
             IsPic: participant.isPic,
-            Amount: 0,
+            Amount: participant.amount ?? 0,
           })),
         ),
       )

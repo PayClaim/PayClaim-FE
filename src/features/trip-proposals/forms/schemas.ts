@@ -73,6 +73,6 @@ export const createTripProposalSchema = applyTripProposalRefinements(
 export const editTripProposalSchema = applyTripProposalRefinements(
   z.object({
     ...baseTripProposalFields,
-    file: z.instanceof(File).nullable().optional(),
+    file: z.instanceof(File).nullable(),
   }),
 )
