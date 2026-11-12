@@ -1,11 +1,11 @@
-import { CheckCircle2, Clock, Eye, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, Eye, MinusCircle, XCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   formatDateBox,
   getInitials,
 } from '#/features/approvals/helper/claim-helpers'
 
-export type StageTone = 'success' | 'danger' | 'warning'
+export type StageTone = 'success' | 'danger' | 'warning' | 'neutral'
 
 const NODE_TONE_CLASS: Record<StageTone, string> = {
   success:
@@ -14,12 +14,15 @@ const NODE_TONE_CLASS: Record<StageTone, string> = {
     'bg-rose-50 border-rose-300 text-rose-600 dark:bg-rose-950 dark:border-rose-700 dark:text-rose-400',
   warning:
     'bg-amber-50 border-amber-300 text-amber-600 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-400',
+  neutral:
+    'bg-muted border-border text-muted-foreground',
 }
 
 const NODE_ICON: Record<StageTone, typeof Clock> = {
   success: CheckCircle2,
   danger: XCircle,
   warning: Clock,
+  neutral: MinusCircle,
 }
 
 interface TimelineStageProps {

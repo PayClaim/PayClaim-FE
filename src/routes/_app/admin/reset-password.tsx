@@ -1,5 +1,5 @@
 import { resetPasswordForm } from '#/features/auth/forms/forms'
-import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
+import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/admin/reset-password')({
@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_app/admin/reset-password')({
 
 function RouteComponent() {
   const form = resetPasswordForm()
-  const { data: employees = [] } = useGetAllEmployeeQuery()
+  const { data: employees = [] } = useGetAllEmployeesQuery()
 
   // Backend menerima username atau email sebagai identifier akun
   const accountOptions = employees

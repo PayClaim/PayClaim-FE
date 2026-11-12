@@ -24,7 +24,7 @@ import {
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { editTripProposalForm } from '#/features/trip-proposals/forms/forms'
 import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queries'
-import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
+import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 import { downloadFile } from '#/lib/download'
 import {
@@ -51,7 +51,7 @@ function RouteComponent() {
     isLoading,
   } = useGetProposalByIdQuery(id)
   const { data: employees = [], isLoading: isLoadingEmployees } =
-    useGetAllEmployeeQuery()
+    useGetAllEmployeesQuery()
 
   if (isError) {
     return <ErrorComponent pageTitle="Revise Trip Proposal" error={error} />

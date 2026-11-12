@@ -26,6 +26,26 @@ export const useGetAllEmployeeQuery = (params?: Record<string, any>) => {
   })
 }
 
+/**
+ * Daftar seluruh karyawan (tanpa pagination) untuk kebutuhan dropdown/selector
+ * seperti peserta trip proposal dan pilihan manager.
+ * Backend mengembalikan semua data bila PageNumber/PageSize tidak dikirim.
+ */
+export const useGetAllEmployeesQuery = () =>
+  useQuery({
+    queryKey: ['employees', 'all'],
+    queryFn: async () => {
+      const res = await api.get<EmployeePagination | EmployeeResponse[]>(
+        '/employees',
+      )
+
+      if (Array.isArray(res)) return res as EmployeeResponse[]
+      if (Array.isArray(res?.data)) return res.data as EmployeeResponse[]
+
+      return [] as EmployeeResponse[]
+    },
+  })
+
 export const useGetEmployeeQuery = (id: string) =>
   useQuery({
     queryKey: ['employees', id],

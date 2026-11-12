@@ -1,7 +1,7 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { editEmployeeForm } from '#/features/employees/forms/forms'
 import {
-  useGetAllEmployeeQuery,
+  useGetAllEmployeesQuery,
   useGetEmployeeQuery,
 } from '#/features/employees/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
@@ -23,7 +23,7 @@ function RouteComponent() {
   } = useGetEmployeeQuery(employeeId)
   const { data: positions = [] } = useGetAllPositionsQuery()
   const { data: departments = [] } = useGetAllDepartmentsQuery()
-  const { data: employees = [] } = useGetAllEmployeeQuery()
+  const { data: employees = [] } = useGetAllEmployeesQuery()
 
   if (isFetching) {
     return (

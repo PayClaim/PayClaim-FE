@@ -1,6 +1,6 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { createEmployeeForm } from '#/features/employees/forms/forms'
-import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
+import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft, Users } from 'lucide-react'
@@ -25,7 +25,7 @@ function RouteComponent() {
     value: d.id,
   }))
 
-  const { data: employees = [] } = useGetAllEmployeeQuery()
+  const { data: employees = [] } = useGetAllEmployeesQuery()
   const managerOptions = employees.map((e) => ({
     label: e.fullName,
     value: e.id,

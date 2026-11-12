@@ -703,7 +703,12 @@ const isPic = Boolean(myParticipant?.isPic)
         title,
         approverName: approval?.approverName || roleName,
         decision:
-          approval?.decision || (isPending ? 'Pending' : 'Not recorded'),
+          approval?.decision ||
+          (isPending
+            ? 'Pending'
+            : level === 1
+              ? 'Skipped'
+              : 'Not recorded'),
         approvalLevel: level,
         decidedAt: approval?.decidedAt || '',
         notes: parsedNotes.notes,
