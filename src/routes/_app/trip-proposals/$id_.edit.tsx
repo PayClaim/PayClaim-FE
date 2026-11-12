@@ -27,7 +27,6 @@ import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queri
 import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 import { downloadFile } from '#/lib/download'
-import { toDateOnly } from '#/lib/utils'
 import {
   TripProposalStatus,
   isTripStatus,
@@ -131,9 +130,6 @@ function EditTripProposalFormContent({
 }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
-
-  // Tanggal hari ini dalam format YYYY-MM-DD.
-  const today = toDateOnly(new Date())
 
   // Pastikan PIC berada di urutan pertama.
   const sortedInitialParticipants: TripProposalParticipantInput[] = [
