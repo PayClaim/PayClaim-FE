@@ -29,9 +29,7 @@ export const Route = createFileRoute('/_app/trip-proposals/create')({
 
 function RouteComponent() {
   const { user } = useAuth()
-  const { data: employeesResponse, isLoading } = useGetAllEmployeeQuery()
-
-  const employees = employeesResponse?.data || []
+  const { data: employees = [], isLoading } = useGetAllEmployeesQuery()
 
   // if (!user) {
   //   return <p>Loading user information...</p>

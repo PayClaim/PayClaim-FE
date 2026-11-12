@@ -750,7 +750,7 @@ const isPic = Boolean(myParticipant?.isPic)
       createApprovalStage(
         1,
         'Document Collection & Manager Approval',
-        'Project Manager',
+        proposal.managerName || 'Project Manager',
         managerApproval,
         isSubmitted,
       ),
