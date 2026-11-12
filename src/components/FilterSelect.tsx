@@ -25,7 +25,7 @@ interface FilterSelectProps<T extends string | number> {
 const NULL_VALUE = '__null__'
 
 export function FilterSelect({
-  // className,
+  className,
   filterLabel,
   val,
   options,
@@ -41,7 +41,7 @@ export function FilterSelect({
       : val
 
   return (
-    <ButtonGroup>
+    <ButtonGroup className={className}>
       <Button variant="outline" disabled>
         {filterLabel}
       </Button>
@@ -51,7 +51,7 @@ export function FilterSelect({
           setValue(raw === NULL_VALUE ? undefined : raw)
         }}
       >
-        <SelectTrigger className="">
+        <SelectTrigger className="grow">
           <SelectValue placeholder="No Filter" />
         </SelectTrigger>
         <SelectContent>
