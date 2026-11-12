@@ -746,18 +746,18 @@ const handleParticipantAmountChange = (
     TripProposalStatus.Completed,
   ])
 
-const myParticipant = proposal.participants.find(
-  (participant) =>
-    (user?.employeeId &&
-      String(participant.employeeId).toLowerCase() ===
-        String(user.employeeId).toLowerCase()) ||
-    (user?.employeeNumber &&
-      participant.employeeNumber?.trim().toLowerCase() ===
-        user.employeeNumber.trim().toLowerCase()) ||
-    (user?.fullName &&
-      participant.employeeName?.trim().toLowerCase() ===
-        user.fullName.trim().toLowerCase()),
-)
+  const myParticipant = proposal.participants.find(
+    (participant) =>
+      (user?.employeeId &&
+        String(participant.employeeId).toLowerCase() ===
+          String(user.employeeId).toLowerCase()) ||
+      (user?.employeeNumber &&
+        participant.employeeNumber?.trim().toLowerCase() ===
+          user.employeeNumber.trim().toLowerCase()) ||
+      (user?.fullName &&
+        participant.employeeName?.trim().toLowerCase() ===
+          user.fullName.trim().toLowerCase()),
+  )
 
   const myTotalBudget =
     proposal?.myParticipantAmount ?? myParticipant?.amount ?? 0
