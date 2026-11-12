@@ -7,7 +7,7 @@ import { cn } from 'cn'
 
 import { Button } from '#/components/ui/button'
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
-import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
+import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 import { toDateOnly } from '#/lib/utils'
 
@@ -29,9 +29,7 @@ export const Route = createFileRoute('/_app/trip-proposals/create')({
 
 function RouteComponent() {
   const { user } = useAuth()
-  const { data: employeesResponse, isLoading } = useGetAllEmployeeQuery()
-
-  const employees = employeesResponse?.data || []
+  const { data: employees = [], isLoading } = useGetAllEmployeesQuery()
 
   // if (!user) {
   //   return <p>Loading user information...</p>

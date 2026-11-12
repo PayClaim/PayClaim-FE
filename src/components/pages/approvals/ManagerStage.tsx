@@ -31,42 +31,58 @@ export function ManagerStage({
   receipt,
   onPreview,
 }: ManagerStageProps) {
-  const isApproved =
-    approval?.decision === 'Approved' ||
-    claim.status === 'UnderReview' ||
-    claim.status === 'Approved' ||
-    claim.status === 'Paid'
+  // Level 1 dilewati jika pengaju adalah Manager: tidak ada approval
+  // Manager, tetapi status sudah bergerak melewati tahap Submitted.
+  const isSkipped =
+    !approval &&
+    !isRejected &&
+    claim.status !== 'Submitted'
 
-  const tone: StageTone = isApproved
-    ? 'success'
-    : isRejected
-      ? 'danger'
-      : 'warning'
+  const isApproved =
+    !isSkipped &&
+    (approval?.decision === 'Approved' ||
+      claim.status === 'UnderReview' ||
+      claim.status === 'Approved' ||
+      claim.status === 'Paid')
+
+  const tone: StageTone = isSkipped
+    ? 'neutral'
+    : isApproved
+      ? 'success'
+      : isRejected
+        ? 'danger'
+        : 'warning'
 
   const statusBadge = (
     <span
       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-        isApproved
-          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
-          : isRejected
-            ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
-            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
+        isSkipped
+          ? 'border-border bg-muted text-muted-foreground'
+          : isApproved
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+            : isRejected
+              ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/60 dark:bg-rose-950/60 dark:text-rose-300'
+              : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
       }`}
     >
       <span
         className={`w-2 h-2 rounded-full ${
-          isApproved
-            ? 'bg-emerald-500'
-            : isRejected
-              ? 'bg-rose-500'
-              : 'bg-amber-500'
+          isSkipped
+            ? 'bg-muted-foreground'
+            : isApproved
+              ? 'bg-emerald-500'
+              : isRejected
+                ? 'bg-rose-500'
+                : 'bg-amber-500'
         }`}
       />
-      {isApproved
-        ? 'Approved'
-        : isRejected
-          ? 'Rejected'
-          : 'Pending'}
+      {isSkipped
+        ? 'Skipped'
+        : isApproved
+          ? 'Approved'
+          : isRejected
+            ? 'Rejected'
+            : 'Pending'}
     </span>
   )
 

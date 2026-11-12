@@ -172,6 +172,7 @@ export interface TripProposalDetail {
   description: string
   status: TripProposalStatus
   filePath: string
+  managerName?: string | null
   participants: ParticipantItem[]
   approvalHistory: TripApprovalHistory[]
 }
@@ -188,6 +189,7 @@ export interface TripProposalDetailResponse {
   description: string
   status: TripProposalStatus
   filePath: string
+  managerName?: string | null
   participants: TripProposalDetailParticipant[]
   approvalHistory: TripProposalApprovalHistory[]
   myParticipantAmount?: number | null
