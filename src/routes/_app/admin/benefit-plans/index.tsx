@@ -262,7 +262,7 @@ function BenefitPlansIndexPage() {
               <div className="flex items-center justify-between">
                 <span>
                   Menampilkan {planList.length} dari {plansResponse.totalCount}{' '}
-                  total klaim
+                  total plans
                 </span>
               </div>
               <div className="w-fit grow-0">
