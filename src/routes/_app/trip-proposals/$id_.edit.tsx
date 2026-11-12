@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   AlertTriangle,
@@ -26,6 +27,7 @@ import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queri
 import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 import { downloadFile } from '#/lib/download'
+import { toDateOnly } from '#/lib/utils'
 import {
   TripProposalStatus,
   isTripStatus,
@@ -33,6 +35,8 @@ import {
   type TripProposalParticipantInput,
 } from '#/types/tripProposals.type'
 import type { EmployeeResponse } from '#/types/employee.type'
+
+const MAX_TRIP_AMOUNT = 100000000
 
 export const Route = createFileRoute('/_app/trip-proposals/$id_/edit')({
   component: RouteComponent,
@@ -45,7 +49,7 @@ function RouteComponent() {
     data: proposal,
     isError,
     error,
-    isFetching,
+    isLoading,
   } = useGetProposalByIdQuery(id)
   const { data: employees = [], isLoading: isLoadingEmployees } =
     useGetAllEmployeeQuery()
@@ -54,7 +58,7 @@ function RouteComponent() {
     return <ErrorComponent pageTitle="Revise Trip Proposal" error={error} />
   }
 
-  if (isFetching || !proposal || !user || isLoadingEmployees) {
+  if (isLoading || !proposal || !user || isLoadingEmployees) {
     return <LoadingComponent pageTitle="Revise Trip Proposal" />
   }
 
@@ -64,7 +68,7 @@ function RouteComponent() {
 
   if (!currentEmployee) {
     return (
-      <main className="max-w-2xl mx-auto py-10">
+      <main className="mx-auto max-w-4xl py-10">
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
           Data karyawan untuk akun yang sedang login tidak ditemukan.
         </div>
@@ -88,10 +92,10 @@ function RouteComponent() {
 
   if (!isPic || !isNeedsRevision) {
     return (
-      <main className="max-w-2xl mx-auto space-y-4 py-8">
+      <main className="mx-auto max-w-4xl space-y-4 py-8">
         <Link to="/trip-proposals/$id" params={{ id }}>
           <Button variant="outline" size="sm" className="gap-2 text-xs">
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             <span>Kembali ke Detail Proposal</span>
           </Button>
         </Link>
@@ -128,7 +132,10 @@ function EditTripProposalFormContent({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
-  // Pastikan PIC berada di urutan pertama
+  // Tanggal hari ini dalam format YYYY-MM-DD.
+  const today = toDateOnly(new Date())
+
+  // Pastikan PIC berada di urutan pertama.
   const sortedInitialParticipants: TripProposalParticipantInput[] = [
     ...(proposal.participants || []),
   ]
@@ -145,11 +152,11 @@ function EditTripProposalFormContent({
       : proposal.totalAmount || 0
 
   const initialValues = {
-    destination: proposal.destination || '',
+    destination: proposal.destination ?? '',
     startDate: proposal.startDate?.slice(0, 10) || '',
     endDate: proposal.endDate?.slice(0, 10) || '',
     accommodationAmount: initialAccommodationAmount,
-    description: proposal.description || '',
+    description: proposal.description ?? '',
     participants:
       sortedInitialParticipants.length > 0
         ? sortedInitialParticipants
@@ -162,25 +169,25 @@ function EditTripProposalFormContent({
     initialValues,
   )
 
-  const [accommodationAmountInput, setAccommodationAmountInput] = useState(
-    initialAccommodationAmount > 0 ? String(initialAccommodationAmount) : '',
-  )
-
   const [participants, setParticipants] = useState<
     TripProposalParticipantInput[]
   >(initialValues.participants)
 
-  // Ambil catatan revisi terakhir dari approvalHistory
-  const lastRevisionHistory = [...(proposal.approvalHistory || [])]
+  // Ambil catatan revisi terakhir dari approvalHistory (bersih dari marker budget).
+  const lastRevisionEntry = [...(proposal.approvalHistory || [])]
     .sort(
       (a, b) =>
         new Date(b.decidedAt).getTime() - new Date(a.decidedAt).getTime(),
     )
-    .find(
-      (h) =>
+    .find((h) => {
+      const cleanedNotes = stripBudgetMarker(h.notes)
+      return (
         String(h.decision).toLowerCase().includes('revision') ||
-        Boolean(h.notes?.trim()),
-    )
+        Boolean(cleanedNotes)
+      )
+    })
+
+  const lastRevisionNotes = stripBudgetMarker(lastRevisionEntry?.notes)
 
   const existingFileName = proposal.filePath
     ? proposal.filePath.split(/[\\/]/).pop()?.split('?')[0] ||
@@ -217,14 +224,6 @@ function EditTripProposalFormContent({
     updateParticipants(updatedParticipants)
   }
 
-  const handleAccommodationAmountChange = (value: string) => {
-    setAccommodationAmountInput(value)
-    form.setFieldValue(
-      'accommodationAmount',
-      value === '' ? 0 : Number(value),
-    )
-  }
-
   const isFormChanged = (values: typeof form.state.values) => {
     const isDestChanged =
       values.destination.trim() !== initialValues.destination.trim()
@@ -256,12 +255,6 @@ function EditTripProposalFormContent({
     )
   }
 
-  const isAccommodationAmountInvalid =
-    hasAttemptedSubmit &&
-    (!accommodationAmountInput ||
-      !Number.isFinite(Number(accommodationAmountInput)) ||
-      Number(accommodationAmountInput) <= 0)
-
   const isParticipantCountInvalid =
     hasAttemptedSubmit && participants.length < 1
 
@@ -272,7 +265,7 @@ function EditTripProposalFormContent({
   const isParticipantsInvalid =
     hasAttemptedSubmit && (isParticipantCountInvalid || hasEmptyParticipant)
 
-  const handleReview = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleReview = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -286,6 +279,30 @@ function EditTripProposalFormContent({
     await form.validateAllFields('submit')
 
     const values = form.state.values
+
+    if (values.startDate && values.startDate < today) {
+      toast.error('Start Date cannot be earlier than today.')
+      return
+    }
+
+    if (values.endDate && values.endDate < today) {
+      toast.error('End Date cannot be earlier than today.')
+      return
+    }
+
+    if (
+      values.startDate &&
+      values.endDate &&
+      values.endDate < values.startDate
+    ) {
+      toast.error('End Date cannot be earlier than Start Date.')
+      return
+    }
+
+    if (values.accommodationAmount > MAX_TRIP_AMOUNT) {
+      toast.error('Maximum Accommodation Amount is Rp 100.000.000.')
+      return
+    }
 
     if (!values.accommodationAmount || values.accommodationAmount <= 0) {
       toast.error('Accommodation amount must be greater than 0.')
@@ -303,7 +320,7 @@ function EditTripProposalFormContent({
     }
 
     if (!form.state.isValid) {
-      toast.error('Periksa kembali kolom yang ditandai merah.')
+      toast.error('Please check the highlighted fields.')
       return
     }
 
@@ -316,185 +333,230 @@ function EditTripProposalFormContent({
   }
 
   return (
-    <main className="max-w-2xl mx-auto space-y-6 pb-12">
-      {/* Header navigasi */}
-      <div className="flex items-center justify-between pb-2 border-b border-border">
-        <div className="flex items-center gap-3">
+    <main className="mx-auto max-w-4xl space-y-6 pb-12">
+      {/* Page Header - Outside Form Card */}
+      <div className="flex flex-col justify-between gap-3 pb-1 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3.5">
           <Link
             to="/trip-proposals/$id"
             params={{ id: proposalId }}
-            className="p-2 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-2xs transition-all hover:bg-muted hover:text-foreground"
+            title="Kembali ke Detail Proposal"
           >
-            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} />
           </Link>
+
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-heading">
-              Revisi Trip Proposal #TRIP-{proposal.id.slice(0, 8).toUpperCase()}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Perbaiki rincian perjalanan, peserta, atau dokumen surat tugas sesuai catatan reviewer.
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl font-extrabold tracking-tight text-heading sm:text-3xl">
+                Revisi Trip Proposal
+              </h1>
+
+              <span className="rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-300">
+                #TRIP-{proposal.id.slice(0, 8).toUpperCase()}
+              </span>
+            </div>
+
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+              Perbaiki rincian perjalanan dinas, peserta, atau surat tugas sesuai catatan dari reviewer.
             </p>
           </div>
         </div>
       </div>
 
       {/* Banner Catatan Reviewer (Alasan Revisi) */}
-      {lastRevisionHistory?.notes && (
-        <section className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/40 p-4.5 space-y-2 shadow-2xs">
+      {lastRevisionNotes && (
+        <section className="space-y-2 rounded-xl border border-amber-300 bg-amber-50/70 p-4.5 shadow-2xs dark:border-amber-700 dark:bg-amber-950/40">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <AlertTriangle className="h-5 w-5 shrink-0" />
             <h2 className="text-sm font-bold">Catatan Permintaan Revisi</h2>
-            <span className="text-xs text-amber-700/80 dark:text-amber-400 font-normal ml-auto">
-              Oleh: {lastRevisionHistory.approverName || 'Reviewer'}
+            <span className="ml-auto text-xs font-normal text-amber-700/80 dark:text-amber-400">
+              Oleh: {lastRevisionEntry?.approverName || 'Reviewer'}
             </span>
           </div>
 
           <div className="pl-7">
-            <p className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap leading-relaxed font-medium bg-white/70 dark:bg-black/20 p-3 rounded-lg border border-amber-200 dark:border-amber-900/60">
-              "{lastRevisionHistory.notes}"
+            <p className="whitespace-pre-wrap rounded-lg border border-amber-200 bg-white/70 p-3 text-xs font-medium leading-relaxed text-amber-900 sm:text-sm dark:border-amber-900/60 dark:bg-black/20 dark:text-amber-200">
+              "{lastRevisionNotes}"
             </p>
           </div>
         </section>
       )}
 
-      {/* Form Container */}
-      <div className="bg-card rounded-2xl p-6 border border-border shadow-xs">
-        <form onSubmit={handleReview} className="space-y-5">
-          {/* Informasi Perjalanan */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <form.AppField name="destination">
+      {/* Main Form Card */}
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs sm:p-8">
+        <form onSubmit={handleReview} className="space-y-7">
+          {/* SECTION 1: TRIP INFORMATION */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-heading">
+              Trip Information
+            </h2>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <form.AppField name="destination">
+                  {(field) => (
+                    <field.TextField
+                      label="Destination"
+                      placeholder="Enter destination"
+                    />
+                  )}
+                </form.AppField>
+              </div>
+
+              {/* Start Date */}
+              <form.AppField
+                name="startDate"
+                validators={{
+                  onChange: ({ value }) => {
+                    if (value && value < today) {
+                      return 'Start Date cannot be earlier than today.'
+                    }
+
+                    const endDate = form.state.values.endDate
+
+                    if (value && endDate && value > endDate) {
+                      return 'Start Date cannot be after End Date.'
+                    }
+
+                    return undefined
+                  },
+                }}
+              >
                 {(field) => (
-                  <field.TextField
-                    label="Destination"
-                    placeholder="Enter destination"
+                  <field.DatePicker label="Start Date" minDate={today} />
+                )}
+              </form.AppField>
+
+              {/* End Date */}
+              <form.AppField
+                name="endDate"
+                validators={{
+                  onChange: ({ value }) => {
+                    if (value && value < today) {
+                      return 'End Date cannot be earlier than today.'
+                    }
+
+                    const startDate = form.state.values.startDate
+
+                    if (value && startDate && value < startDate) {
+                      return 'End Date cannot be before Start Date.'
+                    }
+
+                    return undefined
+                  },
+                }}
+              >
+                {(field) => (
+                  <field.DatePicker
+                    label="End Date"
+                    minDate={form.state.values.startDate || today}
                   />
                 )}
               </form.AppField>
             </div>
-
-            <form.AppField name="startDate">
-              {(field) => <field.DatePicker label="Start Date" />}
-            </form.AppField>
-
-            <form.AppField name="endDate">
-              {(field) => <field.DatePicker label="End Date" />}
-            </form.AppField>
           </div>
 
-          {/* Accommodation Amount */}
+          {/* SECTION 2: ACCOMMODATION AMOUNT */}
           <div>
-            <label
-              htmlFor="accommodationAmount"
-              className={cn(
-                'mb-2 block text-sm font-semibold transition-colors',
-                isAccommodationAmountInvalid
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : 'text-(--sea-ink)',
-              )}
+            <form.AppField
+              name="accommodationAmount"
+              validators={{
+                onChange: ({ value }) => {
+                  if (value > MAX_TRIP_AMOUNT) {
+                    return 'Maximum Accommodation Amount is Rp 100.000.000.'
+                  }
+                  return undefined
+                },
+              }}
             >
-              Accommodation Amount (Hotel, Ticket)
-            </label>
-
-            <input
-              id="accommodationAmount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              aria-invalid={isAccommodationAmountInvalid}
-              className={cn(
-                'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
-                isAccommodationAmountInvalid &&
-                  'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
+              {(field) => (
+                <field.CurrencyField
+                  label="Accommodation Amount (Hotel, Ticket)"
+                  placeholder="0"
+                />
               )}
-              value={accommodationAmountInput}
-              placeholder="Enter accommodation amount"
-              onChange={(event) =>
-                handleAccommodationAmountChange(event.target.value)
-              }
-            />
+            </form.AppField>
 
-            {isAccommodationAmountInvalid && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-                <span>Accommodation amount must be greater than 0</span>
-              </p>
-            )}
-
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Total biaya akomodasi dan perjalanan untuk seluruh proposal, seperti hotel dan tiket.
+            <p className="mt-2 text-xs text-muted-foreground">
+              Total biaya akomodasi dan perjalanan untuk seluruh proposal,
+              seperti hotel dan tiket. Bukan limit reimbursement per peserta.
             </p>
           </div>
 
-          {/* Description */}
-          <form.AppField name="description">
-            {(field) => (
-              <field.TextArea
-                label="Keterangan / Penjelasan Revisi"
-                placeholder="Tuliskan tujuan perjalanan dan perbaikan yang telah dilakukan..."
-                rows={4}
-              />
-            )}
-          </form.AppField>
+          {/* SECTION 3: DESCRIPTION & DOCUMENT */}
+          <div className="space-y-5">
+            <form.AppField name="description">
+              {(field) => (
+                <field.TextArea
+                  label="Keterangan / Penjelasan Revisi"
+                  placeholder="Tuliskan tujuan perjalanan dan perbaikan yang telah dilakukan..."
+                  rows={5}
+                />
+              )}
+            </form.AppField>
 
-          {/* Lampiran Surat Proposal Lama (jika ada) */}
-          {proposal.filePath && (
-            <div className="rounded-xl border border-border bg-muted/20 p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-primary" />
-                  Surat Tugas / Proposal Terlampir Saat Ini
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void downloadFile(proposal.filePath, existingFileName)
-                  }
-                  className="inline-flex items-center gap-1 text-primary hover:underline font-semibold cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Unduh Berkas Lama
-                </button>
+            {/* Lampiran Surat Proposal Lama (jika ada) */}
+            {proposal.filePath && (
+              <div className="space-y-2 rounded-xl border border-border bg-muted/20 p-3.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Surat Tugas / Proposal Terlampir Saat Ini
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void downloadFile(proposal.filePath, existingFileName)
+                    }
+                    className="inline-flex cursor-pointer items-center gap-1 font-semibold text-primary hover:underline"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Unduh Berkas Lama
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Nama file:{' '}
+                  <span className="font-mono font-medium text-foreground">
+                    {existingFileName}
+                  </span>
+                  . Jika Anda tidak mengunggah file baru di bawah, berkas lama ini akan tetap digunakan.
+                </p>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Nama file:{' '}
-                <span className="font-mono text-foreground font-medium">
-                  {existingFileName}
-                </span>
-                . Jika Anda tidak mengunggah file baru di bawah, berkas lama ini akan tetap digunakan.
-              </p>
-            </div>
-          )}
-
-          {/* Upload Dokumen Baru */}
-          <form.AppField name="file">
-            {(field) => (
-              <field.FileInput label="Unggah Surat Proposal Baru (Opsional jika tidak diganti)" />
             )}
-          </form.AppField>
 
-          {/* Participants */}
-          <div className="pt-2">
-            <div className="mb-3 flex items-center justify-between">
+            <form.AppField name="file">
+              {(field) => (
+                <field.FileInput label="Proposal Letter (Opsional jika tidak diganti)" />
+              )}
+            </form.AppField>
+          </div>
+
+          <div className="h-px bg-border/70" />
+
+          {/* SECTION 4: PARTICIPANTS */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <h2
                   className={cn(
-                    'text-sm font-semibold',
+                    'text-lg font-semibold',
                     isParticipantsInvalid &&
                       'text-rose-600 dark:text-rose-400',
                   )}
                 >
                   Participants
                 </h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Minimal 1 peserta (PIC wajib disertakan).
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  At least one employee is required. The PIC can be the only
+                  participant.
                 </p>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={handleAddParticipant}
               >
                 Add Participant
@@ -503,7 +565,7 @@ function EditTripProposalFormContent({
 
             <div
               className={cn(
-                'space-y-3 rounded-lg',
+                'space-y-4 rounded-lg',
                 isParticipantsInvalid &&
                   'border border-rose-500 bg-rose-50/20 p-3 dark:bg-rose-950/20',
               )}
@@ -526,12 +588,12 @@ function EditTripProposalFormContent({
                 return (
                   <div
                     key={index}
-                    className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-3.5 md:grid-cols-[1fr_auto]"
+                    className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-4 md:grid-cols-[1fr_auto]"
                   >
                     <div>
                       <label
                         className={cn(
-                          'mb-1.5 block text-xs font-semibold transition-colors',
+                          'mb-2 block text-sm font-semibold transition-colors',
                           isEmployeeInvalid
                             ? 'text-rose-600 dark:text-rose-400'
                             : 'text-(--sea-ink)',
@@ -541,7 +603,7 @@ function EditTripProposalFormContent({
                       </label>
 
                       {participant.isPic ? (
-                        <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm">
+                        <div className="rounded-md border border-border bg-muted p-2 text-sm">
                           {currentEmployee.fullName} (PIC)
                         </div>
                       ) : (
@@ -579,14 +641,13 @@ function EditTripProposalFormContent({
 
                     <div className="flex items-center gap-2">
                       {participant.isPic ? (
-                        <span className="rounded-md bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
+                        <span className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
                           PIC
                         </span>
                       ) : (
                         <Button
                           type="button"
                           variant="destructive"
-                          size="sm"
                           onClick={() => handleRemoveParticipant(index)}
                         >
                           Remove
@@ -597,10 +658,17 @@ function EditTripProposalFormContent({
                 )
               })}
             </div>
+
+            {isParticipantCountInvalid && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                <span>At least one participant is required.</span>
+              </p>
+            )}
           </div>
 
-          {/* Form Actions */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-border">
+          {/* SECTION 5: SUBMIT ACTIONS */}
+          <div className="flex items-center justify-end gap-3 border-t border-border pt-6">
             <Link to="/trip-proposals/$id" params={{ id: proposalId }}>
               <Button type="button" variant="outline" className="cursor-pointer">
                 Batal
@@ -618,7 +686,7 @@ function EditTripProposalFormContent({
                   <Button
                     type="submit"
                     disabled={!hasChanges || isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="cursor-pointer bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     title={
                       hasChanges
                         ? 'Ajukan ulang revisi proposal'
@@ -637,12 +705,12 @@ function EditTripProposalFormContent({
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Kirim Ulang Revisi Trip Proposal?</DialogTitle>
-                <DialogDescription className="text-xs mt-1">
+                <DialogDescription className="mt-1 text-xs">
                   Proposal perjalanan Anda akan diperbarui dan dikirim kembali ke Manager untuk dilakukan peninjauan ulang.
                 </DialogDescription>
               </DialogHeader>
 
-              <DialogFooter className="gap-2 sm:gap-0 mt-4">
+              <DialogFooter className="mt-4 gap-2 sm:gap-0">
                 <DialogClose asChild>
                   <Button
                     type="button"
@@ -656,7 +724,7 @@ function EditTripProposalFormContent({
                   type="button"
                   disabled={form.state.isSubmitting}
                   onClick={handleConfirm}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
+                  className="cursor-pointer bg-blue-600 font-semibold text-white hover:bg-blue-700"
                 >
                   {form.state.isSubmitting ? 'Mengirim...' : 'Ya, Kirim Ulang'}
                 </Button>
@@ -667,4 +735,12 @@ function EditTripProposalFormContent({
       </div>
     </main>
   )
+}
+
+function stripBudgetMarker(notes: string | null | undefined): string | null {
+  if (!notes) return null
+  const markerRegex =
+    /^\[ACCOMMODATION_BUDGET:([0-9]+(?:\.[0-9]+)?)\|([0-9]+(?:\.[0-9]+)?)\]\r?\n?/
+  const cleaned = notes.replace(markerRegex, '').trim()
+  return cleaned || null
 }

@@ -9,13 +9,10 @@ import { Button } from '#/components/ui/button'
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
 import { useGetAllEmployeeQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
-
-import { idNumberFormatter } from '#/lib/formatter'
 import { toDateOnly } from '#/lib/utils'
 
 import type { EmployeeResponse } from '#/types/employee.type'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
-
 
 const MAX_TRIP_AMOUNT = 100000000
 
@@ -74,11 +71,6 @@ function CreateTripProposalPage({
 
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
-  const [accommodationAmountInput, setAccommodationAmountInput] =
-    useState('')
-    const [isAccommodationLimitExceeded, setIsAccommodationLimitExceeded] =
-  useState(false)
-
   const [participants, setParticipants] = useState<
     TripProposalParticipantInput[]
   >([
@@ -91,11 +83,6 @@ function CreateTripProposalPage({
 
   // Tanggal hari ini dalam format YYYY-MM-DD.
   const today = toDateOnly(new Date())
-
-  // Mengambil angka asli dari input yang sudah memiliki pemisah ribuan.
-  const accommodationAmount = Number(
-    accommodationAmountInput.replace(/\D/g, ''),
-  )
 
   // Setiap perubahan peserta juga memperbarui nilai form.
   const updateParticipants = (
@@ -133,46 +120,15 @@ function CreateTripProposalPage({
     updateParticipants(updatedParticipants)
   }
 
-  // Mengubah Accommodation Amount dengan format pemisah ribuan.
- const handleAccommodationAmountChange = (value: string) => {
-  const digits = value.replace(/\D/g, '')
-  const numericValue = digits ? Number(digits) : 0
-
-  // Tolak nominal lebih dari Rp100 juta.
-  if (numericValue > MAX_TRIP_AMOUNT) {
-    setIsAccommodationLimitExceeded(true)
-    return
-  }
-
-  setIsAccommodationLimitExceeded(false)
-
-  setAccommodationAmountInput(
-    digits ? idNumberFormatter.format(numericValue) : '',
-  )
-
-  form.setFieldValue('accommodationAmount', numericValue)
-}
-
-  // Validasi Accommodation Amount setelah pengguna mencoba submit.
-const isAccommodationAmountInvalid =
-  isAccommodationLimitExceeded ||
-  (
-    hasAttemptedSubmit &&
-    (
-      !accommodationAmountInput ||
-      !Number.isFinite(accommodationAmount) ||
-      accommodationAmount <= 0
-    )
-  )
   const isParticipantCountInvalid =
     hasAttemptedSubmit && participants.length < 1
 
-  const hasEmptyParticipant =
-    participants.some((participant) => !participant.employeeId)
+  const hasEmptyParticipant = participants.some(
+    (participant) => !participant.employeeId,
+  )
 
   const isParticipantsInvalid =
-    hasAttemptedSubmit &&
-    (isParticipantCountInvalid || hasEmptyParticipant)
+    hasAttemptedSubmit && (isParticipantCountInvalid || hasEmptyParticipant)
 
   // Validasi sebelum form benar-benar dikirim.
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -205,21 +161,13 @@ const isAccommodationAmountInvalid =
       return
     }
 
-    if (
-  isAccommodationLimitExceeded ||
-  values.accommodationAmount > MAX_TRIP_AMOUNT
-) {
-  toast.error(
-    'Maximum Accommodation Amount is Rp 100.000.000.',
-  )
-  return
-}
+    if (values.accommodationAmount > MAX_TRIP_AMOUNT) {
+      toast.error('Maximum Accommodation Amount is Rp 100.000.000.')
+      return
+    }
 
     // Validasi Accommodation Amount.
-    if (
-      !values.accommodationAmount ||
-      values.accommodationAmount <= 0
-    ) {
+    if (!values.accommodationAmount || values.accommodationAmount <= 0) {
       toast.error('Accommodation amount must be greater than 0.')
       return
     }
@@ -246,7 +194,6 @@ const isAccommodationAmountInvalid =
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">
-
       {/* Page Header - Outside Form Card */}
       <div className="flex flex-col justify-between gap-3 pb-1 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3.5">
@@ -279,11 +226,7 @@ const isAccommodationAmountInvalid =
 
       {/* Main Form Card */}
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs sm:p-8">
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-7"
-        >
-
+        <form onSubmit={handleSubmit} className="space-y-7">
           {/* SECTION 1: TRIP INFORMATION */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-heading">
@@ -323,10 +266,7 @@ const isAccommodationAmountInvalid =
                 }}
               >
                 {(field) => (
-                  <field.DatePicker
-                    label="Start Date"
-                    minDate={today}
-                  />
+                  <field.DatePicker label="Start Date" minDate={today} />
                 )}
               </form.AppField>
 
@@ -361,53 +301,24 @@ const isAccommodationAmountInvalid =
 
           {/* SECTION 2: ACCOMMODATION AMOUNT */}
           <div>
-            <label
-              htmlFor="accommodationAmount"
-              className={cn(
-                'mb-2 block text-sm font-semibold transition-colors',
-                isAccommodationAmountInvalid
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : 'text-(--sea-ink)',
-              )}
+            <form.AppField
+              name="accommodationAmount"
+              validators={{
+                onChange: ({ value }) => {
+                  if (value > MAX_TRIP_AMOUNT) {
+                    return 'Maximum Accommodation Amount is Rp 100.000.000.'
+                  }
+                  return undefined
+                },
+              }}
             >
-              Accommodation Amount (Hotel, Ticket)
-            </label>
-
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
-                Rp
-              </span>
-
-              <input
-                id="accommodationAmount"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                aria-invalid={isAccommodationAmountInvalid}
-                className={cn(
-                  'h-10 w-full rounded-md border border-border bg-input pl-10 pr-3 text-sm transition-all',
-                  isAccommodationAmountInvalid &&
-                    'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
-                )}
-                value={accommodationAmountInput}
-                placeholder="0"
-                onChange={(event) =>
-                  handleAccommodationAmountChange(event.target.value)
-                }
-              />
-            </div>
-
-            {isAccommodationAmountInvalid && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-
-                <span>
-                  {isAccommodationLimitExceeded
-                    ? 'Maximum Accommodation Amount is Rp 100.000.000.'
-                    : 'Accommodation amount must be greater than 0.'}
-                </span>
-              </p>
-            )}
+              {(field) => (
+                <field.CurrencyField
+                  label="Accommodation Amount (Hotel, Ticket)"
+                  placeholder="0"
+                />
+              )}
+            </form.AppField>
 
             <p className="mt-2 text-xs text-muted-foreground">
               Total biaya akomodasi dan perjalanan untuk seluruh proposal,
@@ -418,12 +329,7 @@ const isAccommodationAmountInvalid =
           {/* SECTION 3: DESCRIPTION & DOCUMENT */}
           <div className="space-y-5">
             <form.AppField name="description">
-              {(field) => (
-                <field.TextArea
-                  label="Description"
-                  rows={5}
-                />
-              )}
+              {(field) => <field.TextArea label="Description" rows={5} />}
             </form.AppField>
 
             <form.AppField name="file">
@@ -450,8 +356,8 @@ const isAccommodationAmountInvalid =
                 </h2>
 
                 <p className="mt-1 text-xs text-muted-foreground">
-                  At least one employee is required. The PIC can be the
-                  only participant.
+                  At least one employee is required. The PIC can be the only
+                  participant.
                 </p>
               </div>
 
@@ -518,19 +424,13 @@ const isAccommodationAmountInvalid =
                             )}
                             value={participant.employeeId}
                             onChange={(event) =>
-                              handleEmployeeChange(
-                                index,
-                                event.target.value,
-                              )
+                              handleEmployeeChange(index, event.target.value)
                             }
                           >
                             <option value="">Select employee</option>
 
                             {availableEmployees.map((employee) => (
-                              <option
-                                key={employee.id}
-                                value={employee.id}
-                              >
+                              <option key={employee.id} value={employee.id}>
                                 {employee.fullName} ({employee.number})
                               </option>
                             ))}
@@ -555,9 +455,7 @@ const isAccommodationAmountInvalid =
                         <Button
                           type="button"
                           variant="destructive"
-                          onClick={() =>
-                            handleRemoveParticipant(index)
-                          }
+                          onClick={() => handleRemoveParticipant(index)}
                         >
                           Remove
                         </Button>
