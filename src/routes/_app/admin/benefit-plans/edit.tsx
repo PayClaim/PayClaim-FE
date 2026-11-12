@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { editBenefitPlanForm } from '#/features/benefit-plans/forms/forms'
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
@@ -20,6 +20,7 @@ export const Route = createFileRoute('/_app/admin/benefit-plans/edit')({
 })
 
 function EditBenefitPlanPage() {
+  const router = useRouter()
   const initialValue = Route.useSearch()
   const form = editBenefitPlanForm(
     {
@@ -53,12 +54,15 @@ function EditBenefitPlanPage() {
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
-      <Link to="/admin/benefit-plans">
-        <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Benefit Plans</span>
-        </Button>
-      </Link>
+      <Button
+        onClick={() => router.history.back()}
+        variant="outline"
+        size="sm"
+        className="gap-2 text-xs font-semibold"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Kembali ke Benefit Plans</span>
+      </Button>
 
       <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex items-center gap-3 pb-4 border-b border-border/70">
@@ -70,7 +74,8 @@ function EditBenefitPlanPage() {
               Edit Aturan Plafon Benefit
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Perbarui batas nominal klaim untuk kombinasi departemen dan jabatan ini.
+              Perbarui batas nominal klaim untuk kombinasi departemen dan
+              jabatan ini.
             </p>
           </div>
         </div>
