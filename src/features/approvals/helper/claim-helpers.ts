@@ -13,30 +13,58 @@ export function getInitials(name?: string | null): string {
 
 function parseUtcDate(dateStr?: string | null): Date | null {
   if (!dateStr) return null
-  const normalized =
-    dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('T')
-      ? dateStr.endsWith('Z') || dateStr.includes('+')
-        ? dateStr
-        : `${dateStr}Z`
-      : dateStr
-  const d = new Date(normalized)
+
+  // Abaikan penanda timezone dari backend.
+  // Jam yang dikirim sudah berupa jam WIB.
+  const localDate = dateStr.replace(
+    /(?:Z|[+-]\d{2}:?\d{2})$/i,
+    '',
+  )
+
+  const d = new Date(`${localDate}+07:00`)
+
   return isNaN(d.getTime()) ? null : d
 }
 
 export function formatDateBox(dateStr?: string | null) {
   const d = parseUtcDate(dateStr)
+
   if (!d) {
-    return { day: '--', monthYear: 'Pending', time: '--:--', longDate: '-' }
+    return {
+      day: '--',
+      monthYear: 'Pending',
+      time: '--:--',
+      longDate: '-',
+    }
   }
-  const day = d.getDate()
-  const monthShort = d.toLocaleDateString('en-US', { month: 'short' })
-  const monthLong = d.toLocaleDateString('en-US', { month: 'long' })
-  const year = d.getFullYear()
+
+  const day = d.toLocaleDateString('en-US', {
+    day: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  })
+
+  const monthShort = d.toLocaleDateString('en-US', {
+    month: 'short',
+    timeZone: 'Asia/Jakarta',
+  })
+
+  const monthLong = d.toLocaleDateString('en-US', {
+    month: 'long',
+    timeZone: 'Asia/Jakarta',
+  })
+
+  const year = d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  })
+
   const time = d.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'Asia/Jakarta',
   })
+
   return {
     day: String(day),
     monthYear: `${monthShort}, ${year}`,

@@ -519,8 +519,12 @@ function formatDecision(decision: string) {
 function parseDateUtc(value: string): Date | null {
   if (!value) return null
 
-  const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
-  const d = new Date(hasTz ? value : `${value}Z`)
+  const localDate = value.replace(
+    /(?:Z|[+-]\d{2}:?\d{2})$/i,
+    '',
+  )
+
+  const d = new Date(`${localDate}+07:00`)
 
   return Number.isNaN(d.getTime()) ? null : d
 }

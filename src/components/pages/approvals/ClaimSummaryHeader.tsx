@@ -1,3 +1,4 @@
+
 import { Button } from '#/components/ui/button'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, Eye, Flag } from 'lucide-react'
@@ -23,49 +24,74 @@ export function ClaimSummaryHeader({
   hasReceipt,
   onPreview,
 }: ClaimSummaryHeaderProps) {
-  return (
-    <div className="p-6 border-b border-border space-y-4">
-      <div className="flex items-center justify-between">
-        <Link
-          to={backTo}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-heading hover:text-primary transition-colors"
-        >
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-muted/40">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <span>{backLabel}</span>
-        </Link>
+  const normalizedClaimType = String(claim.claimType)
+    .replace(/[\s_-]/g, '')
+    .toLowerCase()
 
+const claimReferenceId = claim.id.slice(0, 4).toLowerCase()
+
+  const claimTitle =
+    normalizedClaimType === 'operationalreimbursement'
+      ? `Operational Reimbursement #${claimReferenceId}`
+      : normalizedClaimType === 'businesstripreimbursement'
+        ? claim.tripProposalDescription?.trim() ||
+          'Business Trip Reimbursement'
+        : claim.benefitName?.trim() || 'Benefit Reimbursement'
+
+  return (
+    <div className="border-b border-border p-6 space-y-4">
+      {/* Header: Back Button, Claim Title, Preview */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          {/* Back Button */}
+          <Link
+            to={backTo}
+            aria-label={backLabel}
+            title={backLabel}
+            className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-heading transition-colors hover:bg-muted hover:text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          </Link>
+
+          {/* Claim Information */}
+          <div className="min-w-0 space-y-2">
+            <div className="flex items-start gap-2">
+              <h2 className="break-words text-2xl font-extrabold leading-tight tracking-tight text-heading">
+                {claimTitle}
+              </h2>
+
+              <Flag
+                className="mt-1 h-4 w-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+              Submitted on {submittedLongDate}
+            </p>
+
+            <StatusBadge
+              status={claim.status}
+              label={statusLabel}
+              size="sm"
+            />
+          </div>
+        </div>
+
+        {/* Receipt Preview */}
         {hasReceipt && (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 px-2.5 text-xs gap-1.5"
+            className="h-8 shrink-0 gap-1.5 px-2.5 text-xs"
             onClick={onPreview}
           >
             <Eye className="h-3.5 w-3.5" aria-hidden="true" />
             Preview
           </Button>
         )}
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-extrabold tracking-tight text-heading">
-            CLAIM #{claim.id.slice(0, 8).toLowerCase()}
-          </h2>
-          <Flag className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        </div>
-
-        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block" />
-          Submitted on {submittedLongDate}
-        </p>
-
-        <div className="pt-1">
-          <StatusBadge status={claim.status} label={statusLabel} size="sm" />
-        </div>
       </div>
     </div>
   )
