@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import {
+  Filter,
   Pencil,
   Plus,
   Search,
@@ -34,15 +35,24 @@ import {
   useGetAllEmployeeQuery,
   useActivateEmployeeMutation,
 } from '#/features/employees/queries/queries'
+import type { EmployeeFilterParams } from '#/features/employees/queries/queries'
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import type { EmployeeResponse } from '#/types/employee.type'
 import { deleteEmployeeForm } from '#/features/employees/forms/forms'
 import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '#/lib/error'
+import { PaginationSection } from '#/components/PaginationSection'
+import { ButtonGroup } from '#/components/ui/button-group'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
 
 export const Route = createFileRoute('/_app/admin/employees/')({
   component: RouteComponent,
+  validateSearch: (s) => s as EmployeeFilterParams,
 })
 
 function getInitials(name?: string | null): string {
@@ -53,13 +63,23 @@ function getInitials(name?: string | null): string {
 }
 
 function RouteComponent() {
-  const { data: employees, isError, isFetching } = useGetAllEmployeeQuery()
+  const searchParams = Route.useSearch()
+  const navigate = useNavigate()
+  const {
+    data: employeesResponse,
+    isError,
+    isFetching,
+  } = useGetAllEmployeeQuery(searchParams)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
 
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null)
-  const [positionFilter, setPositionFilter] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<string | null>('active')
+  const [departmentFilter, setDepartmentFilter] = useState<string | undefined>(
+    searchParams.departmentId,
+  )
+  const [positionFilter, setPositionFilter] = useState<string | undefined>(
+    undefined,
+  )
+  const [statusFilter, setStatusFilter] = useState<string | undefined>('active')
   const [searchFilter, setSearchFilter] = useState<string>('')
 
   const departmentOptions = departments.map((d) => ({
@@ -77,27 +97,7 @@ function RouteComponent() {
     { label: 'Inactive', optionValue: 'inactive' },
   ]
 
-  const employeeList: EmployeeResponse[] = Array.isArray(employees)
-    ? employees
-    : ((employees as any)?.data ?? [])
-
-  const displayData = employeeList.filter((e: EmployeeResponse) => {
-    const searchLower = searchFilter.toLowerCase()
-    const matchSearch =
-      !searchFilter ||
-      e.fullName.toLowerCase().includes(searchLower) ||
-      e.email.toLowerCase().includes(searchLower) ||
-      e.number.toLowerCase().includes(searchLower)
-    const matchDepartment =
-      !departmentFilter || e.departmentId === departmentFilter
-    const matchPosition = !positionFilter || e.positionId === positionFilter
-    const matchStatus =
-      !statusFilter ||
-      (statusFilter === 'active' && e.isActive) ||
-      (statusFilter === 'inactive' && !e.isActive)
-
-    return matchSearch && matchDepartment && matchPosition && matchStatus
-  })
+  const employeeList: EmployeeResponse[] = employeesResponse?.data || []
 
   const hasActiveFilters = Boolean(
     searchFilter ||
@@ -105,6 +105,18 @@ function RouteComponent() {
     positionFilter ||
     statusFilter !== 'active',
   )
+
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        search: searchFilter,
+        departmentId: departmentFilter,
+        positionId: positionFilter,
+        isActive: statusFilter == 'active' ? true : undefined,
+      },
+    })
+  }
 
   if (isError) {
     return (
@@ -117,7 +129,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching && employeeList.length === 0) {
+  if (isFetching || !employeesResponse) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
@@ -125,6 +137,9 @@ function RouteComponent() {
       </main>
     )
   }
+
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    employeesResponse
 
   return (
     <main className="space-y-6">
@@ -140,7 +155,7 @@ function RouteComponent() {
                 Employees
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {employeeList.length}
+                {employeesResponse.totalCount}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -163,69 +178,93 @@ function RouteComponent() {
         {/* Filters Toolbar */}
         <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Search name, email, or EMP#..."
-                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-              />
-            </div>
+            <ButtonGroup>
+              <div className="relative grow max-w-70 sm:w-64">
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search name, department, or position..."
+                  className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                />
+              </div>
+              <Button onClick={applyFilterClick}>Search</Button>
+            </ButtonGroup>
+          </div>
 
-            <FilterSelect
-              val={positionFilter}
-              setValue={setPositionFilter}
-              options={positionOptions}
-              filterLabel="Position"
-              nullable
-              nullLabel="All Positions"
-            />
-
-            <FilterSelect
-              val={departmentFilter}
-              setValue={setDepartmentFilter}
-              options={departmentOptions}
-              filterLabel="Department"
-              nullable
-              nullLabel="All Departments"
-            />
-
-            <FilterSelect
-              val={statusFilter}
-              setValue={setStatusFilter}
-              options={statusOptions}
-              filterLabel="Status"
-              nullable
-              nullLabel="All Statuses"
-            />
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchFilter('')
-                  setDepartmentFilter(null)
-                  setPositionFilter(null)
-                  setStatusFilter(null)
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground h-9"
-              >
-                Reset Filter
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button>
+                <Filter /> Filter
               </Button>
-            )}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="grid grid-cols-1 gap-4 w-fit"
+            >
+              <FilterSelect
+                val={positionFilter}
+                setValue={setPositionFilter}
+                options={positionOptions}
+                filterLabel="Position"
+                nullable
+                nullLabel="All Positions"
+              />
 
-          <div className="text-xs text-muted-foreground font-medium">
-            Showing {displayData.length} of {employeeList.length} employees
-          </div>
+              <FilterSelect
+                val={departmentFilter}
+                setValue={setDepartmentFilter}
+                options={departmentOptions}
+                filterLabel="Department"
+                nullable
+                nullLabel="All Departments"
+              />
+
+              <FilterSelect
+                val={statusFilter}
+                setValue={setStatusFilter}
+                options={statusOptions}
+                filterLabel="Status"
+                nullable
+                nullLabel="All Statuses"
+              />
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchFilter('')
+                    setDepartmentFilter(undefined)
+                    setPositionFilter(undefined)
+                    setStatusFilter(undefined)
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                >
+                  Reset Filter
+                </Button>
+              )}
+              <Button onClick={applyFilterClick}>Apply</Button>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Table Content */}
-        {displayData.length > 0 ? (
-          <EmployeeTable employees={displayData} />
+        {employeeList.length > 0 ? (
+          <>
+            <EmployeeTable employees={employeeList} />
+            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>
+                  Menampilkan {employeeList.length} dari{' '}
+                  {employeesResponse.totalCount} total employees
+                </span>
+              </div>
+              <div className="w-fit grow-0">
+                <PaginationSection pagination={paginationProp} />
+              </div>
+            </div>
+          </>
         ) : (
           <div className="py-16 text-center space-y-3">
             <SearchX
@@ -248,9 +287,9 @@ function RouteComponent() {
                 size="sm"
                 onClick={() => {
                   setSearchFilter('')
-                  setDepartmentFilter(null)
-                  setPositionFilter(null)
-                  setStatusFilter(null)
+                  setDepartmentFilter(undefined)
+                  setPositionFilter(undefined)
+                  setStatusFilter(undefined)
                 }}
                 className="text-xs font-semibold h-8"
               >
