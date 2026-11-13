@@ -1,11 +1,11 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { createEmployeeForm } from '#/features/employees/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
-import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { ArrowLeft, Users } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 
 export const Route = createFileRoute('/_app/admin/employees/create')({
   component: RouteComponent,
@@ -33,6 +33,11 @@ function RouteComponent() {
       employee.positionTitle.toLowerCase().includes('manager'),
     label: (employee) => `${employee.fullName} (${employee.number})`,
   })
+
+  // const managerOptions = employees.map((e) => ({
+  //   label: e.fullName,
+  //   value: e.id,
+  // }))
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
@@ -130,7 +135,7 @@ function RouteComponent() {
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerOptions}
+                          values={managerGroups}
                           label="Direct Manager (Level 1 claim approver)"
                           placeholder="Pick a Direct Manager"
                         />

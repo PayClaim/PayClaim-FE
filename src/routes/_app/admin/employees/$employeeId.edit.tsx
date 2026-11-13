@@ -4,12 +4,12 @@ import {
   useGetAllEmployeesQuery,
   useGetEmployeeQuery,
 } from '#/features/employees/queries/queries'
-import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import type { EmployeeResponse } from '#/types/employee.type'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { AlertCircle, ArrowLeft, Users } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 
 export const Route = createFileRoute('/_app/admin/employees/$employeeId/edit')({
   component: RouteComponent,
@@ -108,11 +108,16 @@ function EditEmployeeFormContent({
   }))
 
   const managerGroups = buildEmployeeGroups(employees, {
-    filter: (employee) =>
-      employee.id !== employeeId &&
-      employee.positionTitle.toLowerCase().includes('manager'),
-    label: (employee) => `${employee.fullName} (${employee.number})`,
+    filter: (e) =>
+      e.id !== employeeId && e.positionTitle.toLowerCase().includes('manager'),
+    label: (e) => `${e.fullName} (${e.number})`,
   })
+  // const managerOptions = employees
+  //   .filter((e) => e.id !== employeeId)
+  //   .map((e) => ({
+  //     label: e.fullName,
+  //     value: e.id,
+  //   }))
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
@@ -225,7 +230,7 @@ function EditEmployeeFormContent({
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerOptions}
+                          values={managerGroups}
                           label="Direct Manager (Level 1 claim approver)"
                           placeholder="Pick a Direct Manager"
                           disabled={isInactive}
