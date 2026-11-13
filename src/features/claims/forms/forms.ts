@@ -130,11 +130,21 @@ export const createClaimForm = (initialBenefitId?: string | null) => {
       }
 
       try {
-        await mutation.mutateAsync(formData)
+        const created = await mutation.mutateAsync(formData)
+        const createdId =
+          (created as { id?: string; data?: { id?: string } })?.data?.id ??
+          (created as { id?: string })?.id
         toast.success('Claim submitted successfully')
-        await navigate({
-          to: '/claims',
-        })
+        if (createdId) {
+          await navigate({
+            to: '/claims/$claimId',
+            params: { claimId: createdId },
+          })
+        } else {
+          await navigate({
+            to: '/claims',
+          })
+        }
       } catch (err: unknown) {
         applyBackendErrorToForm(formApi, err, 'Gagal mengajukan klaim')
       }

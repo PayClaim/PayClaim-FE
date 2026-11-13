@@ -593,19 +593,19 @@ function TodayActionButton({
   return (
     <Link
       to={action.to}
-      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-blue-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-slate-700 dark:bg-[#161B22] dark:hover:border-[#2F81F7] dark:hover:bg-[#1C2532]"
+      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100/80 dark:border-amber-500/35 dark:bg-amber-950/30 dark:hover:border-amber-400/60 dark:hover:bg-amber-950/45"
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-800 dark:text-[#E6EDF3]">
+        <p className="text-sm font-bold text-amber-950/85 dark:text-amber-100">
           {action.title}
         </p>
 
-        <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-[#8B949E]">
+        <p className="mt-1 text-[11px] leading-relaxed text-amber-800/80 dark:text-amber-200/70">
           {action.description}
         </p>
       </div>
 
-      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F0FF] px-3 text-xl font-bold tabular-nums text-[#245DA8] transition-colors group-hover:bg-[#D7E7FF] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
+      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-amber-200/85 px-3 text-xl font-bold tabular-nums text-amber-900 transition-colors group-hover:bg-amber-300/90 dark:bg-amber-400/20 dark:text-amber-200 dark:group-hover:bg-amber-400/30">
         {formatNumber(action.count)}
       </div>
     </Link>
