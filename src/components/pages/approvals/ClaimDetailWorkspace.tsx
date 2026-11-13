@@ -25,12 +25,18 @@ export function ClaimDetailWorkspace({
   backTo = '/claims',
   backLabel = 'Back to Claims',
 }: ClaimDetailWorkspaceProps) {
-  const { data: claim, isFetching, isError, error } = useGetClaimsQuery(claimId)
+  const {
+    data: claim,
+    isPending,
+    isFetching,
+    isError,
+    error,
+  } = useGetClaimsQuery(claimId)
   const permissions = useClaimPermissions(claim)
   const actions = useClaimActions(claimId)
   const [previewOpen, setPreviewOpen] = useState(false)
 
-  if (isFetching) return <ClaimLoadingState />
+  if (isPending || (!claim && isFetching)) return <ClaimLoadingState />
 
   if (isError || !claim) {
     return (

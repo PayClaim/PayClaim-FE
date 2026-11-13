@@ -498,12 +498,27 @@ a {
   animation: shimmer-slide 1.5s ease-in-out infinite;
 }
 
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.progress-bar-fill {
+  transform-origin: left;
+  animation: bar-grow 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-flow-in,
   .page-flow-in .grid > div,
   .page-flow-in section,
   .timeline-stagger > div,
-  .skeleton-shimmer {
+  .skeleton-shimmer,
+  .progress-bar-fill {
     animation: none !important;
     transition: none !important;
     transform: none !important;

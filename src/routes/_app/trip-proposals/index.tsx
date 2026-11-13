@@ -11,6 +11,7 @@ import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { Button } from '#/components/ui/button'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { AnimatedNumber } from '#/components/ui/animated-number'
 import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 
 import {
@@ -324,7 +325,7 @@ const sortedProposals = useMemo(() => {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
-            {metrics.totalCount}
+            <AnimatedNumber value={metrics.totalCount} duration={200} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{formatCurrency(metrics.totalAmount)}</span> total estimated budget
@@ -342,7 +343,7 @@ const sortedProposals = useMemo(() => {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
-            {metrics.waitingCount}
+            <AnimatedNumber value={metrics.waitingCount} duration={200} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingAmount)}</span> pending review
@@ -360,7 +361,7 @@ const sortedProposals = useMemo(() => {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
-            {metrics.approvedCompletedCount}
+            <AnimatedNumber value={metrics.approvedCompletedCount} duration={200} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedCompletedAmount)}</span> approved / completed

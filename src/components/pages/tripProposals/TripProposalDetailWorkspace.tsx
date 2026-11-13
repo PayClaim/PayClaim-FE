@@ -33,6 +33,7 @@ import {
 } from '#/types/tripProposals.type'
 
 import { Button } from '#/components/ui/button'
+import { DetailPageSkeleton } from '#/components/ui/page-skeleton'
 
 import {
   Dialog,
@@ -598,13 +599,7 @@ export function TripProposalDetailWorkspace({
   }
 
   if (isLoading) {
-    return (
-      <main className="mx-auto w-full min-w-0 max-w-[1600px]">
-        <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-          Loading trip proposal details...
-        </div>
-      </main>
-    )
+    return <DetailPageSkeleton />
   }
 
   if (isError || !proposal) {

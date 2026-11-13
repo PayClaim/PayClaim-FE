@@ -2,7 +2,7 @@ import { api } from '#/lib/api-client'
 import { idNumberFormatter } from '#/lib/formatter'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Calendar, Loader2 } from 'lucide-react'
+import { Calendar, Check, Copy, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   getDescriptionText,
@@ -43,6 +43,14 @@ export function ClaimInfoSection({
 }: ClaimInfoSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const [showTripDetail, setShowTripDetail] = useState(false)
+  const [copiedEmpNo, setCopiedEmpNo] = useState(false)
+
+  const handleCopyEmployeeNumber = () => {
+    if (!claim.employeeNumber) return
+    navigator.clipboard?.writeText(claim.employeeNumber)
+    setCopiedEmpNo(true)
+    setTimeout(() => setCopiedEmpNo(false), 1500)
+  }
 
   const { data: tripDetail, isLoading: isLoadingTrip } = useQuery({
     queryKey: ['trip-proposal-hover', claim.tripProposalId],
@@ -75,9 +83,23 @@ export function ClaimInfoSection({
               <p className="font-semibold text-heading leading-tight">
                 {claim.employeeName}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {claim.employeeNumber}
-                {claim.departmentName ? ` • ${claim.departmentName}` : ''}
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span className="font-mono">{claim.employeeNumber}</span>
+                {claim.employeeNumber && (
+                  <button
+                    type="button"
+                    onClick={handleCopyEmployeeNumber}
+                    title="Copy employee number"
+                    className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground hover:text-heading hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    {copiedEmpNo ? (
+                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                )}
+                {claim.departmentName ? `• ${claim.departmentName}` : ''}
               </p>
             </div>
           </div>

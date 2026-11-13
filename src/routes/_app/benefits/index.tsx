@@ -2,6 +2,7 @@ import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/que
 import { idNumberFormatter } from '#/lib/formatter'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { AnimatedNumber } from '#/components/ui/animated-number'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   AlertCircle,
@@ -227,7 +228,11 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
-            {idNumberFormatter.format(metrics.totalBalance)}
+            <AnimatedNumber
+              value={metrics.totalBalance}
+              duration={200}
+              formatter={(v) => idNumberFormatter.format(Math.round(v))}
+            />
           </div>
           <p className="text-xs text-muted-foreground">
             Accumulated active claim balance ready to use
@@ -245,7 +250,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
-            {metrics.activeWithBalanceCount}{' '}
+            <AnimatedNumber value={metrics.activeWithBalanceCount} duration={200} />{' '}
             <span className="text-sm font-sans font-medium text-muted-foreground">
               / {metrics.totalCount} Benefits
             </span>

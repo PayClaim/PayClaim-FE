@@ -413,20 +413,25 @@ export function FileInput({
           className={cn(
             'flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed transition-all cursor-pointer text-center bg-card hover:bg-muted/30 group',
             isDragging
-              ? 'border-primary bg-primary/5 dark:bg-primary/10'
+              ? 'border-primary bg-primary/10 dark:bg-primary/15 scale-[1.01] shadow-md ring-2 ring-primary/20'
               : hasError
                 ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20'
                 : 'border-border/80 hover:border-primary/60',
           )}
         >
-          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
+          <div
+            className={cn(
+              'w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center transition-transform duration-200',
+              isDragging ? 'scale-110' : 'group-hover:scale-105',
+            )}
+          >
             <FileUp className="w-4 h-4" />
           </div>
 
           <div>
             <p className="text-xs font-semibold text-foreground">
-              <span className="text-primary hover:underline">Klik untuk unggah</span>{' '}
-              atau tarik & lepas file ke sini
+              <span className="text-primary hover:underline">Click to upload</span>{' '}
+              or drag & drop your file here
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Mendukung PDF, PNG, JPG, WEBP (Maksimal 5 MB)
