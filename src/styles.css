@@ -398,6 +398,61 @@ a {
   background: color-mix(in oklab, var(--header-bg) 84%, transparent 16%);
 }
 
+@keyframes flow-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-flow-in {
+  animation: flow-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-flow-in .grid > div {
+  animation: flow-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.page-flow-in .grid > div:nth-child(1) {
+  animation-delay: 30ms;
+}
+.page-flow-in .grid > div:nth-child(2) {
+  animation-delay: 75ms;
+}
+.page-flow-in .grid > div:nth-child(3) {
+  animation-delay: 120ms;
+}
+.page-flow-in .grid > div:nth-child(4) {
+  animation-delay: 165ms;
+}
+
+.page-flow-in .grid > div:hover {
+  transform: translateY(-2px);
+}
+
+.page-flow-in section {
+  animation: flow-in 500ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-flow-in,
+  .page-flow-in .grid > div,
+  .page-flow-in section {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

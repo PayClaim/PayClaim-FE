@@ -2,7 +2,7 @@ import { api } from '#/lib/api-client'
 import { idNumberFormatter } from '#/lib/formatter'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Calendar } from 'lucide-react'
+import { Calendar, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   getDescriptionText,
@@ -111,22 +111,30 @@ export function ClaimInfoSection({
                   Detail
                 </Link>
 
-                {showTripDetail && (
-                  <div className="absolute left-0 top-full pt-1.5 z-50">
-                    <Link
-                      to="/trip-proposals/$id"
-                      params={{ id: claim.tripProposalId }}
-                      className="block w-72 rounded-xl border border-border bg-popover p-3.5 text-xs shadow-lg space-y-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
-                    >
+                <div
+                  className={`absolute left-0 top-full pt-1.5 z-50 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] origin-top-left ${
+                    showTripDetail
+                      ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+                      : 'opacity-0 translate-y-1.5 scale-95 pointer-events-none'
+                  }`}
+                >
+                  <Link
+                    to="/trip-proposals/$id"
+                    params={{ id: claim.tripProposalId }}
+                    className="block w-72 rounded-xl border border-border bg-popover p-3.5 text-xs shadow-lg space-y-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                  >
                     {isLoadingTrip ? (
-                      <p className="text-muted-foreground">Loading trip details...</p>
+                      <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" aria-hidden="true" />
+                        <span>Loading trip details...</span>
+                      </div>
                     ) : tripDetail ? (
                       <>
                         <div className="border-b border-border pb-1.5">
-                          <p className="font-bold text-heading text-sm">
+                          <p className="font-bold text-heading text-sm text-balance">
                             {tripDetail.destination}
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-[11px] tabular-nums text-muted-foreground">
                             {tripDetail.startDate} – {tripDetail.endDate}
                           </p>
                         </div>
@@ -135,7 +143,7 @@ export function ClaimInfoSection({
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">
                               Estimated Budget
                             </span>
-                            <span className="font-semibold text-heading">
+                            <span className="font-semibold tabular-nums text-heading">
                               {idNumberFormatter.format(tripDetail.totalAmount ?? 0)}
                             </span>
                           </div>
@@ -162,9 +170,8 @@ export function ClaimInfoSection({
                     ) : (
                       <p className="text-muted-foreground">Trip details unavailable.</p>
                     )}
-                    </Link>
-                  </div>
-                )}
+                  </Link>
+                </div>
               </div>
             )}
           </div>

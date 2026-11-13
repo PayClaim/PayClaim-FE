@@ -1,7 +1,12 @@
 import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useLocation,
+} from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_app')({
@@ -21,7 +26,7 @@ export const Route = createFileRoute('/_app')({
         isDirector,
       }
     } catch (err) {
-      toast.error('Sesi masuk telah berakhir, silakan login kembali')
+      toast.error('Your session has expired, please sign in again')
       throw redirect({
         to: '/login',
         search: {
@@ -33,12 +38,14 @@ export const Route = createFileRoute('/_app')({
 })
 
 function RouteComponent() {
+  const location = useLocation()
+
   return (
     <div className="bg-background">
       <Sidebar className="fixed" />
       <div className="grow ms-75 min-h-screen pb-16">
         <Header />
-        <div className="p-7.5">
+        <div key={location.pathname} className="p-7.5 page-flow-in">
           <Outlet />
         </div>
       </div>
