@@ -461,7 +461,7 @@ function RouteComponent() {
               <div className="flex items-center justify-between">
                 <span>
                   Menampilkan {claims.length} dari {response.totalCount} total
-                  employees
+                  claims
                 </span>
               </div>
               <div className="w-fit grow-0">

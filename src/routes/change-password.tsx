@@ -1,7 +1,8 @@
 import { Card } from '#/components/ui/card'
+import { Button } from '#/components/ui/button'
 import { changePasswordForm } from '#/features/auth/forms/forms'
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/change-password')({
   ssr: false,
@@ -71,6 +72,12 @@ function RouteComponent() {
               <form.FormButton className="w-full" label="Change Password" />
             </form.AppForm>
           </form>
+
+          <Link to="/dashboard" className="block mt-3">
+            <Button type="button" variant="outline" className="w-full">
+              Back to Dashboard
+            </Button>
+          </Link>
         </div>
       </Card>
     </main>

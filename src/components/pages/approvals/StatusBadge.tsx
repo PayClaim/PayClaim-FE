@@ -12,7 +12,7 @@ export function StatusBadge({ status, label, size = 'sm' }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 ${sizing} py-1 rounded-md text-xs font-semibold border ${getClaimBadgeClass(status)}`}
+      className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 ${sizing} py-1 rounded-md text-xs font-semibold border ${getClaimBadgeClass(status)}`}
     >
       <span className={`${dot} rounded-full bg-current`} />
       {label}

@@ -1,6 +1,5 @@
 import { createFormHook } from '@tanstack/react-form'
 
-import { Select, SubscribeButton } from '../components/demo.FormComponents'
 import { fieldContext, formContext } from './demo.form-context'
 import {
   CurrencyField,
@@ -19,14 +18,12 @@ export const { useAppForm } = createFormHook({
     NumberField,
     CurrencyField,
     FileInput,
-    Select,
     FormSelect,
     FormSelectNumber,
     TextArea,
     DatePicker,
   },
   formComponents: {
-    SubscribeButton,
     FormButton,
   },
   fieldContext,

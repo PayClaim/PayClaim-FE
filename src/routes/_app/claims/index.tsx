@@ -354,7 +354,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
         {/* Table Content */}
         <div className="overflow-x-auto">
-<table className="w-full min-w-[950px] text-left border-collapse text-xs">            <thead>
+          <table className="w-full min-w-[950px] text-left border-collapse text-xs">
+            <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-5">Description / Benefit</th>
                 <th className="py-3 px-5">Transaction Date</th>
