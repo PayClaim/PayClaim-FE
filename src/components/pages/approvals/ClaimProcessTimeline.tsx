@@ -34,6 +34,13 @@ export function ClaimProcessTimeline({
     Boolean(level2Approval) ||
     isLevel2Rejected
 
+  // Pengaju dari departemen Finance langsung ke Finance Manager (tanpa Level 1)
+  const isFinanceDirectFlow =
+    !level1Approval &&
+    !isLevel1Rejected &&
+    claim.status !== 'Submitted' &&
+    Boolean(claim.departmentName?.toLowerCase().includes('finance'))
+
   return (
     <div className="relative pl-10 space-y-6">
       {showFinanceStage && (
@@ -46,14 +53,16 @@ export function ClaimProcessTimeline({
         />
       )}
 
-      <ManagerStage
-        claim={claim}
-        approval={level1Approval}
-        managerName={managerDisplayName}
-        isRejected={isLevel1Rejected}
-        receipt={receipt}
-        onPreview={onPreview}
-      />
+      {!isFinanceDirectFlow && (
+        <ManagerStage
+          claim={claim}
+          approval={level1Approval}
+          managerName={managerDisplayName}
+          isRejected={isLevel1Rejected}
+          receipt={receipt}
+          onPreview={onPreview}
+        />
+      )}
 
       <SubmissionStage
         claim={claim}

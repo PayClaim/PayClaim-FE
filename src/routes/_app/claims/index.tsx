@@ -206,58 +206,58 @@ function RouteComponent() {
       </div>
 
       {/* KPI Overview Metrics Cards */}
-<div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* KPI 1: Total Claims */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Total Klaim Diajukan
             </span>
-            <div className="w-10 h-10 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 flex items-center justify-center text-slate-600 dark:text-slate-300">
-              <Receipt className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+              <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
+          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
             {metrics.totalCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.totalAmount)}</span> total diajukan
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.totalAmount)}</span> total diajukan
           </p>
         </div>
 
         {/* KPI 2: Waiting Review */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Menunggu Review
             </span>
-            <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.waitingAmount)}</span> dalam proses
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.waitingAmount)}</span> dalam proses
           </p>
         </div>
 
         {/* KPI 3: Approved / Paid */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Disetujui / Selesai (Paid)
             </span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> telah disetujui/cair
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> telah disetujui/cair
           </p>
         </div>
       </div>

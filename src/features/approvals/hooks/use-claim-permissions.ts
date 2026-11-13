@@ -7,6 +7,9 @@ export function useClaimPermissions(claim?: Claim | null) {
 
   const roles = user?.roles || []
   const isAdmin = roles.some((r) => r.toLowerCase() === 'admin')
+  const isFinanceManager = roles.some(
+    (r) => r.toLowerCase() === 'finance manager',
+  )
   const isFinance = roles.some((r) =>
     ['finance', 'finance manager'].includes(r.toLowerCase()),
   )
@@ -18,11 +21,19 @@ export function useClaimPermissions(claim?: Claim | null) {
     user.employeeId === claim.employeeId,
   )
 
+  const isFinanceDepartmentClaim = Boolean(
+    claim?.departmentName?.toLowerCase().includes('finance'),
+  )
+
   const status = claim?.status
   const canManagerApprove =
     status === 'Submitted' && (isManager || isAdmin) && !isOwnClaim
   const canFinanceApprove =
-    status === 'UnderReview' && (isFinance || isAdmin) && !isOwnClaim
+    status === 'UnderReview' &&
+    !isOwnClaim &&
+    (isFinanceDepartmentClaim
+      ? isFinanceManager || isAdmin
+      : isFinance || isAdmin)
 
   return {
     showApprovalActions: canManagerApprove || canFinanceApprove,
