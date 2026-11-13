@@ -36,7 +36,7 @@ function RouteComponent() {
               Add Department
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Daftarkan unit departemen baru dan tentukan induk organisasinya jika ada.
+              Register a new department unit and specify its parent organization if applicable.
             </p>
           </div>
         </div>
@@ -53,8 +53,8 @@ function RouteComponent() {
             <form.AppField name="id">
               {(field) => (
                 <field.TextField
-                  label="Kode Departemen"
-                  placeholder="Contoh: ENG, FIN, HRD, MKT"
+                  label="Department Code"
+                  placeholder="e.g. ENG, FIN, HRD, MKT"
                 />
               )}
             </form.AppField>
@@ -62,8 +62,8 @@ function RouteComponent() {
             <form.AppField name="name">
               {(field) => (
                 <field.TextField
-                  label="Nama Departemen"
-                  placeholder="Contoh: Engineering, Finance & Accounting"
+                  label="Department Name"
+                  placeholder="e.g. Engineering, Finance & Accounting"
                 />
               )}
             </form.AppField>
@@ -73,8 +73,8 @@ function RouteComponent() {
                 <field.FormSelect
                   nullable
                   values={departmentOptions}
-                  label="Induk Departemen (Opsional)"
-                  placeholder="Pilih Induk Departemen (jika sub-divisi)"
+                  label="Parent Department (Optional)"
+                  placeholder="Select Parent Department (if sub-division)"
                 />
               )}
             </form.AppField>

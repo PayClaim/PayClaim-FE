@@ -42,7 +42,7 @@ export const createEmployeeForm = () => {
           to: '/admin/employees',
         })
       } catch (e: unknown) {
-        toast.error(getFriendlyErrorMessage(e, 'Gagal menambahkan karyawan'))
+        toast.error(getFriendlyErrorMessage(e, 'Failed to create employee'))
       }
     },
   })
@@ -74,7 +74,7 @@ export const editEmployeeForm = (
           to: '/admin/employees',
         })
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Gagal memperbarui data karyawan'))
+        toast.error(getFriendlyErrorMessage(err, 'Failed to update employee data'))
       }
     },
   })
@@ -93,7 +93,7 @@ export const deleteEmployeeForm = (id: string) => {
           to: '/admin/employees',
         })
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Gagal menonaktifkan karyawan'))
+        toast.error(getFriendlyErrorMessage(err, 'Failed to deactivate employee'))
       }
     },
   })

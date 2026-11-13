@@ -468,11 +468,11 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         <div className="overflow-x-auto">
 <table className="w-full min-w-[1100px] text-left border-collapse text-xs">            <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-5">Destinasi</th>
+                <th className="py-3 px-5">Destination</th>
                 <th className="py-3 px-5">Trip Period</th>
                 <th className="py-3 px-5">PIC</th>
-                <th className="py-3 px-5">Peserta</th>
-                <th className="py-3 px-5 text-right">Total Biaya</th>
+                <th className="py-3 px-5">Participants</th>
+                <th className="py-3 px-5 text-right">Total Cost</th>
                 <th className="py-3 px-5 text-center">Status</th>
                 <th className="py-3 px-5 text-right">Action</th>
               </tr>
@@ -515,7 +515,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                       <div className="flex items-center gap-1.5 text-foreground font-medium">
                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                         <span>{formatDate(proposal.startDate)}</span>
-                        <span className="text-muted-foreground">s/d</span>
+                        <span className="text-muted-foreground">–</span>
                         <span>{formatDate(proposal.endDate)}</span>
                       </div>
                     </td>
@@ -555,7 +555,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                     <td className="py-3.5 px-5 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-muted/40 border border-border">
                         <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>{proposal.participantCount} Orang</span>
+                        <span>{proposal.participantCount} {proposal.participantCount === 1 ? 'Person' : 'People'}</span>
                       </span>
                     </td>
 
@@ -594,11 +594,11 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                   <td colSpan={7} className="py-12 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
-                      <p className="font-medium">Tidak ada proposal perjalanan yang ditemukan</p>
+                      <p className="font-medium">No trip proposals found</p>
                       <p className="text-xs text-muted-foreground/80">
                         {searchQuery || activeTab !== 'ALL'
-                          ? 'Coba ubah kata kunci pencarian atau tab status.'
-                          : 'Anda belum terdaftar dalam proposal perjalanan dinas mana pun.'}
+                          ? 'Try changing your search keywords or status tab.'
+                          : 'You are not registered in any business trip proposals yet.'}
                       </p>
                     </div>
                   </td>
@@ -613,7 +613,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
           <span>Showing {filteredProposals.length} of {proposals.length} total proposals</span>
           {activeTab !== 'ALL' && (
             <span className="font-medium text-foreground">
-              Filter aktif: {activeTab}
+              Active filter: {activeTab}
             </span>
           )}
         </div>

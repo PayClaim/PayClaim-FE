@@ -103,7 +103,7 @@ function RouteComponent() {
             Enterprise Claim &amp; Reimbursement Portal
           </h1>
           <p className="text-base text-slate-300 leading-relaxed">
-            Platform terintegrasi untuk pengajuan, verifikasi, dan penyelesaian klaim biaya operasional, perjalanan dinas, serta tunjangan karyawan.
+            An integrated platform for submitting, verifying, and settling operational expense claims, business trips, and employee benefits.
           </p>
         </div>
 
@@ -111,7 +111,7 @@ function RouteComponent() {
         <footer className="relative z-10 pt-6 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-400">
           <p className="flex items-center gap-1.5 font-medium text-slate-300">
             <Lock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-            Akses Terbatas Internal Perusahaan
+            Internal Company Restricted Access
           </p>
           <p className="text-slate-500 leading-normal">
             &copy; {new Date().getFullYear()} PT Mitra Integrasi Informatika. Member of Metrodata Group.
@@ -270,8 +270,8 @@ function RouteComponent() {
                         className="absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none transition-colors"
                         aria-label={
                           showPassword
-                            ? 'Sembunyikan password'
-                            : 'Tampilkan password'
+                            ? 'Hide password'
+                            : 'Show password'
                         }
                       >
                         {showPassword ? (
@@ -301,7 +301,7 @@ function RouteComponent() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                        <span>Memproses...</span>
+                        <span>Signing in...</span>
                       </>
                     ) : (
                       <span>Sign in to PayClaim</span>
@@ -322,7 +322,7 @@ function RouteComponent() {
               onClick={() => setForgotDialogOpen(true)}
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline cursor-pointer transition-colors"
             >
-              Hubungi IT Service Desk
+              Contact IT Service Desk
             </button>
           </div>
 
@@ -345,21 +345,21 @@ function RouteComponent() {
 
           <div className="space-y-3.5 py-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             <p>
-              Akun PayClaim terhubung langsung dengan domain akun korporat Anda. Untuk alasan keamanan, pengaturan ulang kata sandi dikelola secara terpusat:
+              Your PayClaim account is linked directly to your corporate domain account. For security reasons, password resets are managed centrally:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
               <li>
-                Jika Anda memiliki akses ke portal SSO, silakan lakukan reset melalui <strong>Self-Service Password Reset (SSPR)</strong>.
+                If you have access to the SSO portal, please reset your password via <strong>Self-Service Password Reset (SSPR)</strong>.
               </li>
               <li>
-                Atau hubungi <strong>IT Service Desk MII</strong> melalui email internal di{' '}
+                Or contact <strong>IT Service Desk MII</strong> via internal email at{' '}
                 <a
                   href="mailto:servicedesk@mii.co.id"
                   className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
                 >
                   servicedesk@mii.co.id
                 </a>{' '}
-                atau ekstensi telepon <strong>1500</strong>.
+                or phone extension <strong>1500</strong>.
               </li>
             </ul>
           </div>
@@ -367,7 +367,7 @@ function RouteComponent() {
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline">
-                Tutup
+                Close
               </Button>
             </DialogClose>
           </DialogFooter>

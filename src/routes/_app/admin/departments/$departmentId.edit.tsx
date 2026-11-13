@@ -39,7 +39,7 @@ function RouteComponent() {
           </Button>
         </Link>
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Departemen tidak ditemukan atau telah dihapus.
+          Department not found or has been deleted.
         </div>
       </main>
     )
@@ -91,10 +91,10 @@ function EditDepartmentFormContent({
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Edit Departemen
+              Edit Department
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Kode Departemen: <span className="font-mono font-bold text-heading">{departmentId}</span>
+              Department Code: <span className="font-mono font-bold text-heading">{departmentId}</span>
             </p>
           </div>
         </div>
@@ -111,8 +111,8 @@ function EditDepartmentFormContent({
             <form.AppField name="name">
               {(field) => (
                 <field.TextField
-                  label="Nama Departemen"
-                  placeholder="Contoh: Engineering, Finance & Accounting"
+                  label="Department Name"
+                  placeholder="e.g. Engineering, Finance & Accounting"
                 />
               )}
             </form.AppField>
@@ -121,9 +121,9 @@ function EditDepartmentFormContent({
               {(field) => (
                 <field.FormSelect
                   nullable
-                  placeholder="Pilih Induk Departemen (jika sub-divisi)"
+                  placeholder="Select Parent Department (if sub-division)"
                   values={departmentOptions}
-                  label="Induk Departemen (Opsional)"
+                  label="Parent Department (Optional)"
                 />
               )}
             </form.AppField>
@@ -138,7 +138,7 @@ function EditDepartmentFormContent({
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Perbarui Departemen"
+                label="Update Department"
               />
             </form.AppForm>
           </div>

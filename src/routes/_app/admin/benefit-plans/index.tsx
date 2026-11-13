@@ -124,8 +124,8 @@ function BenefitPlansIndexPage() {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data matriks plafon benefit. Silakan
-          coba kembali nanti.
+          An error occurred while loading the benefit limit matrix. Please try
+          again later.
         </div>
       </main>
     )
@@ -163,8 +163,8 @@ function BenefitPlansIndexPage() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Matriks plafon batas klaim benefit berdasarkan kombinasi
-              Departemen dan Jabatan.
+              Benefit claim limit matrix based on Department and Position
+              combinations.
             </p>
           </div>
         </div>
@@ -261,7 +261,7 @@ function BenefitPlansIndexPage() {
             <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Menampilkan {planList.length} dari {plansResponse.totalCount}{' '}
+                  Showing {planList.length} of {plansResponse.totalCount}{' '}
                   total plans
                 </span>
               </div>
@@ -278,11 +278,11 @@ function BenefitPlansIndexPage() {
             />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-heading">
-                Tidak ada data plafon ditemukan
+                No benefit limits found
               </p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
-                  ? 'Tidak ada aturan plafon yang cocok dengan filter yang dipilih.'
+                  ? 'No limit rules match the selected filters.'
                   : 'No benefit limit rules are registered in the system yet.'}
               </p>
             </div>
@@ -435,9 +435,8 @@ function DeletePlanDialog({
         <DialogHeader>
           <DialogTitle>Delete Benefit Limit Rule</DialogTitle>
           <DialogDescription className="text-sm pt-1">
-            Apakah Anda yakin ingin menghapus aturan plafon untuk{' '}
-            <strong>{plan.benefitName || plan.benefitId}</strong> pada
-            departemen{' '}
+            Are you sure you want to delete the limit rule for{' '}
+            <strong>{plan.benefitName || plan.benefitId}</strong> in department{' '}
             <strong>{plan.departmentName || plan.departmentId}</strong> (
             {plan.positionTitle || plan.positionId})?
           </DialogDescription>

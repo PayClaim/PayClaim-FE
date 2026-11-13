@@ -114,11 +114,11 @@ function RouteComponent() {
           <div className="py-16 text-center space-y-3">
             <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">Tidak ada kategori ditemukan</p>
+              <p className="text-sm font-semibold text-heading">No categories found</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {searchFilter
-                  ? `Tidak ada kategori yang cocok dengan pencarian "${searchFilter}". Coba ubah kata kunci.`
-                  : 'Belum ada kategori benefit yang terdaftar di sistem.'}
+                  ? `No categories match "${searchFilter}". Try changing your search keyword.`
+                  : 'No benefit categories are registered in the system yet.'}
               </p>
             </div>
             {searchFilter && (
@@ -225,7 +225,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Benefit Category</DialogTitle>
           <DialogDescription className="text-sm pt-1">
-            Apakah Anda yakin ingin menghapus kategori <strong>"{name}"</strong>? Tindakan ini tidak dapat dibatalkan jika kategori telah terkait dengan jenis benefit.
+            Are you sure you want to delete the category <strong>"{name}"</strong>? This action cannot be undone if the category is already linked to benefit types.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">

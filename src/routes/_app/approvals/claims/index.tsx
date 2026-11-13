@@ -469,8 +469,7 @@ function RouteComponent() {
             <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Menampilkan {claims.length} dari {response.totalCount} total
-                  claims
+                  Showing {claims.length} of {response.totalCount} total claims
                 </span>
               </div>
               <div className="w-fit grow-0">

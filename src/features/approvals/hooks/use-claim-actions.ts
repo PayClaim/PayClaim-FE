@@ -54,7 +54,7 @@ export function useClaimActions(claimId: string) {
       setNotes('')
     } catch (err: unknown) {
       toast.error(
-        getFriendlyErrorMessage(err, 'Gagal memproses aksi pada klaim ini.'),
+        getFriendlyErrorMessage(err, 'Failed to process action on this claim.'),
       )
     }
   }

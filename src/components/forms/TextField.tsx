@@ -434,7 +434,7 @@ export function FileInput({
               or drag & drop your file here
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Mendukung PDF, PNG, JPG, WEBP (Maksimal 5 MB)
+              Supports PDF, PNG, JPG, WEBP (Max 5 MB)
             </p>
           </div>
         </div>

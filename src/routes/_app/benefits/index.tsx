@@ -82,11 +82,11 @@ function getCategoryIcon(categoryName?: string | null) {
 
 function formatPeriodLabel(periodType?: string | null): string {
   const p = (periodType || '').toLowerCase()
-  if (p === 'annual' || p === 'yearly') return 'Plafon Tahunan'
-  if (p === 'monthly') return 'Plafon Bulanan'
-  if (p === 'quarterly') return 'Plafon Kuartalan'
-  if (p === 'perevent' || p === 'perclaim') return 'Per Pengajuan'
-  return periodType ? `Periode ${periodType}` : 'Plafon Reguler'
+  if (p === 'annual' || p === 'yearly') return 'Annual Limit'
+  if (p === 'monthly') return 'Monthly Limit'
+  if (p === 'quarterly') return 'Quarterly Limit'
+  if (p === 'perevent' || p === 'perclaim') return 'Per Claim'
+  return periodType ? `${periodType} Period` : 'Regular Limit'
 }
 
 type SortOption =
@@ -275,8 +275,8 @@ function RouteComponent() {
           </div>
           <p className="text-xs text-muted-foreground">
             {metrics.minDays !== null
-              ? `Berakhir dalam ${metrics.minDays} hari ke depan`
-              : 'Tidak ada plafon yang segera berakhir'}
+              ? `Expires in ${metrics.minDays} ${metrics.minDays === 1 ? 'day' : 'days'}`
+              : 'No limits expiring soon'}
           </p>
         </div>
       </div>
@@ -301,7 +301,7 @@ function RouteComponent() {
                 type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                aria-label="Bersihkan pencarian"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -315,9 +315,9 @@ function RouteComponent() {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="h-9 px-3 text-xs font-medium rounded-lg border border-border bg-card text-heading focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
-              aria-label="Filter kategori"
+              aria-label="Filter by category"
             >
-              <option value="ALL">Semua Kategori ({categories.length})</option>
+              <option value="ALL">All Categories ({categories.length})</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -331,13 +331,13 @@ function RouteComponent() {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="h-9 pl-3 pr-8 text-xs font-medium rounded-lg border border-border bg-card text-heading focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer appearance-none shadow-2xs"
-                aria-label="Urutkan tunjangan"
+                aria-label="Sort benefits"
               >
-                <option value="DEFAULT">Urutkan: Masa Berlaku Terdekat</option>
-                <option value="BALANCE_DESC">Saldo: Tertinggi ke Terendah</option>
-                <option value="BALANCE_ASC">Saldo: Terendah ke Tertinggi</option>
-                <option value="NAME_ASC">Nama: A ke Z</option>
-                <option value="NAME_DESC">Nama: Z ke A</option>
+                <option value="DEFAULT">Sort: Expiring Soonest</option>
+                <option value="BALANCE_DESC">Balance: High to Low</option>
+                <option value="BALANCE_ASC">Balance: Low to High</option>
+                <option value="NAME_ASC">Name: A to Z</option>
+                <option value="NAME_DESC">Name: Z to A</option>
               </select>
               <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 pointer-events-none" aria-hidden="true" />
             </div>
@@ -353,7 +353,7 @@ function RouteComponent() {
                     : 'text-muted-foreground hover:text-heading'
                 }`}
               >
-                Semua
+                All
               </button>
               <button
                 type="button"
@@ -364,7 +364,7 @@ function RouteComponent() {
                     : 'text-muted-foreground hover:text-heading'
                 }`}
               >
-                Tersedia
+                Available
               </button>
               <button
                 type="button"
@@ -375,7 +375,7 @@ function RouteComponent() {
                     : 'text-muted-foreground hover:text-heading'
                 }`}
               >
-                Habis / Nonaktif
+                Exhausted / Inactive
               </button>
             </div>
           </div>
@@ -393,27 +393,27 @@ function RouteComponent() {
               <AlertCircle className="w-8 h-8 mx-auto text-destructive" />
               <p className="font-semibold text-sm">Failed to load benefit allocations</p>
               <p className="text-xs text-muted-foreground">
-                Pastikan koneksi backend aktif dan token autentikasi Anda masih valid.
+                Make sure the backend connection is active and your authentication token is still valid.
               </p>
             </div>
           ) : benefits.length === 0 ? (
             <div className="p-12 text-center space-y-3">
               <Layers className="h-10 w-10 mx-auto text-muted-foreground/60" />
               <h2 className="text-lg font-bold text-heading">
-                Belum Ada Alokasi Benefit
+                No Benefit Allocations Yet
               </h2>
               <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Akun Anda belum memiliki kuota benefit aktif yang dialokasikan oleh HR. Hubungi departemen People & Culture / HR untuk informasi hak tunjangan Anda.
+                Your account does not have any active benefit quotas allocated by HR yet. Contact the People & Culture / HR department for benefit eligibility information.
               </p>
             </div>
           ) : sortedAndFilteredBenefits.length === 0 ? (
             <div className="p-10 text-center space-y-3">
               <SearchX className="h-9 w-9 mx-auto text-muted-foreground/60" />
               <p className="text-sm font-semibold text-heading">
-                Tidak ada benefit yang cocok dengan filter
+                No benefits match your filters
               </p>
               <p className="text-xs text-muted-foreground">
-                Coba ubah kata kunci pencarian atau reset filter kategori, urutan, atau status Anda.
+                Try changing your search keyword or resetting your category, sort, or status filter.
               </p>
               <Button
                 variant="outline"
@@ -457,19 +457,19 @@ function RouteComponent() {
                         {isAvailable && (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
-                            Aktif
+                            Active
                           </span>
                         )}
                         {isDepleted && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                             <AlertCircle className="w-3 h-3 text-amber-600" />
-                            Kuota Habis
+                            Quota Exhausted
                           </span>
                         )}
                         {isInactive && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border">
                             <ShieldAlert className="w-3 h-3 text-muted-foreground" />
-                            Tidak Aktif
+                            Inactive
                           </span>
                         )}
                       </div>
@@ -489,11 +489,11 @@ function RouteComponent() {
                       <div className="rounded-xl bg-card border border-border/80 p-3.5 space-y-1.5 shadow-2xs">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span className="font-medium uppercase tracking-wider text-[11px]">
-                            Sisa Plafon Saldo
+                            Remaining Balance
                           </span>
                           {isAvailable && (
                             <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                              Tersedia
+                              Available
                             </span>
                           )}
                         </div>
@@ -512,16 +512,16 @@ function RouteComponent() {
                           {isAvailable ? (
                             <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                               <CheckCircle2 className="w-3 h-3 shrink-0" aria-hidden="true" />
-                              Dapat diajukan untuk klaim reimbursement
+                              Available for reimbursement claims
                             </p>
                           ) : isDepleted ? (
                             <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
                               <AlertCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
-                              Plafon kuota telah habis untuk periode ini
+                              Quota limit exhausted for this period
                             </p>
                           ) : (
                             <p className="text-[11px] text-muted-foreground font-medium">
-                              Periode manfaat belum dimulai atau telah berakhir
+                              Benefit period has not started or has ended
                             </p>
                           )}
                         </div>
@@ -548,8 +548,8 @@ function RouteComponent() {
                             }`}
                           >
                             {daysRemaining > 0
-                              ? `Sisa ${daysRemaining} hari`
-                              : 'Berakhir hari ini'}
+                              ? `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} left`
+                              : 'Expires today'}
                           </span>
                         )}
                       </div>
@@ -576,7 +576,7 @@ function RouteComponent() {
                           variant="outline"
                           className="w-full h-9 rounded-lg font-medium text-xs text-muted-foreground border-border bg-muted/10 cursor-not-allowed"
                         >
-                          {isDepleted ? 'Plafon Habis' : 'Benefit Tidak Aktif'}
+                          {isDepleted ? 'Limit Exhausted' : 'Benefit Inactive'}
                         </Button>
                       )}
                     </div>

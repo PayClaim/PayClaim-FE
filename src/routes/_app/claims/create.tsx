@@ -139,7 +139,7 @@ function RouteComponent() {
   })
 
   const tripSelect = approvedTrips.map((trip) => ({
-    label: `${trip.destination} (Plafon: ${idNumberFormatter.format(
+    label: `${trip.destination} (Limit: ${idNumberFormatter.format(
       getTripRemainingBudget(trip),
     )})`,
     value: trip.id,
@@ -161,7 +161,7 @@ function RouteComponent() {
       }
 
       groupMap.get(category)!.push({
-        label: `${benefit.benefitName} (Sisa: ${idNumberFormatter.format(
+        label: `${benefit.benefitName} (Remaining: ${idNumberFormatter.format(
           benefit.balance,
         )})`,
         value: benefit.employeeBenefitId,
@@ -235,7 +235,7 @@ function RouteComponent() {
     currentClaimType === 'Benefit' &&
     selectedBenefitBudget !== undefined &&
     selectedBenefitBudget <= MAX_CLAIM_AMOUNT
-      ? `Maksimal klaim untuk benefit ini adalah ${idNumberFormatter.format(
+      ? `Maximum claim for this benefit is ${idNumberFormatter.format(
           selectedBenefitBudget,
         )}.`
       : currentClaimType === 'BusinessTripReimbursement' &&
@@ -374,7 +374,7 @@ function RouteComponent() {
           <Link
             to="/claims"
             className="w-10 h-10 rounded-xl bg-card hover:bg-muted border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs shrink-0"
-            title="Kembali ke My Claims"
+            title="Back to My Claims"
           >
             <ArrowLeft className="w-5 h-5" strokeWidth={2} />
           </Link>
@@ -386,13 +386,13 @@ function RouteComponent() {
               </h1>
 
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
-                Formulir Pengajuan
+                Submission Form
               </span>
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
               Complete the expense details and attach a valid receipt
-              untuk diproses reviewer.
+              for reviewer processing.
             </p>
           </div>
         </div>
@@ -447,7 +447,7 @@ function RouteComponent() {
                         placeholder={
                           benefitGroups.length > 0
                             ? 'Select benefit...'
-                            : 'Belum ada benefit aktif'
+                            : 'No active benefits available'
                         }
                         label="Benefit"
                         groups={benefitGroups}
@@ -470,7 +470,7 @@ function RouteComponent() {
                         placeholder={
                           tripSelect.length > 0
                             ? 'Select trip proposal...'
-                            : 'Tidak ada proposal disetujui'
+                            : 'No approved proposals available'
                         }
                         label="Trip Proposal"
                         values={tripSelect}
@@ -505,7 +505,7 @@ function RouteComponent() {
 
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground">
                     Operational reimbursement is submitted directly without linking
-                    benefit atau trip.
+                    a benefit or trip.
                   </div>
                 </div>
               )}
@@ -554,15 +554,15 @@ function RouteComponent() {
                         selectedTrip
                       ) {
                         if (!value) {
-                          return 'Tanggal invoice wajib diisi'
+                          return 'Invoice date is required'
                         }
 
                         if (value < selectedTrip.startDate) {
-                          return `Tanggal invoice tidak boleh sebelum tanggal mulai perjalanan (${selectedTrip.startDate}).`
+                          return `Invoice date cannot be earlier than the trip start date (${selectedTrip.startDate}).`
                         }
 
                         if (value > selectedTrip.endDate) {
-                          return `Tanggal invoice tidak boleh setelah tanggal selesai perjalanan (${selectedTrip.endDate}).`
+                          return `Invoice date cannot be later than the trip end date (${selectedTrip.endDate}).`
                         }
                       }
 
@@ -720,7 +720,7 @@ function RouteComponent() {
               {(field) => (
                 <field.TextArea
                   label="Description"
-                  placeholder="Jelaskan secara ringkas tujuan pengeluaran klaim ini..."
+                  placeholder="Briefly describe the purpose of this expense claim..."
                   rows={4}
                 />
               )}
@@ -757,7 +757,7 @@ function RouteComponent() {
 
               <span>
                 {form.state.isSubmitting
-                  ? 'Mengirimkan...'
+                  ? 'Submitting...'
                   : 'Submit Claim'}
               </span>
             </Button>
@@ -767,18 +767,18 @@ function RouteComponent() {
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Konfirmasi Pengajuan Klaim</DialogTitle>
+                <DialogTitle>Confirm Claim Submission</DialogTitle>
 
                 <DialogDescription className="text-sm pt-1">
-                  Pastikan rincian data pengajuan klaim Anda sudah benar
-                  sebelum diteruskan ke reviewer.
+                  Please verify that your claim details are accurate before
+                  forwarding to the reviewer.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-4 bg-muted/30 border border-border rounded-xl text-xs space-y-2.5">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">
-                    Tipe Klaim:
+                    Claim Type:
                   </span>
 
                   <span className="font-semibold text-foreground">
@@ -816,7 +816,7 @@ function RouteComponent() {
                     size="sm"
                     className="cursor-pointer"
                   >
-                    Periksa Kembali
+                    Review Again
                   </Button>
                 </DialogClose>
 
@@ -827,8 +827,8 @@ function RouteComponent() {
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
                 >
                   {form.state.isSubmitting
-                    ? 'Mengirimkan...'
-                    : 'Konfirmasi & Kirim'}
+                    ? 'Submitting...'
+                    : 'Confirm & Submit'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -896,11 +896,11 @@ function BenefitInfoBanner({
         </div>
 
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Periode aktif:{' '}
+          Active period:{' '}
           <span className="font-medium text-foreground">
             {selectedBenefit.startDate}
           </span>{' '}
-          s/d{' '}
+          to{' '}
           <span className="font-medium text-foreground">
             {selectedBenefit.endDate}
           </span>
@@ -909,7 +909,7 @@ function BenefitInfoBanner({
 
       <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
         <span className="text-[11px] text-muted-foreground block">
-          Sisa Kuota Tersedia
+          Remaining Quota Available
         </span>
 
         <span className="text-base font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -947,7 +947,7 @@ function TripInfoBanner({
         </div>
 
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          Jadwal:{' '}
+          Schedule:{' '}
           <span className="font-medium text-foreground">
             {selectedTrip.startDate}
           </span>{' '}
@@ -960,7 +960,7 @@ function TripInfoBanner({
 
       <div className="sm:text-right shrink-0 bg-background/80 dark:bg-card px-3.5 py-2 rounded-lg border border-border/80">
         <span className="text-[11px] text-muted-foreground block">
-          Sisa Plafon Reimbursement
+          Remaining Reimbursement Limit
         </span>
 
         <span className="text-base font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">

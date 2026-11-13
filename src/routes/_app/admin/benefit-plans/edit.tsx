@@ -33,7 +33,7 @@ function EditBenefitPlanPage() {
 
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const departmentOptions = [
-    { label: 'Semua Departemen (ALL)', value: 'ALL' },
+    { label: 'All Departments (ALL)', value: 'ALL' },
     ...departments.map((d) => ({
       label: d.name,
       value: d.id,
@@ -71,11 +71,10 @@ function EditBenefitPlanPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Edit Aturan Plafon Benefit
+              Edit Benefit Limit Rule
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Perbarui batas nominal klaim untuk kombinasi departemen dan
-              jabatan ini.
+              Update the claim limit amount for this department and position combination.
             </p>
           </div>
         </div>
@@ -93,8 +92,8 @@ function EditBenefitPlanPage() {
               {(field) => (
                 <field.FormSelect
                   values={departmentOptions}
-                  label="Departemen"
-                  placeholder="Pilih Departemen"
+                  label="Department"
+                  placeholder="Select Department"
                 />
               )}
             </form.AppField>
@@ -103,8 +102,8 @@ function EditBenefitPlanPage() {
               {(field) => (
                 <field.FormSelect
                   values={positionOptions}
-                  label="Jabatan / Posisi"
-                  placeholder="Pilih Posisi"
+                  label="Position"
+                  placeholder="Select Position"
                 />
               )}
             </form.AppField>
@@ -114,8 +113,8 @@ function EditBenefitPlanPage() {
                 {(field) => (
                   <field.FormSelect
                     values={benefitOptions}
-                    label="Jenis Benefit"
-                    placeholder="Pilih Jenis Benefit"
+                    label="Benefit Type"
+                    placeholder="Select Benefit Type"
                   />
                 )}
               </form.AppField>
@@ -125,7 +124,7 @@ function EditBenefitPlanPage() {
               <form.AppField name="limitAmount">
                 {(field) => (
                   <field.CurrencyField
-                    label="Nominal Plafon (IDR)"
+                    label="Limit Amount (IDR)"
                     placeholder="0"
                   />
                 )}
@@ -142,7 +141,7 @@ function EditBenefitPlanPage() {
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Perbarui Plafon"
+                label="Update Limit Rule"
               />
             </form.AppForm>
           </div>

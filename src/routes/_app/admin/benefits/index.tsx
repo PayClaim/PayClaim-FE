@@ -170,10 +170,10 @@ function RouteComponent() {
           <div className="py-16 text-center space-y-3">
             <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">Tidak ada data benefit ditemukan</p>
+              <p className="text-sm font-semibold text-heading">No benefits found</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
-                  ? 'Tidak ada data benefit yang sesuai dengan kriteria filter saat ini.'
+                  ? 'No benefits match the current filter criteria.'
                   : 'No benefit types are registered in the system yet.'}
               </p>
             </div>
@@ -299,7 +299,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Benefit</DialogTitle>
           <DialogDescription className="text-sm pt-1">
-            Apakah Anda yakin ingin menghapus benefit <strong>"{name}"</strong>? Data plafon dan riwayat yang terkait akan terpengaruh.
+            Are you sure you want to delete the benefit <strong>"{name}"</strong>? Related limit rules and claim history will be affected.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">

@@ -242,7 +242,7 @@ function EditEmployeeFormContent({
               type="button"
               size="sm"
             >
-              Batal
+              Cancel
             </Button>
             <form.AppForm>
               <form.FormButton

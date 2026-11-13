@@ -13,9 +13,9 @@ function RouteComponent() {
   const form = createBenefitForm()
 
   const periodTypeOption = [
-    { label: 'Monthly (Bulanan)', value: 'Monthly' },
-    { label: 'Yearly (Tahunan)', value: 'Yearly' },
-    { label: 'One Time (Sekali Pakai)', value: 'OneTime' },
+    { label: 'Monthly', value: 'Monthly' },
+    { label: 'Yearly', value: 'Yearly' },
+    { label: 'One Time', value: 'OneTime' },
   ]
 
   const categoryOptions = categories.map((c) => ({
@@ -42,7 +42,7 @@ function RouteComponent() {
               Add Master Benefit
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Daftarkan jenis tunjangan baru untuk klaim reimbursement karyawan.
+              Register a new benefit type for employee reimbursement claims.
             </p>
           </div>
         </div>
@@ -60,8 +60,8 @@ function RouteComponent() {
               <form.AppField name="name">
                 {(field) => (
                   <field.TextField
-                    label="Nama Benefit"
-                    placeholder="Contoh: Kacamata & Lensa, Tunjangan Kesehatan Gigi"
+                    label="Benefit Name"
+                    placeholder="e.g. Eyeglasses & Lenses, Dental Allowance"
                   />
                 )}
               </form.AppField>
@@ -71,8 +71,8 @@ function RouteComponent() {
               {(field) => (
                 <field.FormSelect
                   values={periodTypeOption}
-                  label="Periode Klaim"
-                  placeholder="Pilih Periode"
+                  label="Claim Period"
+                  placeholder="Select Period"
                 />
               )}
             </form.AppField>
@@ -81,8 +81,8 @@ function RouteComponent() {
               {(field) => (
                 <field.FormSelectNumber
                   values={categoryOptions}
-                  label="Kategori Benefit"
-                  placeholder="Pilih Kategori"
+                  label="Benefit Category"
+                  placeholder="Select Category"
                 />
               )}
             </form.AppField>
@@ -91,8 +91,8 @@ function RouteComponent() {
           <form.AppField name="description">
             {(field) => (
               <field.TextArea
-                label="Deskripsi / Ketentuan Benefit"
-                placeholder="Jelaskan ruang lingkup, ketentuan syarat nota, atau rincian reimbursement..."
+                label="Description / Terms"
+                placeholder="Describe scope, receipt requirements, or reimbursement details..."
               />
             )}
           </form.AppField>

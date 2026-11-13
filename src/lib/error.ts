@@ -1,6 +1,6 @@
 export function getFriendlyErrorMessage(
   err: unknown,
-  fallback = 'Terjadi kesalahan sistem, silakan coba beberapa saat lagi',
+  fallback = 'A system error occurred. Please try again later.',
 ): string {
   if (!err) return fallback
   if (typeof err === 'string') return err
@@ -14,9 +14,10 @@ export function getFriendlyErrorMessage(
   if (
     message.includes('Failed to fetch') ||
     message.includes('NetworkError') ||
-    message.includes('koneksi jaringan')
+    message.includes('koneksi jaringan') ||
+    message.includes('Failed to connect to the server')
   ) {
-    return 'Gagal terhubung ke server. Pastikan koneksi internet aktif dan server backend sedang berjalan.'
+    return 'Failed to connect to the server. Make sure your internet connection is active and the backend server is running.'
   }
 
   // Tangani kesalahan teknis runtime JavaScript

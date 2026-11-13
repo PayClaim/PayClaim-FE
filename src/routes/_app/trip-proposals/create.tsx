@@ -212,7 +212,7 @@ function CreateTripProposalPage({
               </h1>
 
               <span className="rounded-full border border-blue-200/60 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-300">
-                Formulir Pengajuan
+                Submission Form
               </span>
             </div>
 

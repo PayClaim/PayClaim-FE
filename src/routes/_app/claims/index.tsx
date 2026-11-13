@@ -467,7 +467,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
                       <p className="font-medium">
-                        Tidak ada klaim yang ditemukan
+                        No claims found
                       </p>
                       <p className="text-xs text-muted-foreground/80">
                         {searchQuery || activeTab !== 'ALL'
@@ -486,12 +486,11 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
           <div className="flex items-center justify-between">
             <span>
-              Showing {filteredClaims.length} of {claims.length} total
-              klaim
+              Showing {filteredClaims.length} of {claims.length} total claims
             </span>
             {activeTab !== 'ALL' && (
               <span className="font-medium text-foreground">
-                Filter aktif: {activeTab}
+                Active filter: {activeTab}
               </span>
             )}
           </div>

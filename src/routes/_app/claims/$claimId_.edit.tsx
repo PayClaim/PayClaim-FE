@@ -80,7 +80,7 @@ function EditClaimFormContent({
 
   const handleReview = async () => {
     if (!isFormChanged(form.state.values)) {
-      toast.info('Belum ada perubahan data pada formulir klaim ini.')
+      toast.info('No changes have been made to this claim form yet.')
       return
     }
     await form.validateAllFields('submit')
@@ -106,10 +106,10 @@ function EditClaimFormContent({
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-heading">
-              Revisi Klaim #{claim.id.slice(0, 8).toUpperCase()}
+              Revise Claim #{claim.id.slice(0, 8).toUpperCase()}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Perbaiki informasi atau berkas klaim sesuai catatan dari reviewer.
+              Update claim details or attachments according to the reviewer notes.
             </p>
           </div>
         </div>
@@ -120,9 +120,9 @@ function EditClaimFormContent({
         <section className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/40 p-4.5 space-y-2 shadow-2xs">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
             <AlertTriangle className="w-5 h-5 shrink-0" />
-            <h2 className="text-sm font-bold">Catatan Permintaan Revisi</h2>
+            <h2 className="text-sm font-bold">Revision Request Notes</h2>
             <span className="text-xs text-amber-700/80 dark:text-amber-400 font-normal ml-auto">
-              Oleh: {lastRevisionHistory.approverName || 'Reviewer'}
+              By: {lastRevisionHistory.approverName || 'Reviewer'}
             </span>
           </div>
 
@@ -146,12 +146,12 @@ function EditClaimFormContent({
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <form.AppField name="transactionDate">
-              {(field) => <field.DatePicker label="Tanggal Transaksi / Kwitansi" />}
+              {(field) => <field.DatePicker label="Transaction / Receipt Date" />}
             </form.AppField>
 
             <form.AppField name="amount">
               {(field) => (
-                <field.CurrencyField label="Nominal Klaim" placeholder="0" />
+                <field.CurrencyField label="Claim Amount" placeholder="0" />
               )}
             </form.AppField>
           </div>
@@ -162,7 +162,7 @@ function EditClaimFormContent({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-primary" />
-                  Berkas Kwitansi Terlampir Saat Ini
+                  Currently Attached Receipt
                 </span>
                 <button
                   type="button"
@@ -170,11 +170,11 @@ function EditClaimFormContent({
                   className="inline-flex items-center gap-1 text-primary hover:underline font-semibold cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Unduh Berkas Lama
+                  Download Existing File
                 </button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Nama file: <span className="font-mono text-foreground font-medium">{existingFileName}</span>. Jika Anda tidak mengunggah file baru di bawah, berkas lama ini akan tetap digunakan.
+                File name: <span className="font-mono text-foreground font-medium">{existingFileName}</span>. If you do not upload a new file below, this existing file will continue to be used.
               </p>
             </div>
           )}
@@ -182,15 +182,15 @@ function EditClaimFormContent({
           {/* Upload Bukti Baru */}
           <form.AppField name="receiptFile">
             {(field) => (
-              <field.FileInput label="Unggah Bukti Baru (Opsional jika tidak diganti)" />
+              <field.FileInput label="Upload New Receipt (Optional if unchanged)" />
             )}
           </form.AppField>
 
           <form.AppField name="description">
             {(field) => (
               <field.TextArea
-                label="Keterangan / Penjelasan Revisi"
-                placeholder="Tuliskan keterangan perbaikan yang telah Anda lakukan..."
+                label="Revision Notes / Explanation"
+                placeholder="Describe the fixes you have made..."
                 rows={4}
               />
             )}
@@ -200,7 +200,7 @@ function EditClaimFormContent({
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-border">
             <Link to="/claims/$claimId" params={{ claimId }}>
               <Button type="button" variant="outline" className="cursor-pointer">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.Subscribe
@@ -218,11 +218,11 @@ function EditClaimFormContent({
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                       hasChanges
-                        ? 'Ajukan ulang revisi'
-                        : 'Lakukan perubahan data atau unggah berkas baru untuk mengajukan revisi'
+                        ? 'Resubmit revision'
+                        : 'Modify form details or upload a new file to submit revision'
                     }
                   >
-                    Ajukan Ulang Revisi
+                    Resubmit Revision
                   </Button>
                 )
               }}
@@ -233,16 +233,16 @@ function EditClaimFormContent({
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Kirim Ulang Revisi Klaim?</DialogTitle>
+                <DialogTitle>Resubmit Claim Revision?</DialogTitle>
                 <DialogDescription className="text-xs mt-1">
-                  Klaim Anda akan diperbarui dan dikirim kembali kepada peninjau untuk dilakukan verifikasi ulang.
+                  Your claim will be updated and sent back to the reviewer for re-verification.
                 </DialogDescription>
               </DialogHeader>
 
               <DialogFooter className="gap-2 sm:gap-0 mt-4">
                 <DialogClose asChild>
                   <Button type="button" variant="outline" className="cursor-pointer">
-                    Batal
+                    Cancel
                   </Button>
                 </DialogClose>
                 <Button
@@ -251,7 +251,7 @@ function EditClaimFormContent({
                   onClick={handleConfirm}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer"
                 >
-                  {form.state.isSubmitting ? 'Mengirim...' : 'Ya, Kirim Ulang'}
+                  {form.state.isSubmitting ? 'Submitting...' : 'Yes, Resubmit'}
                 </Button>
               </DialogFooter>
             </DialogContent>

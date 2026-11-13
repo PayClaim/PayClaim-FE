@@ -127,7 +127,7 @@ function UserDropDown({
             className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <KeyRound className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
-            <span>Ganti Kata Sandi</span>
+            <span>Change Password</span>
           </Link>
         </DropdownMenuItem>
 
@@ -138,7 +138,7 @@ function UserDropDown({
           className="text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40 gap-2 cursor-pointer font-medium text-xs px-3 py-2"
         >
           <LogOut className="w-4 h-4" strokeWidth={1.75} />
-          <span>Keluar (Logout)</span>
+          <span>Sign Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
