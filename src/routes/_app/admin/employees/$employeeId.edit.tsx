@@ -105,7 +105,9 @@ function EditEmployeeFormContent({
   }))
 
   const managerGroups = buildEmployeeGroups(employees, {
-    filter: (employee) => employee.id !== employeeId,
+    filter: (employee) =>
+      employee.id !== employeeId &&
+      employee.positionTitle.toLowerCase().includes('manager'),
     label: (employee) => `${employee.fullName} (${employee.number})`,
   })
 
