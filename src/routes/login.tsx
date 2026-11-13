@@ -50,7 +50,7 @@ function RouteComponent() {
   }
 
   return (
-    <main className="min-h-screen w-full flex flex-col lg:grid lg:grid-cols-12 bg-white dark:bg-[#0D1117] transition-colors relative">
+    <main className="min-h-screen w-full flex flex-col lg:grid lg:grid-cols-12 bg-white dark:bg-background transition-colors relative">
       {/* Theme Toggle di Pojok Kanan Atas */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-30">
         <ThemeToggle />
@@ -120,7 +120,7 @@ function RouteComponent() {
       </section>
 
       {/* Sisi Kanan: Form Area (Clean, Focused, Accessible) */}
-      <section className="flex-1 lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 bg-white dark:bg-[#0D1117] transition-colors">
+      <section className="flex-1 lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 bg-white dark:bg-background transition-colors">
         <div className="w-full max-w-[360px] mx-auto space-y-7">
           {/* Mobile Header (Hanya tampil pada layar < lg) */}
           <div className="lg:hidden flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -199,7 +199,7 @@ function RouteComponent() {
                       onKeyDown={handleKeyDown}
                       className={cn(
                         'w-full h-10 px-3.5 text-sm rounded-lg border transition-all focus:outline-none',
-                        'bg-white dark:bg-[#161B22] text-slate-900 dark:text-[#E6EDF3] placeholder:text-slate-400 dark:placeholder:text-[#8B949E]',
+                        'bg-white dark:bg-card text-slate-900 dark:text-foreground placeholder:text-slate-400 dark:placeholder:text-muted-foreground',
                         '[&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] dark:[&:-webkit-autofill]:shadow-[0_0_0_1000px_#020617_inset] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:white]',
                         hasError
                           ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20'
@@ -255,7 +255,7 @@ function RouteComponent() {
                         onKeyDown={handleKeyDown}
                         className={cn(
                           'w-full h-10 px-3.5 pe-10 text-sm rounded-lg border transition-all focus:outline-none',
-                          'bg-white dark:bg-[#161B22] text-slate-900 dark:text-[#E6EDF3] placeholder:text-slate-400 dark:placeholder:text-[#8B949E]',
+                          'bg-white dark:bg-card text-slate-900 dark:text-foreground placeholder:text-slate-400 dark:placeholder:text-muted-foreground',
                           '[&:-webkit-autofill]:shadow-[0_0_0_1000px_white_inset] dark:[&:-webkit-autofill]:shadow-[0_0_0_1000px_#020617_inset] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:white]',
                           hasError
                             ? 'border-rose-500 dark:border-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/20'
