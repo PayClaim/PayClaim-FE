@@ -1,20 +1,17 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
 import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 
 import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  Filter,
   Receipt,
   Search,
-  X,
 } from 'lucide-react'
 import {
   formatDate,
@@ -22,10 +19,23 @@ import {
   getInitials,
   getStatusBadgeConfig,
 } from '#/features/claims/utils/claim-badges'
+import { ButtonGroup } from '#/components/ui/button-group'
+import type { DateRange } from 'react-day-picker'
+import { Button } from '#/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { FilterSelect } from '#/components/FilterSelect'
+import { DatePickerWithRange } from '#/components/DateRangePicker'
+import { PaginationSection } from '#/components/PaginationSection'
+import { toDateOnly } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
+  validateSearch: (s) => s as ClaimFilterParams,
   beforeLoad: ({ context }) => {
-    const roles = context.user?.roles || []
+    const roles = context.user.roles
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
@@ -40,53 +50,59 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
   component: RouteComponent,
 })
 
-type StatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
-
-function getSubmittedAtTime(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
-function getClaimPriority(status: string): number {
-  const normalized = (status || '').replace(/[\s_-]/g, '').toLowerCase()
-
-  // Paling urgent: revisi dan menunggu approval.
-  if (
-    ['needsrevision', 'submitted', 'underreview'].includes(normalized)
-  ) {
-    return 0
-  }
-
-  if (['approved', 'paid'].includes(normalized)) {
-    return 1
-  }
-
-  if (['rejected'].includes(normalized)) {
-    return 2
-  }
-
-  return 3
-}
+type StatusTab =
+  'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
+  const searchRoute = Route.useSearch()
   const navigate = useNavigate()
 
   const {
     data: response,
-    isLoading,
+    isFetching,
     isError,
     error,
-  } = useGetAdminAllClaimsQuery()
+  } = useGetAdminAllClaimsQuery(searchRoute)
 
   // Array Claim berada di dalam response.data.
   const claims = response?.data ?? []
+  const initialDateRange = {
+    from: searchRoute.startDate ? new Date(searchRoute.startDate) : undefined,
+    to: searchRoute.endDate ? new Date(searchRoute.endDate) : undefined,
+  }
 
   // Filter & Search states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<StatusTab>('ALL')
+  const [searchFilter, setSearchFilter] = useState('')
+
+  const [claimType, setClaimType] = useState<string | undefined>(
+    searchRoute.claimType,
+  )
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(
+    searchRoute.claimType,
+  )
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialDateRange,
+  )
+
+  const statusOptions = [
+    { label: 'Approved', optionValue: 'Approved' },
+    { label: 'Rejected', optionValue: 'Rejected' },
+    { label: 'Submitted', optionValue: 'Submitted' },
+    { label: 'Under Review', optionValue: 'UnderReview' },
+    { label: 'Need Revision', optionValue: 'NeedRevision' },
+    { label: 'Paid', optionValue: 'Paid' },
+  ]
+  const claimTypeOptions = [
+    { label: 'Benefit', optionValue: 'Benefit' },
+    {
+      label: 'OperationalReimbursement',
+      optionValue: 'OperationalReimbursement',
+    },
+    {
+      label: 'BusinessTripReimbursement',
+      optionValue: 'BusinessTripReimbursement',
+    },
+  ]
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -97,7 +113,10 @@ function RouteComponent() {
       ['Submitted', 'UnderReview'].includes(c.status),
     )
     const waitingCount = waitingClaims.length
-    const waitingAmount = waitingClaims.reduce((sum, c) => sum + (c.amount || 0), 0)
+    const waitingAmount = waitingClaims.reduce(
+      (sum, c) => sum + (c.amount || 0),
+      0,
+    )
 
     const approvedPaidClaims = claims.filter((c) =>
       ['Approved', 'Paid'].includes(c.status),
@@ -151,22 +170,6 @@ function RouteComponent() {
     })
   }, [claims, searchQuery, activeTab])
 
-  const sortedClaims = useMemo(() => {
-  return [...filteredClaims].sort((a, b) => {
-    const priorityDifference =
-      getClaimPriority(a.status) - getClaimPriority(b.status)
-
-    if (priorityDifference !== 0) {
-      return priorityDifference
-    }
-
-    return (
-      getSubmittedAtTime(b.submittedAt) -
-      getSubmittedAtTime(a.submittedAt)
-    )
-  })
-}, [filteredClaims])
-
   return (
     <main className="min-w-0 space-y-6">
       {/* Header */}
@@ -187,7 +190,7 @@ function RouteComponent() {
       </div>
 
       {/* 3 KPI Summary Cards */}
-<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {/* KPI 1: Total Claims */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
           <div className="flex items-center justify-between">
@@ -246,23 +249,24 @@ function RouteComponent() {
       {/* Claims Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-      <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
-        <div className="min-w-0">
-          <h2 className="font-semibold text-foreground text-base">
+        <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
+          <div className="min-w-0">
+            <h2 className="font-semibold text-foreground text-base">
               Claim Requests
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Select a claim to view its details and approval workflow.
             </p>
           </div>
-        
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
+            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+              <button
                 type="button"
                 onClick={() => setActiveTab('ALL')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'ALL'
                     ? 'bg-card text-foreground shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -272,7 +276,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('WAITING')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'WAITING'
                     ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -282,7 +287,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('APPROVED')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'APPROVED'
                     ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -292,7 +298,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('PAID')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'PAID'
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'PAID'
                     ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -302,7 +309,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'REVISION_OR_REJECTED'
                     ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -332,36 +340,80 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 </button>
               )}
             </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button>
+                  <Filter /> Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="grid grid-cols-1 gap-4 w-fit"
+              >
+                <FilterSelect
+                  val={statusFilter}
+                  setValue={setStatusFilter}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullable
+                  nullLabel="All Statuses"
+                />
+
+                <FilterSelect
+                  val={claimType}
+                  setValue={setClaimType}
+                  options={claimTypeOptions}
+                  filterLabel="Claim Type"
+                  nullable
+                  nullLabel="All Claims"
+                />
+
+                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchFilter('')
+                      setClaimType(undefined)
+                      setDateRange(undefined)
+                      setStatusFilter(undefined)
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
+                <Button onClick={applyFilterClick}>Apply</Button>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
         {/* Table Content */}
-        {isLoading ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Loading claims...
-          </div>
-        ) : isError ? (
-          <div className="p-10 text-center text-sm text-destructive">
-            {error instanceof Error ? error.message : 'Failed to load claims.'}
-          </div>
-        ) : filteredClaims.length === 0 ? (
+        {claims.length === 0 ? (
           <div className="p-12 text-center">
             <Receipt size={36} className="mx-auto text-muted-foreground/40" />
-            <h3 className="mt-3 font-medium text-foreground">No claims found</h3>
+            <h3 className="mt-3 font-medium text-foreground">
+              No claims found
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchQuery || activeTab !== 'ALL'
+              {searchFilter
                 ? 'No claims match your filter criteria.'
                 : 'There are currently no claims available for review.'}
             </p>
           </div>
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
-            <table className="w-full min-w-[1050px] whitespace-nowrap text-left text-sm">
+            <table className="w-full min-w-262.5 whitespace-nowrap text-left text-sm">
               <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-5 py-3.5 font-medium">Employee</th>
                   <th className="px-5 py-3.5 font-medium">Claim Type</th>
-                  <th className="px-5 py-3.5 font-medium">Benefit / Trip Details</th>
+                  <th className="px-5 py-3.5 font-medium">
+                    Benefit / Trip Details
+                  </th>
                   <th className="px-5 py-3.5 font-medium">Invoice Date</th>
                   <th className="px-5 py-3.5 font-medium">Amount</th>
                   <th className="px-5 py-3.5 font-medium">Submitted</th>
@@ -371,7 +423,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               </thead>
 
               <tbody className="divide-y divide-border">
-                {sortedClaims.map((claim) => {
+                {filteredClaims.map((claim) => {
                   const typeBadge = getClaimTypeBadge(claim.claimType)
                   const TypeIcon = typeBadge.icon
                   const statusConfig = getStatusBadgeConfig(claim.status)
@@ -414,7 +466,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                       </td>
 
                       {/* Benefit / Trip details with Claim ID code */}
-                      <td className="max-w-[260px] truncate px-5 py-4">
+                      <td className="max-w-65 truncate px-5 py-4">
                         <div className="font-medium text-foreground truncate">
                           {claim.benefitName ||
                             claim.tripProposalDescription ||
@@ -464,6 +516,18 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 })}
               </tbody>
             </table>
+
+            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>
+                  Menampilkan {claims.length} dari {response.totalCount} total
+                  employees
+                </span>
+              </div>
+              <div className="w-fit grow-0">
+                <PaginationSection pagination={paginationProp} />
+              </div>
+            </div>
           </div>
         )}
       </section>

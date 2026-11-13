@@ -8,6 +8,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export interface ClaimFilterParams {
+  search?: string
   claimType?: string
   status?: string
   startDate?: string
