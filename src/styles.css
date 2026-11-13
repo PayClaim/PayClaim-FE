@@ -443,10 +443,52 @@ a {
   animation: flow-in 500ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
 }
 
+.page-flow-in tbody tr {
+  transition: background-color 180ms ease;
+}
+
+.timeline-stagger > div {
+  animation: flow-in 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.timeline-stagger > div:nth-child(1) {
+  animation-delay: 40ms;
+}
+.timeline-stagger > div:nth-child(2) {
+  animation-delay: 110ms;
+}
+.timeline-stagger > div:nth-child(3) {
+  animation-delay: 180ms;
+}
+.timeline-stagger > div:nth-child(4) {
+  animation-delay: 250ms;
+}
+
+@keyframes shimmer-slide {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 85%, transparent) 25%,
+    color-mix(in oklab, var(--muted) 45%, var(--card)) 50%,
+    color-mix(in oklab, var(--muted) 85%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-slide 1.5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-flow-in,
   .page-flow-in .grid > div,
-  .page-flow-in section {
+  .page-flow-in section,
+  .timeline-stagger > div,
+  .skeleton-shimmer {
     animation: none !important;
     transition: none !important;
     transform: none !important;

@@ -1,9 +1,10 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
+import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 
 import {
   ArrowRight,
@@ -70,6 +71,8 @@ function RouteComponent() {
 
   // Filter & Search states
   const [searchFilter, setSearchFilter] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  useSearchShortcut(searchInputRef)
 
   const [claimType, setClaimType] = useState<string | undefined>(
     searchRoute.claimType,
@@ -269,12 +272,18 @@ function RouteComponent() {
                 <div className="relative grow max-w-70 sm:w-64">
                   <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
+                    ref={searchInputRef}
                     type="text"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                     placeholder="Search employee name, or benefits..."
-                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                    className="w-full pl-9 pr-9 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                   />
+                  {!searchFilter && (
+                    <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      /
+                    </kbd>
+                  )}
                 </div>
                 <Button onClick={applyFilterClick}>Search</Button>
               </ButtonGroup>

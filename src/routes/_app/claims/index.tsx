@@ -4,12 +4,14 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
+import { ErrorComponent } from '#/components/ErrorAndLoading'
+import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 import { Button } from '#/components/ui/button'
 
 import {
@@ -84,6 +86,8 @@ function RouteComponent() {
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  useSearchShortcut(searchInputRef)
   const [activeTab, setActiveTab] = useState<StatusTab>('ALL')
 
   // KPI Calculations
@@ -175,7 +179,7 @@ function RouteComponent() {
 }, [filteredClaims])
 
   if (isError) return <ErrorComponent pageTitle="My Claims" />
-  if (isPending) return <LoadingComponent pageTitle="My Claims" />
+  if (isPending) return <ListPageSkeleton />
 
   if (!claimResponse) return <NotFoundPage />
   const { data, errors, message, statusCode, success, ...paginationProp } =
@@ -332,20 +336,25 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search description, benefit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8.5 pr-8 py-1.5 text-xs bg-muted/40 border border-border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/50 transition-colors"
+                className="w-full pl-8.5 pr-9 py-1.5 text-xs bg-muted/40 border border-border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/50 transition-colors"
               />
-              {searchQuery && (
+              {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
+              ) : (
+                <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  /
+                </kbd>
               )}
             </div>
           </div>
