@@ -73,7 +73,7 @@ export function ListPageSkeleton() {
 
 export function DetailPageSkeleton() {
   const visible = useDeferredVisibility(200)
-  if (!visible) return null
+  if (!visible) return <div className="min-h-180" />
 
   return (
     <main

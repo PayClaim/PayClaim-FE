@@ -5,7 +5,7 @@ import {
   createFileRoute,
   Outlet,
   redirect,
-  useLocation,
+  useMatches,
 } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
@@ -38,14 +38,15 @@ export const Route = createFileRoute('/_app')({
 })
 
 function RouteComponent() {
-  const location = useLocation()
+  const matches = useMatches()
+  const activePath = matches[matches.length - 1]?.pathname ?? 'root'
 
   return (
     <div className="bg-background">
       <Sidebar className="fixed" />
       <div className="grow ms-75 min-h-screen pb-16">
         <Header />
-        <div key={location.pathname} className="p-7.5 page-flow-in">
+        <div key={activePath} className="p-7.5 page-flow-in">
           <Outlet />
         </div>
       </div>
