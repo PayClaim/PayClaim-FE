@@ -139,6 +139,7 @@ function RouteComponent() {
       if (q) {
         const desc = (claim.description || '').toLowerCase()
         const benefit = (claim.benefitName || '').toLowerCase()
+        const tripDest = (claim.tripProposalDestination || '').toLowerCase()
         const trip = (claim.tripProposalDescription || '').toLowerCase()
         const id = (claim.id || '').toLowerCase()
         const claimType = (claim.claimType || '').toLowerCase()
@@ -146,6 +147,7 @@ function RouteComponent() {
         return (
           desc.includes(q) ||
           benefit.includes(q) ||
+          tripDest.includes(q) ||
           trip.includes(q) ||
           id.includes(q) ||
           claimType.includes(q)
@@ -204,59 +206,58 @@ function RouteComponent() {
       </div>
 
       {/* KPI Overview Metrics Cards */}
-<div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* KPI 1: Total Claims */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Total Klaim Diajukan
             </span>
-            <div className="w-10 h-10 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 flex items-center justify-center text-slate-600 dark:text-slate-300">
-              <Receipt className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+              <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-foreground">
+          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
             {metrics.totalCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.totalAmount)} total diajukan
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.totalAmount)}</span> total diajukan
           </p>
         </div>
 
         {/* KPI 2: Waiting Review */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Menunggu Review
             </span>
-            <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.waitingAmount)} dalam proses
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.waitingAmount)}</span> dalam proses
           </p>
         </div>
 
         {/* KPI 3: Approved / Paid */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">
+        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider">
               Disetujui / Selesai (Paid)
             </span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
-          </p>
-          <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.approvedPaidAmount)} telah
-            disetujui/cair
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> telah disetujui/cair
           </p>
         </div>
       </div>
@@ -355,9 +356,9 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         <div className="overflow-x-auto">
 <table className="w-full min-w-[950px] text-left border-collapse text-xs">            <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-5">Keterangan / Manfaat</th>
                 <th className="py-3 px-5">Tanggal Transaksi</th>
                 <th className="py-3 px-5">Tipe Klaim</th>
-                <th className="py-3 px-5">Keterangan / Manfaat</th>
                 <th className="py-3 px-5 text-right">Nominal</th>
                 <th className="py-3 px-5 text-center">Status</th>
                 <th className="py-3 px-5 text-right">Aksi</th>
@@ -368,6 +369,9 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 const typeBadge = getClaimTypeBadge(claim.claimType)
                 const TypeIcon = typeBadge.icon
                 const statusConfig = getStatusBadgeConfig(claim.status)
+                const tripTitle = claim.tripProposalDestination
+                  ? `Business Trip to ${claim.tripProposalDestination}`
+                  : claim.tripProposalDescription
 
                 return (
                   <tr
@@ -380,6 +384,22 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                     }
                     className="hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
+                    {/* Keterangan / Manfaat */}
+                    <td className="py-3.5 px-5 min-w-[240px] max-w-[300px]">
+                      <span className="block truncate whitespace-nowrap font-medium text-foreground">
+                        {claim.benefitName ||
+                          tripTitle ||
+                          claim.description ||
+                          '-'}
+                      </span>
+
+                      {claim.description && (claim.benefitName || tripTitle) && (
+                        <span className="mt-0.5 block truncate whitespace-nowrap text-[11px] text-muted-foreground">
+                          {claim.description}
+                        </span>
+                      )}
+                    </td>
+
                     {/* Tanggal Transaksi */}
                     <td className="py-3.5 px-5 font-medium text-foreground whitespace-nowrap">
                       {formatDate(claim.transactionDate)}
@@ -398,27 +418,11 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                       </span>
                     </td>
 
-                    {/* Keterangan / Manfaat */}
-                    <td className="py-3.5 px-5 min-w-[240px] max-w-[300px]">
-                      <span className="block truncate whitespace-nowrap font-medium text-foreground">
-                        {claim.benefitName ||
-                          claim.tripProposalDescription ||
-                          claim.description ||
-                          '-'}
-                      </span>
-
-                      {claim.description &&
-                        (claim.benefitName ||
-                          claim.tripProposalDescription) && (
-                          <span className="mt-0.5 block truncate whitespace-nowrap text-[11px] text-muted-foreground">
-                            {claim.description}
-                          </span>
-                        )}
-                    </td>
-
                     {/* Nominal */}
-                    <td className="py-3.5 px-5 text-right font-mono font-bold text-foreground whitespace-nowrap">
-                      {idNumberFormatter.format(claim.amount)}
+                    <td className="py-3.5 px-5 text-right whitespace-nowrap">
+                      <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+                        {idNumberFormatter.format(claim.amount)}
+                      </span>
                     </td>
 
                     {/* Status */}

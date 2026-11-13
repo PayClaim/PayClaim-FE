@@ -68,6 +68,7 @@ function RouteComponent() {
   const {
     data: employeesResponse,
     isError,
+    error,
     isFetching,
   } = useGetAllEmployeeQuery(searchParams)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
@@ -122,8 +123,10 @@ function RouteComponent() {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data karyawan. Silakan coba kembali
-          nanti.
+          An error occurs when loading employees data.
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load employees data.'}
         </div>
       </main>
     )
@@ -133,7 +136,9 @@ function RouteComponent() {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data karyawan...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading employees data...
+        </p>
       </main>
     )
   }
@@ -159,8 +164,8 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Kelola data master karyawan, jabatan, departemen, dan direct
-              manager penilai klaim.
+              Manage master data of employees, positions, departments, and
+              direct manager for claims approver.
             </p>
           </div>
         </div>
@@ -186,7 +191,7 @@ function RouteComponent() {
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Search name, department, or position..."
-                  className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                  className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                 />
               </div>
               <Button onClick={applyFilterClick}>Search</Button>
@@ -256,8 +261,8 @@ function RouteComponent() {
             <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Menampilkan {employeeList.length} dari{' '}
-                  {employeesResponse.totalCount} total employees
+                  Showing {employeeList.length} of{' '}
+                  {employeesResponse.totalCount} employees total
                 </span>
               </div>
               <div className="w-fit grow-0">
@@ -273,12 +278,12 @@ function RouteComponent() {
             />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-heading">
-                Tidak ada data karyawan ditemukan
+                Employees not found
               </p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
-                  ? 'Tidak ada data karyawan yang cocok dengan kriteria filter saat ini.'
-                  : 'Belum ada data karyawan yang terdaftar di sistem.'}
+                  ? 'No employees data that match with the filters.'
+                  : 'No registered employees available yet.'}
               </p>
             </div>
             {hasActiveFilters && (
@@ -465,23 +470,22 @@ function DeleteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Nonaktifkan Karyawan</DialogTitle>
+          <DialogTitle>Deactivate Employee</DialogTitle>
           <DialogDescription className="text-sm pt-1 space-y-2">
             <p>
-              Apakah Anda yakin ingin menonaktifkan karyawan{' '}
-              <strong>"{name}"</strong>?
+              Are you sure want to deactivate employee <strong>"{name}"</strong>
+              ?
             </p>
             <p className="text-xs text-muted-foreground">
-              Akun login akan dinonaktifkan sehingga karyawan tidak dapat login
-              kembali. Seluruh data riwayat klaim dan audit tetap disimpan aman
-              demi kepatuhan pembukuan.
+              The account will be deactivate, so the employee no longer able to
+              login. Employee history will be kept for company auditing purpose.
             </p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
             <Button variant="outline" size="sm">
-              Batal
+              Cancel
             </Button>
           </DialogClose>
           <form
@@ -492,7 +496,7 @@ function DeleteDialog({
             }}
           >
             <Button variant="destructive" size="sm" type="submit">
-              Nonaktifkan
+              Deactivate
             </Button>
           </form>
         </DialogFooter>
@@ -516,12 +520,10 @@ function ActivateDialog({
   const handleActivate = async () => {
     try {
       await activateMutation.mutateAsync(id)
-      toast.success(`Karyawan ${name} berhasil diaktifkan kembali.`)
+      toast.success(`Employee ${name} successfully reactivated.`)
       setOpen(false)
     } catch (err: unknown) {
-      toast.error(
-        getFriendlyErrorMessage(err, 'Gagal mengaktifkan kembali karyawan'),
-      )
+      toast.error(getFriendlyErrorMessage(err, 'Failed to reactivate employee'))
     }
   }
 
@@ -530,15 +532,15 @@ function ActivateDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Aktifkan Kembali Karyawan</DialogTitle>
+          <DialogTitle>Reactivate Employee</DialogTitle>
           <DialogDescription className="text-sm pt-1 space-y-2">
             <p>
-              Apakah Anda yakin ingin mengaktifkan kembali karyawan{' '}
-              <strong>"{name}"</strong>?
+              Are you sure want to reactivate employee <strong>"{name}"</strong>
+              ?
             </p>
             <p className="text-xs text-muted-foreground">
-              Akun login akan dipulihkan dan kuota benefit tahun berjalan akan
-              disinkronkan kembali sesuai jabatannya.
+              The account will be reactivated and the benefit will be applied
+              according to its position and department
             </p>
           </DialogDescription>
         </DialogHeader>
@@ -549,7 +551,7 @@ function ActivateDialog({
               size="sm"
               disabled={activateMutation.isPending}
             >
-              Batal
+              Cancel
             </Button>
           </DialogClose>
           <Button
@@ -560,8 +562,8 @@ function ActivateDialog({
             disabled={activateMutation.isPending}
           >
             {activateMutation.isPending
-              ? 'Mengaktifkan...'
-              : 'Aktifkan Karyawan'}
+              ? 'Reactivating...'
+              : 'Activate Employee'}
           </Button>
         </DialogFooter>
       </DialogContent>

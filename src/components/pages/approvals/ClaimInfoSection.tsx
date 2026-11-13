@@ -74,7 +74,9 @@ export function ClaimInfoSection({
         <InfoField label="Benefit / Trip Reference">
           <p className="font-semibold text-heading">
             {claim.benefitName ||
-              claim.tripProposalDescription ||
+              (claim.tripProposalDestination
+                ? `Business Trip to ${claim.tripProposalDestination}`
+                : claim.tripProposalDescription) ||
               'Operational Expense'}
           </p>
         </InfoField>

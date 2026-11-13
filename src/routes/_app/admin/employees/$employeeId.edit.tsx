@@ -4,6 +4,7 @@ import {
   useGetAllEmployeesQuery,
   useGetEmployeeQuery,
 } from '#/features/employees/queries/queries'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import type { EmployeeResponse } from '#/types/employee.type'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -103,12 +104,12 @@ function EditEmployeeFormContent({
     value: d.id,
   }))
 
-  const managerOptions = employees
-    .filter((e) => e.id !== employeeId)
-    .map((e) => ({
-      label: e.fullName,
-      value: e.id,
-    }))
+  const managerGroups = buildEmployeeGroups(employees, {
+    filter: (employee) =>
+      employee.id !== employeeId &&
+      employee.positionTitle.toLowerCase().includes('manager'),
+    label: (employee) => `${employee.fullName} (${employee.number})`,
+  })
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
@@ -226,7 +227,7 @@ function EditEmployeeFormContent({
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerOptions}
+                          groups={managerGroups}
                           label="Direct Manager (Penilai Klaim Level 1)"
                           placeholder="Pilih Direct Manager"
                           disabled={isInactive}

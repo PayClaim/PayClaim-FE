@@ -9,6 +9,7 @@ export interface ClaimResponse {
   employeeId: string
   employeeName: string | null
   benefitName: string | null
+  tripProposalDestination?: string | null
   tripProposalDescription: string | null
   filePath: string | null
 }

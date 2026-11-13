@@ -1,6 +1,7 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { createEmployeeForm } from '#/features/employees/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft, Users } from 'lucide-react'
@@ -26,10 +27,11 @@ function RouteComponent() {
   }))
 
   const { data: employees = [] } = useGetAllEmployeesQuery()
-  const managerOptions = employees.map((e) => ({
-    label: e.fullName,
-    value: e.id,
-  }))
+  const managerGroups = buildEmployeeGroups(employees, {
+    filter: (employee) =>
+      employee.positionTitle.toLowerCase().includes('manager'),
+    label: (employee) => `${employee.fullName} (${employee.number})`,
+  })
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
@@ -123,7 +125,7 @@ function RouteComponent() {
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerOptions}
+                          groups={managerGroups}
                           label="Direct Manager (Penilai Klaim Level 1)"
                           placeholder="Pilih Direct Manager"
                         />

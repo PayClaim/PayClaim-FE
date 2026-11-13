@@ -66,12 +66,21 @@ export function FinanceStage({
     </span>
   )
 
+  const isFinanceDirect = Boolean(
+    claim.departmentName?.toLowerCase().includes('finance'),
+  )
+
   return (
     <TimelineStage
       title="Finance Verification & Disbursement"
       statusBadge={statusBadge}
       tone={tone}
-      approverName={approval?.approverName || 'Finance Officer'}
+      approverName={
+        approval?.approverName ||
+        (isFinanceDirect
+          ? claim.managerName || 'Finance Manager'
+          : 'Finance Officer')
+      }
       showViewButton={hasReceipt}
       onView={onPreview}
     >

@@ -28,8 +28,10 @@ export function ClaimSummaryHeader({
     normalizedClaimType === 'operationalreimbursement'
       ? `Operational Reimbursement #${claimReferenceId}`
       : normalizedClaimType === 'businesstripreimbursement'
-        ? claim.tripProposalDescription?.trim() ||
-          'Business Trip Reimbursement'
+        ? claim.tripProposalDestination?.trim()
+          ? `Business Trip to ${claim.tripProposalDestination.trim()}`
+          : claim.tripProposalDescription?.trim() ||
+            'Business Trip Reimbursement'
         : claim.benefitName?.trim() || 'Benefit Reimbursement'
 
   return (
