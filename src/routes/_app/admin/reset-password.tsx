@@ -1,5 +1,6 @@
 import { resetPasswordForm } from '#/features/auth/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/admin/reset-password')({
@@ -11,12 +12,13 @@ function RouteComponent() {
   const { data: employees = [] } = useGetAllEmployeesQuery()
 
   // Backend menerima username atau email sebagai identifier akun
-  const accountOptions = employees
-    .filter((e) => e.isActive && e.email)
-    .map((e) => ({
-      label: `${e.fullName} (${e.number}) - ${e.email}`,
-      value: e.email,
-    }))
+  const accountGroups = buildEmployeeGroups(
+    employees.filter((e) => e.isActive && e.email),
+    {
+      label: (e) => `${e.fullName} (${e.number}) - ${e.email}`,
+      value: (e) => e.email,
+    },
+  )
 
   return (
     <main className="bg-card max-w-200 rounded-2xl p-4 mx-auto">
@@ -36,7 +38,7 @@ function RouteComponent() {
         <form.AppField name="username">
           {(field) => (
             <field.FormSelect
-              values={accountOptions}
+              groups={accountGroups}
               label="Account"
               placeholder="Select account"
             />
