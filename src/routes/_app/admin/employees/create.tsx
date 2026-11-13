@@ -135,7 +135,7 @@ function RouteComponent() {
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerGroups}
+                          groups={managerGroups}
                           label="Direct Manager (Level 1 claim approver)"
                           placeholder="Pick a Direct Manager"
                         />

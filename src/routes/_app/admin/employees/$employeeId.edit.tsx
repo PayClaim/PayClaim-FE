@@ -112,12 +112,6 @@ function EditEmployeeFormContent({
       e.id !== employeeId && e.positionTitle.toLowerCase().includes('manager'),
     label: (e) => `${e.fullName} (${e.number})`,
   })
-  // const managerOptions = employees
-  //   .filter((e) => e.id !== employeeId)
-  //   .map((e) => ({
-  //     label: e.fullName,
-  //     value: e.id,
-  //   }))
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
@@ -230,7 +224,7 @@ function EditEmployeeFormContent({
                       {(field) => (
                         <field.FormSelect
                           nullable
-                          values={managerGroups}
+                          groups={managerGroups}
                           label="Direct Manager (Level 1 claim approver)"
                           placeholder="Pick a Direct Manager"
                           disabled={isInactive}
