@@ -244,7 +244,7 @@ function RouteComponent() {
               <Layers className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.activeWithBalanceCount}{' '}
             <span className="text-sm font-sans font-medium text-muted-foreground">
               / {metrics.totalCount} Benefits

@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -43,6 +44,7 @@ export const useGetAllProposalsQuery = (
       : ['trip-proposals'],
     queryFn: () => getAllProposals(employeeId),
     enabled,
+    placeholderData: keepPreviousData,
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery
@@ -58,6 +60,9 @@ export const useCreateTripProposalMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['trip-proposals'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'summary'],
       })
     },
   })
@@ -92,9 +97,14 @@ export const useUpdateTripProposalMutation = (id: string) => {
     },
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['trip-proposals'],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['trip-proposals'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['dashboard', 'summary'],
+        }),
+      ])
     },
   })
 }
@@ -108,9 +118,14 @@ export const useApproveTripProposalMutation = (id: string) => {
       api.post(`/trip-proposals/${id}/approve`, body),
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['trip-proposals'],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['trip-proposals'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['dashboard', 'summary'],
+        }),
+      ])
     },
   })
 }
@@ -124,9 +139,14 @@ export const useRejectTripProposalMutation = (id: string) => {
       api.post(`/trip-proposals/${id}/reject`, body),
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['trip-proposals'],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['trip-proposals'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['dashboard', 'summary'],
+        }),
+      ])
     },
   })
 }

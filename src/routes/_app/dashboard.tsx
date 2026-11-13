@@ -7,12 +7,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import { useGetAllEmployeeBenefitsQuery } from '#/features/employee-benefits/queries/queries'
 import {
-  useGetAdminAllClaimsQuery,
-  useGetAllClaimsQuery,
-} from '#/features/claims/queries/queries'
-import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
+  useGetDashboardSummaryQuery,
+} from '#/features/dashboard/queries/queries'
+import type {
+  DashboardBenefitItem,
+  DashboardRecentAction,
+  ExpenseTrendPeriod,
+} from '#/features/dashboard/queries/queries'
 
 import {
   ArrowRight,
@@ -32,8 +34,6 @@ export const Route = createFileRoute('/_app/dashboard')({
   component: Dashboard,
 })
 
-const DASHBOARD_PAGE_SIZE = 100
-
 type DashboardRoute =
   | '/claims'
   | '/claims/create'
@@ -46,74 +46,12 @@ type PeriodFilter = 'month' | 'sixMonths' | 'year' | 'all'
 type BenefitFrequency = 'monthly' | 'yearly' | 'all'
 type OverviewView = 'claims' | 'trips'
 
-type DashboardClaim = {
-  id: string
-  employeeId?: string
-  employeeName?: string | null
-  amount: number
-  status: string
-  transactionDate?: string | null
-  submittedAt?: string | null
-  updatedAt?: string | null
-  modifiedAt?: string | null
-  claimType?: string | null
-  benefitName?: string | null
-  tripProposalDescription?: string | null
-  description?: string | null
-}
-
-type DashboardProposal = {
-  id: string
-  destination: string
-  status: string
-  totalAmount: number
-  submittedAt?: string | null
-  updatedAt?: string | null
-  modifiedAt?: string | null
-  startDate?: string
-  endDate?: string
-  picEmployeeId?: string | null
-  picName?: string | null
-}
-
-type DashboardBenefit = {
-  employeeBenefitId: string
-  benefitName: string
-  balance: number
-  periodType?: string | number | null
-  startDate?: string
-  endDate?: string
-  periodStartDate?: string
-  periodEndDate?: string
-  validFrom?: string
-  validTo?: string
-  createdAt?: string
-}
-
 type TodaySummaryAction = {
   id: string
   title: string
   description: string
   count: number
   to: DashboardRoute
-}
-
-type RecentAction = {
-  id: string
-  type: 'Claim' | 'Trip'
-  title: string
-  description: string
-  status: string
-  amount: number
-  date: string
-  timestamp: number
-  href: string
-}
-
-type ExpenseBucket = {
-  key: string
-  label: string
-  amount: number
 }
 
 type StatusDefinition = {
@@ -238,14 +176,6 @@ function getDateKey(value?: string | null): string {
   return match?.[1] ?? ''
 }
 
-function getTimestamp(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
 function formatDate(value?: string | null): string {
   const dateKey = getDateKey(value)
 
@@ -277,93 +207,6 @@ function getJakartaDateParts() {
   }
 }
 
-function getMonthKey(year: number, month: number): string {
-  return `${year}-${String(month + 1).padStart(2, '0')}`
-}
-
-function getPeriodStartKey(period: PeriodFilter): string {
-  const current = getJakartaDateParts()
-  const year = Number(current.year)
-  const month = Number(current.month) - 1
-
-  if (period === 'month') {
-    return `${current.year}-${current.month}-01`
-  }
-
-  if (period === 'year') {
-    return `${current.year}-01-01`
-  }
-
-  if (period === 'sixMonths') {
-    const start = new Date(Date.UTC(year, month - 5, 1))
-
-    return `${start.getUTCFullYear()}-${String(
-      start.getUTCMonth() + 1,
-    ).padStart(2, '0')}-01`
-  }
-
-  return '0000-01-01'
-}
-
-function matchesPeriod(
-  dateValue: string | null | undefined,
-  period: PeriodFilter,
-): boolean {
-  if (period === 'all') return true
-
-  const dateKey = getDateKey(dateValue)
-
-  if (!dateKey) return false
-
-  const current = getJakartaDateParts()
-  const currentMonth = `${current.year}-${current.month}`
-
-  if (period === 'month') {
-    return dateKey.startsWith(currentMonth)
-  }
-
-  if (period === 'year') {
-    return dateKey.startsWith(current.year)
-  }
-
-  return dateKey >= getPeriodStartKey('sixMonths')
-}
-
-function getUpdatedAt(item: {
-  updatedAt?: string | null
-  modifiedAt?: string | null
-}): string | null {
-  return item.updatedAt || item.modifiedAt || null
-}
-
-function isUpdatedToday(
-  submittedAt: string | null | undefined,
-  updatedAt: string | null | undefined,
-  todayKey: string,
-): boolean {
-  if (!submittedAt || !updatedAt) return false
-
-  return (
-    getTimestamp(updatedAt) > getTimestamp(submittedAt) &&
-    getDateKey(updatedAt) === todayKey
-  )
-}
-
-function getPaidClaims(claims: DashboardClaim[]) {
-  return claims.filter(
-    (claim) => normalizeStatus(claim.status) === 'paid',
-  )
-}
-
-function getPaidClaimsByPeriod(
-  claims: DashboardClaim[],
-  period: PeriodFilter,
-): DashboardClaim[] {
-  return getPaidClaims(claims).filter((claim) =>
-    matchesPeriod(claim.transactionDate, period),
-  )
-}
-
 function getPeriodLabel(period: PeriodFilter): string {
   switch (period) {
     case 'month':
@@ -377,103 +220,12 @@ function getPeriodLabel(period: PeriodFilter): string {
   }
 }
 
-function getExpenseBuckets(
-  claims: DashboardClaim[],
-  period: PeriodFilter,
-): ExpenseBucket[] {
-  const paidClaims = getPaidClaimsByPeriod(claims, period)
-  const current = getJakartaDateParts()
-  const year = Number(current.year)
-  const month = Number(current.month) - 1
-
-  if (period === 'month') {
-    const buckets: ExpenseBucket[] = Array.from(
-      { length: 5 },
-      (_, index) => ({
-        key: `week-${index + 1}`,
-        label: `Week ${index + 1}`,
-        amount: 0,
-      }),
-    )
-
-    paidClaims.forEach((claim) => {
-      const day = Number(
-        getDateKey(claim.transactionDate).slice(8, 10),
-      )
-
-      if (!day) return
-
-      const weekIndex = Math.min(4, Math.floor((day - 1) / 7))
-
-      buckets[weekIndex].amount += getAmount(claim.amount)
-    })
-
-    return buckets
-  }
-
-  if (period === 'all') {
-    const yearAmounts = new Map<number, number>()
-
-    paidClaims.forEach((claim) => {
-      const dateKey = getDateKey(claim.transactionDate)
-
-      if (!dateKey) return
-
-      const claimYear = Number(dateKey.slice(0, 4))
-
-      yearAmounts.set(
-        claimYear,
-        (yearAmounts.get(claimYear) ?? 0) + getAmount(claim.amount),
-      )
-    })
-
-    return Array.from(yearAmounts.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([claimYear, amount]) => ({
-        key: String(claimYear),
-        label: String(claimYear),
-        amount,
-      }))
-  }
-
-  const firstMonth = period === 'year' ? 0 : month - 5
-  const numberOfMonths = period === 'year' ? month + 1 : 6
-
-  return Array.from({ length: numberOfMonths }, (_, index) => {
-    const date = new Date(
-      Date.UTC(year, firstMonth + index, 1),
-    )
-
-    const bucketYear = date.getUTCFullYear()
-    const bucketMonth = date.getUTCMonth()
-    const key = getMonthKey(bucketYear, bucketMonth)
-
-    const amount = paidClaims
-      .filter((claim) =>
-        getDateKey(claim.transactionDate).startsWith(key),
-      )
-      .reduce(
-        (total, claim) => total + getAmount(claim.amount),
-        0,
-      )
-
-    return {
-      key,
-      label: new Intl.DateTimeFormat('id-ID', {
-        month: 'short',
-        timeZone: 'UTC',
-      }).format(date),
-      amount,
-    }
-  })
-}
-
 // =====================================================
 // BENEFIT FREQUENCY
 // =====================================================
 
 function getBenefitFrequency(
-  benefit: DashboardBenefit,
+  benefit: DashboardBenefitItem,
 ): Exclude<BenefitFrequency, 'all'> | null {
   const periodType = String(benefit.periodType ?? '')
     .trim()
@@ -492,17 +244,8 @@ function getBenefitFrequency(
   }
 
   // Fallback apabila API belum mengirimkan PeriodType.
-  const start = getDateKey(
-    benefit.periodStartDate ||
-      benefit.startDate ||
-      benefit.validFrom,
-  )
-
-  const end = getDateKey(
-    benefit.periodEndDate ||
-      benefit.endDate ||
-      benefit.validTo,
-  )
+  const start = getDateKey(benefit.startDate)
+  const end = getDateKey(benefit.endDate)
 
   if (!start || !end) return null
 
@@ -521,7 +264,7 @@ function getBenefitFrequency(
 }
 
 function benefitMatchesFrequency(
-  benefit: DashboardBenefit,
+  benefit: DashboardBenefitItem,
   frequency: BenefitFrequency,
 ): boolean {
   if (frequency === 'all') return true
@@ -777,25 +520,30 @@ function QuickAccessCard({
 // STATUS DISTRIBUTION
 // =====================================================
 
-function StatusDistribution<T extends { status: string }>({
-  items,
+function StatusDistribution({
+  countsByStatus,
+  totalCount,
   statuses,
 }: {
-  items: T[]
+  countsByStatus: Record<string, number>
+  totalCount: number
   statuses: StatusDefinition[]
 }) {
+  const normalizedCounts = Object.entries(countsByStatus).reduce<
+    Record<string, number>
+  >((acc, [key, value]) => {
+    const normalized = normalizeStatus(key)
+    acc[normalized] = (acc[normalized] ?? 0) + value
+    return acc
+  }, {})
+
   return (
     <div className="space-y-4">
       {statuses.map((status) => {
-        const count = items.filter(
-          (item) =>
-            normalizeStatus(item.status) === status.key,
-        ).length
+        const count = normalizedCounts[status.key] ?? 0
 
         const percentage =
-          items.length > 0
-            ? (count / items.length) * 100
-            : 0
+          totalCount > 0 ? (count / totalCount) * 100 : 0
 
         return (
           <div key={status.key}>
@@ -827,31 +575,25 @@ function StatusDistribution<T extends { status: string }>({
 // ONE PANEL WITH DROPDOWN
 // =====================================================
 function OverviewPanel({
-  claims,
-  proposals,
+  claimStatusOverview,
+  tripStatusOverview,
 }: {
-  claims: DashboardClaim[]
-  proposals: DashboardProposal[]
+  claimStatusOverview: Record<string, Record<string, number>>
+  tripStatusOverview: Record<string, Record<string, number>>
 }) {
   const [view, setView] = useState<OverviewView>('claims')
   const [period, setPeriod] = useState<PeriodFilter>('year')
 
   const isClaimsView = view === 'claims'
 
-  const filteredClaims = claims.filter((claim) =>
-    matchesPeriod(
-      claim.submittedAt || claim.transactionDate,
-      period,
-    ),
-  )
+  const countsByStatus = isClaimsView
+    ? claimStatusOverview[period] ?? {}
+    : tripStatusOverview[period] ?? {}
 
-  const filteredProposals = proposals.filter((proposal) =>
-    matchesPeriod(proposal.submittedAt, period),
+  const totalCount = Object.values(countsByStatus).reduce(
+    (sum, count) => sum + count,
+    0,
   )
-
-  const totalCount = isClaimsView
-    ? filteredClaims.length
-    : filteredProposals.length
 
   return (
     <DashboardPanel
@@ -895,12 +637,14 @@ function OverviewPanel({
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {isClaimsView ? (
             <StatusDistribution
-              items={filteredClaims}
+              countsByStatus={countsByStatus}
+              totalCount={totalCount}
               statuses={CLAIM_STATUSES}
             />
           ) : (
             <StatusDistribution
-              items={filteredProposals}
+              countsByStatus={countsByStatus}
+              totalCount={totalCount}
               statuses={TRIP_STATUSES}
             />
           )}
@@ -915,36 +659,32 @@ function OverviewPanel({
 // =====================================================
 
 function ExpenseTrendPanel({
-  claims,
+  trendByPeriod,
   title,
 }: {
-  claims: DashboardClaim[]
+  trendByPeriod: Record<string, ExpenseTrendPeriod>
   title: string
 }) {
   const [period, setPeriod] = useState<PeriodFilter>('sixMonths')
 
-  const paidClaims = getPaidClaimsByPeriod(claims, period)
-  const buckets = getExpenseBuckets(claims, period)
+  const currentTrend = trendByPeriod[period] ?? {
+    totalPaid: 0,
+    paidCount: 0,
+    highestAmount: null,
+    lowestAmount: null,
+    buckets: [],
+  }
+
+  const buckets = currentTrend.buckets
+  const paidCount = currentTrend.paidCount
+  const totalPaid = currentTrend.totalPaid
+  const highestAmount = currentTrend.highestAmount
+  const lowestAmount = currentTrend.lowestAmount
 
   const maxAmount = Math.max(
     ...buckets.map((bucket) => bucket.amount),
     0,
   )
-
-  const totalPaid = paidClaims.reduce(
-    (total, claim) => total + getAmount(claim.amount),
-    0,
-  )
-
-  const amounts = paidClaims
-    .map((claim) => getAmount(claim.amount))
-    .filter((amount) => amount > 0)
-
-  const highestAmount =
-    amounts.length > 0 ? Math.max(...amounts) : null
-
-  const lowestAmount =
-    amounts.length > 0 ? Math.min(...amounts) : null
 
   return (
     <DashboardPanel
@@ -967,11 +707,11 @@ function ExpenseTrendPanel({
           </p>
 
           <p className="mt-1 text-xs text-muted-foreground">
-            {paidClaims.length} paid claims · {getPeriodLabel(period)}
+            {paidCount} paid claims · {getPeriodLabel(period)}
           </p>
         </div>
 
-        {paidClaims.length > 0 ? (
+        {paidCount > 0 ? (
           <>
             <div className="flex h-[148px] shrink-0 items-end justify-between gap-2 pb-2">
               {buckets.map((bucket) => {
@@ -1072,7 +812,7 @@ function ExpenseTrendPanel({
 function BenefitOverview({
   benefits,
 }: {
-  benefits: DashboardBenefit[]
+  benefits: DashboardBenefitItem[]
 }) {
   const [frequency, setFrequency] = useState<BenefitFrequency>('all')
 
@@ -1177,7 +917,7 @@ function RecentActions({
   actions,
   isAdmin,
 }: {
-  actions: RecentAction[]
+  actions: DashboardRecentAction[]
   isAdmin: boolean
 }) {
   return (
@@ -1291,56 +1031,11 @@ function Dashboard() {
   // API QUERIES
   // =====================================================
 
-  const {
-    data: employeeBenefits = [],
-    isLoading: isLoadingBenefits,
-  } = useGetAllEmployeeBenefitsQuery(
-    hasUser && !isAdmin,
-  )
+  const { data: summary, isLoading: isLoadingSummary } =
+    useGetDashboardSummaryQuery(hasUser)
 
-  const dashboardClaimParams = {
-    pageNumber: 1,
-    pageSize: DASHBOARD_PAGE_SIZE,
-  }
-
-  const {
-    data: myClaimsResponse,
-    isLoading: isLoadingMyClaims,
-  } = useGetAllClaimsQuery(
-    dashboardClaimParams,
-    hasUser,
-  )
-
-  const {
-    data: adminClaimsResponse,
-    isLoading: isLoadingAdminClaims,
-  } = useGetAdminAllClaimsQuery(
-    dashboardClaimParams,
-    isApprover,
-  )
-
-  const {
-    data: proposalResponse = [],
-    isLoading: isLoadingProposals,
-  } = useGetAllProposalsQuery(
-    isEmployee ? user?.employeeId : undefined,
-    hasUser,
-  )
-
-  const myClaims = (
-    myClaimsResponse?.data ?? []
-  ) as DashboardClaim[]
-
-  const allClaims = (
-    isApprover
-      ? adminClaimsResponse?.data ?? []
-      : myClaimsResponse?.data ?? []
-  ) as DashboardClaim[]
-
-  const proposals = proposalResponse as DashboardProposal[]
-
-  const benefitList =
-    employeeBenefits as unknown as DashboardBenefit[]
+  const benefitList = summary?.benefits ?? []
+  const todaySummary = summary?.todaySummary
 
   // =====================================================
   // DATE
@@ -1364,118 +1059,6 @@ function Dashboard() {
   }).format(currentDateObject)
 
   // =====================================================
-  // PERSONAL CLAIMS
-  // =====================================================
-
-  const myAttentionClaims = myClaims.filter((claim) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(claim.status),
-    ),
-  )
-
-  const myUpdatedClaims = myClaims.filter((claim) =>
-    isUpdatedToday(
-      claim.submittedAt,
-      getUpdatedAt(claim),
-      todayKey,
-    ),
-  )
-
-  // =====================================================
-  // PERSONAL TRIP PROPOSALS
-  // =====================================================
-
-  const myProposals = isEmployee
-    ? proposals
-    : proposals.filter(
-        (proposal) =>
-          proposal.picEmployeeId &&
-          user?.employeeId &&
-          proposal.picEmployeeId.toLowerCase() ===
-            user.employeeId.toLowerCase(),
-      )
-
-  const myAttentionProposals = myProposals.filter((proposal) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(proposal.status),
-    ),
-  )
-
-  const myUpdatedProposals = myProposals.filter((proposal) =>
-    isUpdatedToday(
-      proposal.submittedAt,
-      getUpdatedAt(proposal),
-      todayKey,
-    ),
-  )
-
-  // =====================================================
-  // APPROVAL QUEUE
-  // =====================================================
-
-  const pendingClaimApprovals = allClaims.filter((claim) => {
-    const status = normalizeStatus(claim.status)
-
-    if (
-      claim.employeeId &&
-      user?.employeeId &&
-      claim.employeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
-    ) {
-      return false
-    }
-
-    if (isAdmin) {
-      return ['submitted', 'underreview'].includes(status)
-    }
-
-    if (isManager) {
-      return status === 'submitted'
-    }
-
-    if (isFinance) {
-      return status === 'underreview'
-    }
-
-    return false
-  })
-
-  const pendingTripApprovals = proposals.filter((proposal) => {
-    const status = normalizeStatus(proposal.status)
-
-    if (
-      proposal.picEmployeeId &&
-      user?.employeeId &&
-      proposal.picEmployeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
-    ) {
-      return false
-    }
-
-    if (isAdmin) {
-      return [
-        'submitted',
-        'underreview',
-        'financemanagerreview',
-      ].includes(status)
-    }
-
-    if (isManager) {
-      return status === 'submitted'
-    }
-
-    if (isFinance) {
-      return status === 'underreview'
-    }
-
-    if (isFinanceManager) {
-      return status === 'financemanagerreview'
-    }
-
-    return false
-  })
-
-  // =====================================================
   // TODAY SUMMARY ACTIONS
   // =====================================================
 
@@ -1494,7 +1077,7 @@ function Dashboard() {
       id: 'employee-claims-revision',
       title: 'Claims Need Your Attention',
       description: 'Claims returned or rejected by reviewers.',
-      count: myAttentionClaims.length,
+      count: todaySummary?.myAttentionClaimsCount ?? 0,
       to: '/claims',
     })
 
@@ -1502,7 +1085,7 @@ function Dashboard() {
       id: 'employee-trip-revision',
       title: 'Trip Proposals Need Your Attention',
       description: 'Trip proposals returned or rejected.',
-      count: myAttentionProposals.length,
+      count: todaySummary?.myAttentionProposalsCount ?? 0,
       to: '/trip-proposals',
     })
 
@@ -1510,7 +1093,7 @@ function Dashboard() {
       id: 'employee-claim-updates',
       title: 'Your Claims Were Updated',
       description: 'Check the latest changes to your claim status.',
-      count: myUpdatedClaims.length,
+      count: todaySummary?.myUpdatedClaimsCount ?? 0,
       to: '/claims',
     })
 
@@ -1518,7 +1101,7 @@ function Dashboard() {
       id: 'employee-trip-updates',
       title: 'Trip Proposal Updates',
       description: 'Check the latest changes to your proposals.',
-      count: myUpdatedProposals.length,
+      count: todaySummary?.myUpdatedProposalsCount ?? 0,
       to: '/trip-proposals',
     })
   } else {
@@ -1526,7 +1109,7 @@ function Dashboard() {
       id: 'approval-claims',
       title: 'Claims Need Your Approval',
       description: 'Employee reimbursement claims awaiting review.',
-      count: pendingClaimApprovals.length,
+      count: todaySummary?.pendingClaimApprovalsCount ?? 0,
       to: '/approvals/claims',
     })
 
@@ -1534,7 +1117,7 @@ function Dashboard() {
       id: 'approval-trips',
       title: 'Trip Proposals Need Your Approval',
       description: 'Business trip proposals awaiting your decision.',
-      count: pendingTripApprovals.length,
+      count: todaySummary?.pendingTripApprovalsCount ?? 0,
       to: '/approvals/trip-proposals',
     })
 
@@ -1543,7 +1126,7 @@ function Dashboard() {
       id: 'personal-claim-revision',
       title: 'Your Claims Need Attention',
       description: 'Your own claims returned or rejected.',
-      count: myAttentionClaims.length,
+      count: todaySummary?.myAttentionClaimsCount ?? 0,
       to: '/claims',
     })
 
@@ -1551,7 +1134,7 @@ function Dashboard() {
       id: 'personal-trip-revision',
       title: 'Your Trip Proposals Need Attention',
       description: 'Your own trip proposals returned or rejected.',
-      count: myAttentionProposals.length,
+      count: todaySummary?.myAttentionProposalsCount ?? 0,
       to: '/trip-proposals',
     })
 
@@ -1559,7 +1142,7 @@ function Dashboard() {
       id: 'personal-claim-updates',
       title: 'Your Claims Were Updated',
       description: 'Check changes to your claim status.',
-      count: myUpdatedClaims.length,
+      count: todaySummary?.myUpdatedClaimsCount ?? 0,
       to: '/claims',
     })
 
@@ -1567,95 +1150,19 @@ function Dashboard() {
       id: 'personal-trip-updates',
       title: 'Your Trip Proposals Were Updated',
       description: 'Check changes to your trip proposals.',
-      count: myUpdatedProposals.length,
+      count: todaySummary?.myUpdatedProposalsCount ?? 0,
       to: '/trip-proposals',
     })
   }
 
-  // =====================================================
-  // RECENT ACTIONS
-  // =====================================================
-
-  const uniqueClaims = Array.from(
-    new Map(
-      [...allClaims, ...myClaims].map((claim) => [
-        claim.id,
-        claim,
-      ]),
-    ).values(),
-  )
-
-  const myClaimIds = new Set(
-    myClaims.map((claim) => claim.id),
-  )
-
-  const myProposalIds = new Set(
-    myProposals.map((proposal) => proposal.id),
-  )
-
-  const recentActions: RecentAction[] = [
-    ...uniqueClaims.map((claim): RecentAction => {
-      const isOwnClaim = myClaimIds.has(claim.id)
-
-      return {
-        id: claim.id,
-        type: 'Claim',
-        title:
-          claim.benefitName ||
-          claim.tripProposalDescription ||
-          claim.description ||
-          'Reimbursement Claim',
-        description: isOwnClaim
-          ? `${claim.claimType || 'Reimbursement'} · ${formatDate(claim.transactionDate)}`
-          : `${claim.employeeName || 'Employee'} · ${claim.claimType || 'Claim'}`,
-        status: claim.status,
-        amount: getAmount(claim.amount),
-        date: claim.submittedAt || '',
-        timestamp: getTimestamp(claim.submittedAt),
-        href:
-          isApprover && !isOwnClaim
-            ? `/approvals/claims/${claim.id}`
-            : `/claims/${claim.id}`,
-      }
-    }),
-
-    ...proposals.map((proposal): RecentAction => {
-      const isOwnProposal = myProposalIds.has(proposal.id)
-
-      return {
-        id: proposal.id,
-        type: 'Trip',
-        title: proposal.destination || 'Business Trip',
-        description: `Business Trip · ${formatDate(proposal.submittedAt)}`,
-        status: proposal.status,
-        amount: getAmount(proposal.totalAmount),
-        date: proposal.submittedAt || '',
-        timestamp: getTimestamp(proposal.submittedAt),
-        href:
-          isApprover && !isOwnProposal
-            ? `/approvals/trip-proposals/${proposal.id}`
-            : `/trip-proposals/${proposal.id}`,
-      }
-    }),
-  ]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 5)
+  const recentActions = summary?.recentActions ?? []
 
   // =====================================================
   // LOADING
   // =====================================================
 
   const isDashboardLoading =
-    isLoadingUser ||
-    (
-      hasUser &&
-      (
-        (!isAdmin && isLoadingBenefits) ||
-        isLoadingMyClaims ||
-        isLoadingProposals ||
-        (isApprover && isLoadingAdminClaims)
-      )
-    )
+    isLoadingUser || (hasUser && isLoadingSummary)
 
   if (isDashboardLoading) {
     return (
@@ -1764,20 +1271,6 @@ function Dashboard() {
   }
 
   // =====================================================
-  // ROLE DISPLAY
-  // =====================================================
-
-  const roleTitle = isAdmin
-    ? 'Administrator'
-    : isFinanceManager
-      ? 'Finance Manager'
-      : isFinance
-        ? 'Finance'
-        : isManager
-          ? 'Manager'
-          : 'Employee'
-
-  // =====================================================
   // DASHBOARD UI
   // =====================================================
 
@@ -1785,7 +1278,7 @@ function Dashboard() {
     <main className="min-w-0 space-y-5">
       {/* TODAY SUMMARY */}
       <TodaySummaryBanner
-        userName={user.fullName?.split(' ')[0] || 'there'}
+        userName={user.fullName.split(' ')[0] || 'there'}
         date={formattedDate}
         actions={todayActions}
         isEmployee={isEmployee}
@@ -1812,12 +1305,12 @@ function Dashboard() {
       {isApprover && (
         <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <OverviewPanel
-            claims={allClaims}
-            proposals={proposals}
+            claimStatusOverview={summary?.claimStatusOverview ?? {}}
+            tripStatusOverview={summary?.tripStatusOverview ?? {}}
           />
 
           <ExpenseTrendPanel
-            claims={allClaims}
+            trendByPeriod={summary?.companyExpenseTrend ?? {}}
             title={
               isManager
                 ? 'Team Reimbursement Trend'
@@ -1833,7 +1326,7 @@ function Dashboard() {
           <BenefitOverview benefits={benefitList} />
 
           <ExpenseTrendPanel
-            claims={myClaims}
+            trendByPeriod={summary?.myExpenseTrend ?? {}}
             title="My Expense Trend"
           />
         </div>

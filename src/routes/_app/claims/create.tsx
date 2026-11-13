@@ -503,7 +503,7 @@ function RouteComponent() {
                     Benefit / Allocation
                   </label>
 
-                  <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
+                  <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground">
                     Operational reimbursement is submitted directly without linking
                     benefit atau trip.
                   </div>
@@ -803,7 +803,7 @@ function RouteComponent() {
                     Submitted Amount:
                   </span>
 
-                  <span className="font-bold text-base text-blue-600 dark:text-blue-400 font-mono">
+                  <span className="font-bold text-base text-blue-600 dark:text-blue-400 tabular-nums">
                     {idNumberFormatter.format(form.state.values.amount)}
                   </span>
                 </div>
@@ -912,7 +912,7 @@ function BenefitInfoBanner({
           Sisa Kuota Tersedia
         </span>
 
-        <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+        <span className="text-base font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">
           {idNumberFormatter.format(selectedBenefit.balance)}
         </span>
       </div>
@@ -963,7 +963,7 @@ function TripInfoBanner({
           Sisa Plafon Reimbursement
         </span>
 
-        <span className="text-base font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+        <span className="text-base font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">
           {idNumberFormatter.format(budget)}
         </span>
       </div>

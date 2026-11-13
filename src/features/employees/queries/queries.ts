@@ -5,7 +5,12 @@ import type {
   EmployeeResponse,
   UpdateEmployeeRequest,
 } from '#/types/employee.type'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 export interface EmployeeFilterParams {
   pageNumber?: number
@@ -23,6 +28,7 @@ export const useGetAllEmployeeQuery = (params?: Record<string, any>) => {
     queryFn: () => {
       return api.get<EmployeePagination>('/employees', { params: normalized })
     },
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -22,6 +22,7 @@ export const loginMutation = () => {
     onSuccess: (res) => {
       storage.set('token', res.data.token)
       queryClient.clear()
+      queryClient.setQueryData(['authUser'], res.data.user)
     },
   })
 }

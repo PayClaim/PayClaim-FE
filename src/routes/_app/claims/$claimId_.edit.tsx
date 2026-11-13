@@ -29,10 +29,10 @@ export const Route = createFileRoute('/_app/claims/$claimId_/edit')({
 
 function RouteComponent() {
   const { claimId } = Route.useParams()
-  const { data: claim, isError, error, isFetching } = useGetClaimsQuery(claimId)
+  const { data: claim, isError, error, isPending } = useGetClaimsQuery(claimId)
 
   if (isError) return <ErrorComponent pageTitle="Revise Claim" error={error} />
-  if (isFetching || !claim) return <LoadingComponent pageTitle="Revise Claim" />
+  if (isPending) return <LoadingComponent pageTitle="Revise Claim" />
 
   return <EditClaimFormContent claimId={claimId} claim={claim} />
 }

@@ -6,6 +6,7 @@ import type {
   MyClaimResponse,
 } from '#/types/claims.type'
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -19,6 +20,7 @@ function invalidateClaimRelatedQueries(queryClient: QueryClient, id?: string) {
     queryClient.invalidateQueries({ queryKey: ['admin.claims'] }),
     queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] }),
     queryClient.invalidateQueries({ queryKey: ['trip-proposals'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] }),
   ])
 }
 
@@ -46,6 +48,7 @@ export const useGetAdminAllClaimsQuery = (
       })
     },
     enabled,
+    placeholderData: keepPreviousData,
   })
 
 // Digunakan untuk klaim pribadi (My Claims)
@@ -61,6 +64,7 @@ export const useGetAllClaimsQuery = (
       })
     },
     enabled,
+    placeholderData: keepPreviousData,
   })
 
 // Digunakan untuk detail klaim & riwayat approval

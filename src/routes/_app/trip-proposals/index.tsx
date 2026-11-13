@@ -319,11 +319,11 @@ const sortedProposals = useMemo(() => {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Proposals
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Plane className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -341,7 +341,7 @@ const sortedProposals = useMemo(() => {
               <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -359,7 +359,7 @@ const sortedProposals = useMemo(() => {
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedCompletedCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -372,17 +372,17 @@ const sortedProposals = useMemo(() => {
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
 <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
-            <h2 className="font-semibold text-foreground text-base">
-              Riwayat Proposal
+            <h2 className="font-semibold text-heading text-base">
+              Trip Proposal History
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Pilih proposal untuk melihat timeline persetujuan, daftar peserta, dan dokumen pendukung.
+              Select a proposal row to view approval timeline, participants, and supporting documents.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
+            <div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-1 text-xs">              <button
                 type="button"
                 onClick={() => setActiveTab('ALL')}
 className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'

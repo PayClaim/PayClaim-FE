@@ -63,7 +63,7 @@ function BenefitPlansIndexPage() {
   const navigate = useNavigate()
   const {
     data: plansResponse,
-    isFetching,
+    isPending,
     isError,
   } = useGetAllBenefitPlansQuery(searchRoute)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
@@ -131,7 +131,7 @@ function BenefitPlansIndexPage() {
     )
   }
 
-  if (!plansResponse || isFetching) {
+  if (isPending) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />

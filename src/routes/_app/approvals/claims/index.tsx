@@ -56,7 +56,7 @@ function RouteComponent() {
 
   const {
     data: response,
-    isFetching,
+    isPending,
     isError,
     error,
   } = useGetAdminAllClaimsQuery(searchRoute)
@@ -161,7 +161,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching || !response) {
+  if (isPending) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="p-10 text-center text-sm text-muted-foreground">
@@ -201,11 +201,11 @@ function RouteComponent() {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Claims
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -223,7 +223,7 @@ function RouteComponent() {
               <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -241,7 +241,7 @@ function RouteComponent() {
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -255,7 +255,7 @@ function RouteComponent() {
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
           <div>
-            <h2 className="font-semibold text-foreground text-base">
+            <h2 className="font-semibold text-heading text-base text-balance">
               Claim Requests
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">

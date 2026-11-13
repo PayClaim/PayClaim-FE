@@ -69,7 +69,7 @@ function RouteComponent() {
     data: employeesResponse,
     isError,
     error,
-    isFetching,
+    isPending,
   } = useGetAllEmployeeQuery(searchParams)
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const { data: positions = [] } = useGetAllPositionsQuery()
@@ -132,7 +132,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching || !employeesResponse) {
+  if (isPending) {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />

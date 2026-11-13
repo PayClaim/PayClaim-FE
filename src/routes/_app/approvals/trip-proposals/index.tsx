@@ -482,11 +482,11 @@ const roles = user?.roles || []
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Proposals
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Plane className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -504,7 +504,7 @@ const roles = user?.roles || []
               <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -522,7 +522,7 @@ const roles = user?.roles || []
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedCount}
           </div>
           <p className="text-xs text-muted-foreground">
