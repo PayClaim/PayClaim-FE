@@ -50,9 +50,6 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
   component: RouteComponent,
 })
 
-type StatusTab =
-  'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
-
 function RouteComponent() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
@@ -137,38 +134,45 @@ function RouteComponent() {
     }
   }, [claims, response?.totalCount])
 
-  // Filtered claims based on search query & active status tab
-  const filteredClaims = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-
-    return claims.filter((claim) => {
-      // Status filter
-      if (activeTab === 'WAITING') {
-        if (!['Submitted', 'UnderReview'].includes(claim.status)) return false
-      } else if (activeTab === 'APPROVED') {
-        if (claim.status !== 'Approved') return false
-      } else if (activeTab === 'PAID') {
-        if (claim.status !== 'Paid') return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['NeedsRevision', 'Rejected'].includes(claim.status)) return false
-      }
-
-      // Search query
-      if (q) {
-        const nameMatch = (claim.employeeName || '').toLowerCase().includes(q)
-        const benefitMatch = (claim.benefitName || '').toLowerCase().includes(q)
-        const tripMatch = (claim.tripProposalDescription || '')
-          .toLowerCase()
-          .includes(q)
-        const idMatch = claim.id.toLowerCase().includes(q)
-        const typeMatch = (claim.claimType || '').toLowerCase().includes(q)
-
-        return nameMatch || benefitMatch || tripMatch || idMatch || typeMatch
-      }
-
-      return true
+  const hasActiveFilters = Boolean(
+    searchFilter || claimType || dateRange || statusFilter,
+  )
+  const applyFilterClick = () => {
+    searchRoute
+    navigate({
+      to: '.',
+      search: {
+        claimType: claimType,
+        search: searchFilter,
+        status: statusFilter,
+        startDate: toDateOnly(dateRange?.from),
+        endDate: toDateOnly(dateRange?.to),
+      },
     })
-  }, [claims, searchQuery, activeTab])
+  }
+
+  if (isError) {
+    return (
+      <main className="p-6">
+        <div className="p-10 text-center text-sm text-destructive">
+          {error instanceof Error ? error.message : 'Failed to load claims.'}
+        </div>
+      </main>
+    )
+  }
+
+  if (isFetching || !response) {
+    return (
+      <main className="py-20 text-center space-y-3">
+        <div className="p-10 text-center text-sm text-muted-foreground">
+          Loading claims...
+        </div>
+      </main>
+    )
+  }
+
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    response
 
   return (
     <main className="min-w-0 space-y-6">
@@ -190,7 +194,7 @@ function RouteComponent() {
       </div>
 
       {/* 3 KPI Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* KPI 1: Total Claims */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-2xs relative">
           <div className="flex items-center justify-between">
@@ -249,8 +253,8 @@ function RouteComponent() {
       {/* Claims Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-        <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
-          <div className="min-w-0">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
+          <div>
             <h2 className="font-semibold text-foreground text-base">
               Claim Requests
             </h2>
@@ -260,85 +264,20 @@ function RouteComponent() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            {/* Segmented Status Tabs */}
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setActiveTab('ALL')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'ALL'
-                    ? 'bg-card text-foreground shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('WAITING')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'WAITING'
-                    ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Waiting Review
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('APPROVED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'APPROVED'
-                    ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('PAID')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'PAID'
-                    ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Paid
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  activeTab === 'REVISION_OR_REJECTED'
-                    ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Needs Revision / Rejected
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64 shrink-0">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search employee, benefit..."
-                className="w-full h-9 pl-9 pr-8 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+            <div className="flex flex-wrap items-center gap-3">
+              <ButtonGroup>
+                <div className="relative grow max-w-70 sm:w-64">
+                  <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Search employee name, or benefits..."
+                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                  />
+                </div>
+                <Button onClick={applyFilterClick}>Search</Button>
+              </ButtonGroup>
             </div>
 
             <Popover>
@@ -423,7 +362,7 @@ function RouteComponent() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {filteredClaims.map((claim) => {
+                {claims.map((claim) => {
                   const typeBadge = getClaimTypeBadge(claim.claimType)
                   const TypeIcon = typeBadge.icon
                   const statusConfig = getStatusBadgeConfig(claim.status)
