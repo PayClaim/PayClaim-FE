@@ -29,6 +29,8 @@ function RouteComponent() {
 
   const { data: employees = [] } = useGetAllEmployeesQuery()
   const managerGroups = buildEmployeeGroups(employees, {
+    filter: (employee) =>
+      employee.positionTitle.toLowerCase().includes('manager'),
     label: (employee) => `${employee.fullName} (${employee.number})`,
   })
 

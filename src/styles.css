@@ -79,31 +79,31 @@
   --lagoon: #60a5fa;
   --lagoon-deep: #3b82f6;
   --palm: #34d399;
-  --sand: #181818;
-  --foam: #121212;
-  --surface: #1f1f1f;
-  --surface-strong: #242424;
-  --line: #2e2e32;
+  --sand: #222222;
+  --foam: #1e1e1e;
+  --surface: #242424;
+  --surface-strong: #2a2a2a;
+  --line: #36363a;
   --inset-glint: rgba(255, 255, 255, 0.05);
   --kicker: #93c5fd;
-  --bg-base: #0f0f0f;
-  --header-bg: #0f0f0f;
-  --chip-bg: #272727;
-  --chip-line: #383838;
-  --link-bg-hover: #272727;
+  --bg-base: #1a1a1a;
+  --header-bg: #1a1a1a;
+  --chip-bg: #2e2e2e;
+  --chip-line: #404044;
+  --link-bg-hover: #2e2e2e;
   --hero-a: transparent;
   --hero-b: transparent;
 
-  /* YouTube-inspired dark palette: warm dark charcoal (#0f0f0f) & clear elevation */
-  --background: #0f0f0f;
+  /* Dark gray palette (#1a1a1a base) & clear elevation */
+  --background: #1a1a1a;
   --foreground: #f1f1f1;
 
   /* Elevated cards, containers, tables */
-  --card: #1f1f1f;
+  --card: #242424;
   --card-foreground: #f1f1f1;
 
   /* Dialogs, popovers, dropdowns */
-  --popover: #212121;
+  --popover: #2a2a2a;
   --popover-foreground: #f1f1f1;
 
   /* Brand Primary */
@@ -111,11 +111,11 @@
   --primary-foreground: #ffffff;
 
   /* Secondary, muted, chip buttons */
-  --secondary: #272727;
+  --secondary: #2e2e2e;
   --secondary-foreground: #f1f1f1;
-  --muted: #272727;
+  --muted: #2e2e2e;
   --muted-foreground: #aaaaaa;
-  --accent: #272727;
+  --accent: #2e2e2e;
   --accent-foreground: #f1f1f1;
 
   /* Alerts */
@@ -123,8 +123,8 @@
   --destructive-foreground: #ffffff;
 
   /* Borders & Inputs */
-  --border: #2e2e32;
-  --input: #272727;
+  --border: #36363a;
+  --input: #2e2e2e;
   --ring: #465fff;
 
   /* Charts */
@@ -134,14 +134,14 @@
   --chart-4: #a78bfa;
   --chart-5: #f472b6;
 
-  /* Sidebar aligned with YouTube sidebar */
-  --sidebar: #0f0f0f;
+  /* Sidebar aligned with dark gray base */
+  --sidebar: #1a1a1a;
   --sidebar-foreground: #f1f1f1;
   --sidebar-primary: #465fff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #272727;
+  --sidebar-accent: #2e2e2e;
   --sidebar-accent-foreground: #f1f1f1;
-  --sidebar-border: #242428;
+  --sidebar-border: #303034;
   --sidebar-ring: #465fff;
 }
 
