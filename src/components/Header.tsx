@@ -59,7 +59,7 @@ export default function Header() {
         <UserDropDown user={user} logout={onClickLogout}>
           <button
             type="button"
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100/80 dark:hover:bg-secondary border border-border transition-colors cursor-pointer group bg-card"
+            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100/80 dark:hover:bg-secondary border border-border transition-all duration-150 active:scale-[0.97] cursor-pointer group bg-card"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
               {initial}

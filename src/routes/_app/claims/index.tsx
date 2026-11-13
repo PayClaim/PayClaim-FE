@@ -448,9 +448,9 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
                     {/* Aksi */}
                     <td className="py-3.5 px-5 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
                         <span>Detail</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                       </span>
                     </td>
                   </tr>

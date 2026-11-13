@@ -444,7 +444,22 @@ a {
 }
 
 .page-flow-in tbody tr {
-  transition: background-color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    transform 140ms ease;
+}
+
+.page-flow-in tbody tr.cursor-pointer:active {
+  transform: scale(0.996);
+}
+
+.page-flow-in button {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: 150ms;
+}
+
+.page-flow-in button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .timeline-stagger > div {
