@@ -4,18 +4,19 @@ import {
   useGetAllEmployeesQuery,
   useGetEmployeeQuery,
 } from '#/features/employees/queries/queries'
-import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
 import type { EmployeeResponse } from '#/types/employee.type'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { AlertCircle, ArrowLeft, Users } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 
 export const Route = createFileRoute('/_app/admin/employees/$employeeId/edit')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const router = useRouter()
   const { employeeId } = Route.useParams()
   const {
     data: employee,
@@ -38,18 +39,17 @@ function RouteComponent() {
   if (isError || !employee) {
     return (
       <main className="max-w-2xl mx-auto space-y-4">
-        <Link to="/admin/employees">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-xs font-semibold"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Employee List</span>
-          </Button>
-        </Link>
+        <Button
+          onClick={() => router.history.back()}
+          variant="outline"
+          size="sm"
+          className="gap-2 text-xs font-semibold"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Employees List</span>
+        </Button>
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Data karyawan tidak ditemukan atau telah dihapus.
+          Employee not found or already deleted
         </div>
       </main>
     )
@@ -79,6 +79,7 @@ function EditEmployeeFormContent({
   departments: { id: string; name: string }[]
   employees: EmployeeResponse[]
 }) {
+  const router = useRouter()
   const isInactive = !employee.isActive
   const formattedHireDate = employee.hireDate
     ? employee.hireDate.split('T')[0]
@@ -105,24 +106,22 @@ function EditEmployeeFormContent({
   }))
 
   const managerGroups = buildEmployeeGroups(employees, {
-    filter: (employee) =>
-      employee.id !== employeeId &&
-      employee.positionTitle.toLowerCase().includes('manager'),
-    label: (employee) => `${employee.fullName} (${employee.number})`,
+    filter: (e) =>
+      e.id !== employeeId && e.positionTitle.toLowerCase().includes('manager'),
+    label: (e) => `${e.fullName} (${e.number})`,
   })
 
   return (
     <main className="max-w-2xl mx-auto space-y-6">
-      <Link to="/admin/employees">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 text-xs font-semibold"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Employee List</span>
-        </Button>
-      </Link>
+      <Button
+        onClick={() => router.history.back()}
+        variant="outline"
+        size="sm"
+        className="gap-2 text-xs font-semibold"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Back to Employees List</span>
+      </Button>
 
       <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex items-center gap-3 pb-4 border-b border-border/70">
@@ -131,10 +130,10 @@ function EditEmployeeFormContent({
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Edit Data Karyawan
+              Edit Employee Profile
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Nomor Karyawan:{' '}
+              Employee Number:{' '}
               <span className="font-mono font-bold text-heading">
                 {employee.number}
               </span>
@@ -146,9 +145,8 @@ function EditEmployeeFormContent({
           <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm">
-              Karyawan ini berstatus <strong>Inactive</strong>. Data karyawan
-              yang nonaktif tidak dapat diubah. Silakan aktifkan kembali
-              karyawan terlebih dahulu melalui daftar karyawan.
+              This employee is <strong>Inactive</strong>. You cannot change the
+              inactive employee data. Please reactivate before continue to edit
             </p>
           </div>
         )}
@@ -167,24 +165,21 @@ function EditEmployeeFormContent({
             <div className="sm:col-span-2">
               <form.AppField name="fullName">
                 {(field) => (
-                  <field.TextField label="Nama Lengkap" disabled={isInactive} />
+                  <field.TextField label="Fullname" disabled={isInactive} />
                 )}
               </form.AppField>
             </div>
 
             <form.AppField name="email">
               {(field) => (
-                <field.TextField
-                  label="Email Perusahaan"
-                  disabled={isInactive}
-                />
+                <field.TextField label="Work Email" disabled={isInactive} />
               )}
             </form.AppField>
 
             <form.AppField name="hireDate">
               {(field) => (
                 <field.TextField
-                  label="Tanggal Bergabung (Permanen)"
+                  label="Join Date (Permanent)"
                   disabled={true}
                 />
               )}
@@ -194,8 +189,8 @@ function EditEmployeeFormContent({
               {(field) => (
                 <field.FormSelect
                   values={positionOptions}
-                  placeholder="Pilih Posisi / Jabatan"
-                  label="Jabatan / Posisi"
+                  placeholder="Pick a job position"
+                  label="Job Position"
                   disabled={isInactive}
                 />
               )}
@@ -205,8 +200,8 @@ function EditEmployeeFormContent({
               {(field) => (
                 <field.FormSelect
                   values={departmentOptions}
-                  label="Departemen"
-                  placeholder="Pilih Departemen"
+                  label="Department"
+                  placeholder="Pick a department"
                   disabled={isInactive}
                 />
               )}
@@ -228,8 +223,8 @@ function EditEmployeeFormContent({
                         <field.FormSelect
                           nullable
                           groups={managerGroups}
-                          label="Direct Manager (Penilai Klaim Level 1)"
-                          placeholder="Pilih Direct Manager"
+                          label="Direct Manager (Level 1 claim approver)"
+                          placeholder="Pick a Direct Manager"
                           disabled={isInactive}
                         />
                       )}
@@ -241,15 +236,18 @@ function EditEmployeeFormContent({
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
-            <Link to="/admin/employees">
-              <Button variant="outline" type="button" size="sm">
-                Cancel
-              </Button>
-            </Link>
+            <Button
+              onClick={() => router.history.back()}
+              variant="outline"
+              type="button"
+              size="sm"
+            >
+              Batal
+            </Button>
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Perbarui Karyawan"
+                label="Update employee data"
                 disabled={isInactive}
               />
             </form.AppForm>
