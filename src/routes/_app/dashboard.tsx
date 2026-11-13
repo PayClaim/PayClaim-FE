@@ -624,7 +624,7 @@ function TodaySummaryBanner({
   isEmployee: boolean
 }) {
   return (
-    <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#B8CCE8] bg-gradient-to-br from-[#C9DDF7] via-[#DCE9FA] to-[#C6D9F2] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-6">
+    <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#A4C1E8] bg-gradient-to-br from-[#B6D2F7] via-[#D8E7FA] to-[#9FC1F0] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-6">
       <div className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-7">
         {/* LEFT CONTENT */}
         <div className="flex min-w-0 flex-col items-start justify-start self-start text-left">

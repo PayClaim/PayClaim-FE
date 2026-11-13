@@ -21,7 +21,11 @@ function parseUtcDate(dateStr?: string | null): Date | null {
     '',
   )
 
-  const d = new Date(`${localDate}+07:00`)
+  const isoDate = /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+    ? `${localDate}T00:00:00`
+    : localDate
+
+  const d = new Date(`${isoDate}+07:00`)
 
   return isNaN(d.getTime()) ? null : d
 }

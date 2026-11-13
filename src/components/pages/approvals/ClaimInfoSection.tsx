@@ -1,4 +1,7 @@
+import { api } from '#/lib/api-client'
 import { idNumberFormatter } from '#/lib/formatter'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { Calendar } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -6,6 +9,7 @@ import {
   getInitials,
 } from '#/features/approvals/helper/claim-helpers'
 import type { Claim } from '#/types/approval-action.type'
+import type { TripProposal } from '#/types/tripProposals.type'
 
 const DESCRIPTION_LIMIT = 140
 
@@ -38,6 +42,18 @@ export function ClaimInfoSection({
   transactionLongDate,
 }: ClaimInfoSectionProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showTripDetail, setShowTripDetail] = useState(false)
+
+  const { data: tripDetail, isLoading: isLoadingTrip } = useQuery({
+    queryKey: ['trip-proposal-hover', claim.tripProposalId],
+    queryFn: async () => {
+      const res = await api.get<TripProposal | { data: TripProposal }>(
+        `/trip-proposals/${claim.tripProposalId}`,
+      )
+      return 'data' in res ? res.data : res
+    },
+    enabled: Boolean(claim.tripProposalId) && showTripDetail,
+  })
 
   const descriptionText = getDescriptionText(claim)
   const isLong = descriptionText.length > DESCRIPTION_LIMIT
@@ -72,13 +88,86 @@ export function ClaimInfoSection({
         </InfoField>
 
         <InfoField label="Benefit / Trip Reference">
-          <p className="font-semibold text-heading">
-            {claim.benefitName ||
-              (claim.tripProposalDestination
-                ? `Business Trip to ${claim.tripProposalDestination}`
-                : claim.tripProposalDescription) ||
-              'Operational Expense'}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-heading">
+              {claim.benefitName ||
+                (claim.tripProposalDestination
+                  ? `Business Trip to ${claim.tripProposalDestination}`
+                  : claim.tripProposalDescription) ||
+                'Operational Expense'}
+            </p>
+
+            {claim.tripProposalId && (
+              <div
+                className="relative inline-block"
+                onMouseEnter={() => setShowTripDetail(true)}
+                onMouseLeave={() => setShowTripDetail(false)}
+              >
+                <Link
+                  to="/trip-proposals/$id"
+                  params={{ id: claim.tripProposalId }}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800 cursor-pointer transition-colors"
+                >
+                  Detail
+                </Link>
+
+                {showTripDetail && (
+                  <div className="absolute left-0 top-full pt-1.5 z-50">
+                    <Link
+                      to="/trip-proposals/$id"
+                      params={{ id: claim.tripProposalId }}
+                      className="block w-72 rounded-xl border border-border bg-popover p-3.5 text-xs shadow-lg space-y-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                    >
+                    {isLoadingTrip ? (
+                      <p className="text-muted-foreground">Loading trip details...</p>
+                    ) : tripDetail ? (
+                      <>
+                        <div className="border-b border-border pb-1.5">
+                          <p className="font-bold text-heading text-sm">
+                            {tripDetail.destination}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {tripDetail.startDate} – {tripDetail.endDate}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">
+                              Estimated Budget
+                            </span>
+                            <span className="font-semibold text-heading">
+                              {idNumberFormatter.format(tripDetail.totalAmount ?? 0)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">
+                              Status
+                            </span>
+                            <span className="font-semibold text-heading">
+                              {tripDetail.status}
+                            </span>
+                          </div>
+                        </div>
+                        {tripDetail.description && (
+                          <div>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">
+                              Purpose
+                            </span>
+                            <p className="text-heading/90 line-clamp-2">
+                              {tripDetail.description}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">Trip details unavailable.</p>
+                    )}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </InfoField>
 
         <InfoField label="Amount Requested">

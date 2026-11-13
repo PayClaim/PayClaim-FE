@@ -413,9 +413,6 @@ function RouteComponent() {
                               : claim.tripProposalDescription) ||
                             'Operational Expense'}
                         </div>
-                        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                          ID: CLM-{claim.id.slice(0, 8).toUpperCase()}
-                        </div>
                       </td>
 
                       {/* Transaction Date */}

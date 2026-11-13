@@ -239,9 +239,6 @@ const statusConfig = getApprovalStatusConfig(
         <div className="font-semibold text-foreground text-sm">
           {proposal.destination}
         </div>
-        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-          ID: TRIP-{proposal.id.slice(0, 8).toUpperCase()}
-        </div>
       </td>
 
       {/* PIC with Initials Avatar */}
