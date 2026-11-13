@@ -26,7 +26,6 @@ import {
   Receipt,
   TrendingDown,
   TrendingUp,
-  Wallet,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/dashboard')({
@@ -44,7 +43,7 @@ type DashboardRoute =
   | '/approvals/trip-proposals'
 
 type PeriodFilter = 'month' | 'sixMonths' | 'year' | 'all'
-
+type BenefitFrequency = 'monthly' | 'yearly' | 'all'
 type OverviewView = 'claims' | 'trips'
 
 type DashboardClaim = {
@@ -81,6 +80,7 @@ type DashboardBenefit = {
   employeeBenefitId: string
   benefitName: string
   balance: number
+  periodType?: string | number | null
   startDate?: string
   endDate?: string
   periodStartDate?: string
@@ -123,7 +123,7 @@ type StatusDefinition = {
 }
 
 // =====================================================
-// STATUS DEFINITIONS
+// STATUS CONFIGURATION
 // =====================================================
 
 const CLAIM_STATUSES: StatusDefinition[] = [
@@ -468,47 +468,65 @@ function getExpenseBuckets(
   })
 }
 
-function getBenefitDate(
+// =====================================================
+// BENEFIT FREQUENCY
+// =====================================================
+
+function getBenefitFrequency(
   benefit: DashboardBenefit,
-  type: 'start' | 'end',
-): string | null {
-  if (type === 'start') {
-    return (
-      benefit.periodStartDate ||
-      benefit.startDate ||
-      benefit.validFrom ||
-      benefit.createdAt ||
-      null
-    )
+): Exclude<BenefitFrequency, 'all'> | null {
+  const periodType = String(benefit.periodType ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (periodType.includes('monthly') || periodType === 'month') {
+    return 'monthly'
   }
 
-  return (
-    benefit.periodEndDate ||
-    benefit.endDate ||
-    benefit.validTo ||
-    null
+  if (
+    periodType.includes('yearly') ||
+    periodType.includes('annual') ||
+    periodType === 'year'
+  ) {
+    return 'yearly'
+  }
+
+  // Fallback apabila API belum mengirimkan PeriodType.
+  const start = getDateKey(
+    benefit.periodStartDate ||
+      benefit.startDate ||
+      benefit.validFrom,
   )
+
+  const end = getDateKey(
+    benefit.periodEndDate ||
+      benefit.endDate ||
+      benefit.validTo,
+  )
+
+  if (!start || !end) return null
+
+  const startTime = new Date(`${start}T00:00:00Z`).getTime()
+  const endTime = new Date(`${end}T00:00:00Z`).getTime()
+
+  const durationDays = Math.round(
+    (endTime - startTime) / (1000 * 60 * 60 * 24),
+  )
+
+  if (!Number.isFinite(durationDays) || durationDays < 0) {
+    return null
+  }
+
+  return durationDays <= 45 ? 'monthly' : 'yearly'
 }
 
-function benefitMatchesPeriod(
+function benefitMatchesFrequency(
   benefit: DashboardBenefit,
-  period: PeriodFilter,
+  frequency: BenefitFrequency,
 ): boolean {
-  if (period === 'all') return true
+  if (frequency === 'all') return true
 
-  const start = getDateKey(getBenefitDate(benefit, 'start'))
-  const end = getDateKey(getBenefitDate(benefit, 'end'))
-
-  const periodStart = getPeriodStartKey(period)
-  const current = getJakartaDateParts()
-  const today = `${current.year}-${current.month}-${current.day}`
-
-  if (!start && !end) return true
-
-  if (start && start > today) return false
-  if (end && end < periodStart) return false
-
-  return true
+  return getBenefitFrequency(benefit) === frequency
 }
 
 // =====================================================
@@ -550,7 +568,7 @@ function DashboardPanel({
 }) {
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-2">
         <h2 className="min-w-0 text-base font-semibold text-foreground">
           {title}
         </h2>
@@ -558,9 +576,7 @@ function DashboardPanel({
         {action}
       </div>
 
-      <div className="min-w-0 px-4 pt-2 pb-4">
-        {children}
-      </div>
+      <div className="min-w-0 p-5 pt-3">{children}</div>
     </section>
   )
 }
@@ -577,7 +593,7 @@ function TodayActionButton({
   return (
     <Link
       to={action.to}
-      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-[#B8CCE8] bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-[#789FD2] hover:bg-[#EAF1FC] dark:border-slate-700 dark:bg-[#161B22] dark:hover:border-[#2F81F7] dark:hover:bg-[#1C2532]"
+      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-blue-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-slate-700 dark:bg-[#161B22] dark:hover:border-[#2F81F7] dark:hover:bg-[#1C2532]"
     >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800 dark:text-[#E6EDF3]">
@@ -589,13 +605,12 @@ function TodayActionButton({
         </p>
       </div>
 
-      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] px-3 text-xl font-bold tabular-nums text-[#244E83] transition-colors group-hover:bg-[#C3D8F4] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
+      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F0FF] px-3 text-xl font-bold tabular-nums text-[#245DA8] transition-colors group-hover:bg-[#D7E7FF] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
         {formatNumber(action.count)}
       </div>
     </Link>
   )
 }
-
 
 function TodaySummaryBanner({
   userName,
@@ -610,27 +625,29 @@ function TodaySummaryBanner({
 }) {
   return (
     <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#B8CCE8] bg-gradient-to-br from-[#C9DDF7] via-[#DCE9FA] to-[#C6D9F2] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-6">
-      <div className="grid min-w-0 grid-cols-1 items-center gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-7">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-7">
+        {/* LEFT CONTENT */}
+        <div className="flex min-w-0 flex-col items-start justify-start self-start text-left">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
 
-            <span className="text-sm font-semibold leading-none text-[#294B76] dark:text-[#C9D8EA]">
+            <span className="text-sm font-bold leading-none text-[#294B76] dark:text-[#C9D8EA]">
               {date}
             </span>
           </div>
 
-          <h1 className="mt-4 break-words text-2xl font-bold tracking-tight text-[#172B49] dark:text-[#E6EDF3] sm:text-3xl">
+          <h1 className="mt-4 w-full break-words text-2xl font-bold leading-tight tracking-tight text-[#172B49] dark:text-[#E6EDF3] sm:text-3xl">
             Welcome back, {userName}!
           </h1>
 
-          <p className="mt-2 text-sm text-[#405F87] dark:text-[#8B949E]">
+          <p className="mt-2 w-full max-w-md text-sm leading-relaxed text-[#405F87] dark:text-[#8B949E]">
             {isEmployee
               ? "Here's what's happening with your benefits and requests."
               : "Here's what's happening with your team and approvals."}
           </p>
         </div>
 
-        <div className="min-w-0">
+        {/* RIGHT CONTENT */}
+        <div className="w-full min-w-0 self-start">
           <h2 className="mb-3 text-sm font-bold tracking-wide text-[#294B76] dark:text-[#C9D8EA]">
             {isEmployee
               ? 'NEEDS YOUR ATTENTION'
@@ -668,7 +685,6 @@ function TodaySummaryBanner({
     </section>
   )
 }
-
 
 // =====================================================
 // STATUS BADGE
@@ -734,10 +750,10 @@ function QuickAccessCard({
   return (
     <Link
       to={to}
-      className="group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-[#2F81F7]/50 hover:bg-[#EAF1FC] dark:hover:bg-[#1C2532]"
+      className="group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:border-[#2F81F7]/50 hover:bg-blue-50/50 dark:hover:bg-[#1C2532]"
     >
       <div className="flex items-center justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] transition-colors group-hover:bg-[#C3D8F4] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#DCE9FA] text-[#315F9E] transition-colors group-hover:bg-[#C8DDF9] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
           <Icon className="h-4.5 w-4.5" />
         </div>
 
@@ -761,15 +777,15 @@ function QuickAccessCard({
 // STATUS DISTRIBUTION
 // =====================================================
 
-function StatusDistribution({
+function StatusDistribution<T extends { status: string }>({
   items,
   statuses,
 }: {
-  items: Array<{ status: string }>
+  items: T[]
   statuses: StatusDefinition[]
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {statuses.map((status) => {
         const count = items.filter(
           (item) =>
@@ -807,7 +823,8 @@ function StatusDistribution({
 }
 
 // =====================================================
-// COMBINED OVERVIEW PANEL
+// REIMBURSEMENT CLAIMS + BUSINESS TRIP OVERVIEW
+// ONE PANEL WITH DROPDOWN
 // =====================================================
 
 function OverviewPanel({
@@ -820,6 +837,8 @@ function OverviewPanel({
   const [view, setView] = useState<OverviewView>('claims')
   const [period, setPeriod] = useState<PeriodFilter>('year')
 
+  const isClaimsView = view === 'claims'
+
   const filteredClaims = claims.filter((claim) =>
     matchesPeriod(
       claim.submittedAt || claim.transactionDate,
@@ -830,8 +849,6 @@ function OverviewPanel({
   const filteredProposals = proposals.filter((proposal) =>
     matchesPeriod(proposal.submittedAt, period),
   )
-
-  const isClaimsView = view === 'claims'
 
   const totalCount = isClaimsView
     ? filteredClaims.length
@@ -854,12 +871,8 @@ function OverviewPanel({
             }
             className="h-8 max-w-40 cursor-pointer rounded-lg border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition-colors hover:border-primary/50 focus:ring-2 focus:ring-primary/20"
           >
-            <option value="claims">
-              Reimbursement Claims
-            </option>
-            <option value="trips">
-              Business Trips
-            </option>
+            <option value="claims">Reimbursement Claims</option>
+            <option value="trips">Business Trips</option>
           </select>
 
           <PeriodFilter
@@ -869,24 +882,14 @@ function OverviewPanel({
         </div>
       }
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {isClaimsView ? 'Total claims' : 'Total proposals'}
-          </p>
+      <div className="mb-5">
+        <p className="text-xs text-muted-foreground">
+          {isClaimsView ? 'Total claims' : 'Total proposals'}
+        </p>
 
-          <p className="mt-1 text-2xl font-bold text-foreground">
-            {formatNumber(totalCount)}
-          </p>
-        </div>
-
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
-          {isClaimsView ? (
-            <Receipt className="h-5 w-5" />
-          ) : (
-            <Plane className="h-5 w-5" />
-          )}
-        </div>
+        <p className="mt-1 text-2xl font-bold text-foreground">
+          {formatNumber(totalCount)}
+        </p>
       </div>
 
       {isClaimsView ? (
@@ -918,7 +921,6 @@ function ExpenseTrendPanel({
   const [period, setPeriod] = useState<PeriodFilter>('sixMonths')
 
   const paidClaims = getPaidClaimsByPeriod(claims, period)
-
   const buckets = getExpenseBuckets(claims, period)
 
   const maxAmount = Math.max(
@@ -951,8 +953,8 @@ function ExpenseTrendPanel({
         />
       }
     >
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex h-[320px] min-h-0 flex-col">
+        <div className="mb-4 shrink-0">
           <p className="text-xs text-muted-foreground">
             Total paid reimbursement
           </p>
@@ -966,100 +968,96 @@ function ExpenseTrendPanel({
           </p>
         </div>
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
-          <TrendingUp className="h-5 w-5" />
-        </div>
-      </div>
+        {paidClaims.length > 0 ? (
+          <>
+            <div className="flex h-[148px] shrink-0 items-end justify-between gap-2 pb-2">
+              {buckets.map((bucket) => {
+                const height =
+                  maxAmount > 0
+                    ? (bucket.amount / maxAmount) * 100
+                    : 0
 
-      {paidClaims.length > 0 ? (
-        <>
-          <div className="flex h-40 items-end justify-between gap-2 pb-2">
-            {buckets.map((bucket) => {
-              const height =
-                maxAmount > 0
-                  ? (bucket.amount / maxAmount) * 100
-                  : 0
+                const isActive =
+                  bucket.key === buckets[buckets.length - 1]?.key
 
-              const isActive =
-                bucket.key === buckets[buckets.length - 1]?.key
+                return (
+                  <div
+                    key={bucket.key}
+                    className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
+                    title={`${bucket.label}: ${formatCurrency(bucket.amount)}`}
+                  >
+                    <div className="flex h-full w-full items-end justify-center">
+                      <div
+                        className={`w-full max-w-10 rounded-t-md transition-all ${
+                          isActive
+                            ? 'bg-[#2F81F7] dark:bg-[#58A6FF]'
+                            : 'bg-[#A9C5EC] dark:bg-[#273E5C]'
+                        }`}
+                        style={{
+                          height:
+                            bucket.amount > 0
+                              ? `${Math.max(height, 4)}%`
+                              : '3px',
+                        }}
+                      />
+                    </div>
 
-              return (
-                <div
-                  key={bucket.key}
-                  className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
-                  title={`${bucket.label}: ${formatCurrency(bucket.amount)}`}
-                >
-                  <div className="flex h-full w-full items-end justify-center">
-                    <div
-                      className={`w-full max-w-10 rounded-t-md transition-all ${
-                        isActive
-                          ? 'bg-[#2F81F7] dark:bg-[#58A6FF]'
-                          : 'bg-[#A9C5EC] dark:bg-[#273E5C]'
-                      }`}
-                      style={{
-                        height:
-                          bucket.amount > 0
-                            ? `${Math.max(height, 4)}%`
-                            : '3px',
-                      }}
-                    />
+                    <span className="whitespace-nowrap text-[10px] text-muted-foreground">
+                      {bucket.label}
+                    </span>
                   </div>
+                )
+              })}
+            </div>
 
-                  <span className="whitespace-nowrap text-[10px] text-muted-foreground">
-                    {bucket.label}
-                  </span>
+            <div className="mt-auto grid shrink-0 grid-cols-2 gap-3 pt-4">
+              <div className="rounded-lg bg-emerald-50/70 p-3 dark:bg-emerald-950/30">
+                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                  <TrendingUp className="h-3.5 w-3.5" />
+
+                  <p className="text-[11px] font-medium">
+                    Highest Reimbursement
+                  </p>
                 </div>
-              )
-            })}
-          </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-emerald-50/70 p-3 dark:bg-emerald-950/30">
-              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                <TrendingUp className="h-3.5 w-3.5" />
-
-                <p className="text-[11px] font-medium">
-                  Highest Reimbursement
+                <p className="mt-2 break-words text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                  {highestAmount !== null
+                    ? formatCurrency(highestAmount)
+                    : '—'}
                 </p>
               </div>
 
-              <p className="mt-2 break-words text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                {highestAmount !== null
-                  ? formatCurrency(highestAmount)
-                  : '—'}
-              </p>
-            </div>
+              <div className="rounded-lg bg-muted/40 p-3">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <TrendingDown className="h-3.5 w-3.5" />
 
-            <div className="rounded-lg bg-muted/40 p-3">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <TrendingDown className="h-3.5 w-3.5" />
+                  <p className="text-[11px] font-medium">
+                    Lowest Reimbursement
+                  </p>
+                </div>
 
-                <p className="text-[11px] font-medium">
-                  Lowest Reimbursement
+                <p className="mt-2 break-words text-sm font-bold text-foreground">
+                  {lowestAmount !== null
+                    ? formatCurrency(lowestAmount)
+                    : '—'}
                 </p>
               </div>
-
-              <p className="mt-2 break-words text-sm font-bold text-foreground">
-                {lowestAmount !== null
-                  ? formatCurrency(lowestAmount)
-                  : '—'}
-              </p>
             </div>
+          </>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
+            <HandCoins className="h-8 w-8 text-muted-foreground/40" />
+
+            <p className="mt-2 text-sm font-medium text-foreground">
+              No paid reimbursement found
+            </p>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              No paid claims for {getPeriodLabel(period).toLowerCase()}.
+            </p>
           </div>
-        </>
-      ) : (
-        <div className="flex h-32 flex-col items-center justify-center text-center">
-          <HandCoins className="h-8 w-8 text-muted-foreground/40" />
-
-          <p className="mt-2 text-sm font-medium text-foreground">
-            No paid reimbursement found
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            No paid claims for {getPeriodLabel(period).toLowerCase()}.
-          </p>
-        </div>
-      )}
+        )}
+      </div>
     </DashboardPanel>
   )
 }
@@ -1073,10 +1071,10 @@ function BenefitOverview({
 }: {
   benefits: DashboardBenefit[]
 }) {
-  const [period, setPeriod] = useState<PeriodFilter>('all')
+  const [frequency, setFrequency] = useState<BenefitFrequency>('all')
 
   const filteredBenefits = benefits.filter((benefit) =>
-    benefitMatchesPeriod(benefit, period),
+    benefitMatchesFrequency(benefit, frequency),
   )
 
   const totalBalance = filteredBenefits.reduce(
@@ -1093,66 +1091,76 @@ function BenefitOverview({
             {filteredBenefits.length} Allocations
           </span>
 
-          <PeriodFilter
-            value={period}
-            onChange={setPeriod}
-          />
+          <select
+            aria-label="Filter benefit frequency"
+            value={frequency}
+            onChange={(event) =>
+              setFrequency(event.target.value as BenefitFrequency)
+            }
+            className="h-8 max-w-36 cursor-pointer rounded-lg border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition-colors hover:border-primary/50 focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">All Periods</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
         </div>
       }
     >
-      <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#E8F6EF] to-[#DFF1E8] p-4 dark:border-emerald-900/50 dark:from-[#142A22] dark:to-[#182A25]">
-        <p className="text-xs font-medium text-emerald-800/80 dark:text-emerald-300">
-          Remaining Benefit Balance
-        </p>
+      <div className="flex h-[320px] min-h-0 flex-col">
+        <div className="shrink-0 rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#E8F6EF] to-[#DFF1E8] p-4 dark:border-emerald-900/50 dark:from-[#142A22] dark:to-[#182A25]">
+          <p className="text-xs font-medium text-emerald-800/80 dark:text-emerald-300">
+            Remaining Benefit Balance
+          </p>
 
-        <p className="mt-2 break-words text-3xl font-bold tracking-tight text-emerald-800 dark:text-emerald-300 sm:text-4xl">
-          {formatCurrency(totalBalance)}
-        </p>
+          <p className="mt-2 break-words text-3xl font-bold tracking-tight text-emerald-800 dark:text-emerald-300">
+            {formatCurrency(totalBalance)}
+          </p>
 
-        <p className="mt-1 text-xs text-emerald-700/80 dark:text-emerald-300/80">
-          {filteredBenefits.length} benefit allocations available
-        </p>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-foreground">
-            Benefit Breakdown
-          </h3>
-
-          <span className="text-[10px] text-muted-foreground">
-            {getPeriodLabel(period)}
-          </span>
+          <p className="mt-1 text-xs text-emerald-700/80 dark:text-emerald-300/80">
+            {filteredBenefits.length} benefit allocations available
+          </p>
         </div>
 
-        {filteredBenefits.length > 0 ? (
-          <div className="space-y-1">
-            {filteredBenefits.map((benefit) => (
-              <div
-                key={benefit.employeeBenefitId}
-                className="flex min-w-0 items-center justify-between gap-3 border-b border-border py-2.5 last:border-0"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                    <Wallet className="h-4 w-4" />
+        <div className="mt-4 flex min-h-0 flex-1 flex-col">
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-foreground">
+              Benefit Breakdown
+            </h3>
+
+            <span className="text-[10px] text-muted-foreground">
+              {frequency === 'all'
+                ? 'All Periods'
+                : frequency === 'monthly'
+                  ? 'Monthly'
+                  : 'Yearly'}
+            </span>
+          </div>
+
+          {filteredBenefits.length > 0 ? (
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="space-y-1">
+                {filteredBenefits.map((benefit) => (
+                  <div
+                    key={benefit.employeeBenefitId}
+                    className="flex min-w-0 items-center justify-between gap-3 border-b border-border py-3 last:border-0"
+                  >
+                    <p className="min-w-0 truncate text-sm font-medium text-foreground">
+                      {benefit.benefitName}
+                    </p>
+
+                    <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                      {formatCurrency(getAmount(benefit.balance))}
+                    </p>
                   </div>
-
-                  <p className="min-w-0 truncate text-sm font-medium text-foreground">
-                    {benefit.benefitName}
-                  </p>
-                </div>
-
-                <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                  {formatCurrency(getAmount(benefit.balance))}
-                </p>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-5 text-center text-xs text-muted-foreground">
-            No benefit allocations available for this period.
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 items-center justify-center text-center text-xs text-muted-foreground">
+              No benefit allocations available for this period.
+            </div>
+          )}
+        </div>
       </div>
     </DashboardPanel>
   )
@@ -1188,7 +1196,7 @@ function RecentActions({
               <a
                 key={`${action.type}-${action.id}`}
                 href={action.href}
-                className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-[#2F81F7]/40 hover:bg-[#EAF1FC] dark:hover:bg-[#1C2532]"
+                className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-card p-3.5 transition-colors hover:border-[#2F81F7]/40 hover:bg-blue-50/40 dark:hover:bg-[#1C2532]"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -1226,7 +1234,7 @@ function RecentActions({
           })}
         </div>
       ) : (
-        <div className="py-8 text-center">
+        <div className="py-10 text-center">
           <FileText className="mx-auto h-8 w-8 text-muted-foreground/40" />
 
           <p className="mt-2 text-sm font-medium text-foreground">
@@ -1328,7 +1336,12 @@ function Dashboard() {
 
   const proposals = proposalResponse as DashboardProposal[]
 
-  const benefitList = employeeBenefits as unknown as DashboardBenefit[]
+  const benefitList =
+    employeeBenefits as unknown as DashboardBenefit[]
+
+  // =====================================================
+  // DATE
+  // =====================================================
 
   const currentDate = getJakartaDateParts()
 
@@ -1522,6 +1535,7 @@ function Dashboard() {
       to: '/approvals/trip-proposals',
     })
 
+    // Personal requests that need attention.
     addTodayAction({
       id: 'personal-claim-revision',
       title: 'Your Claims Need Attention',
@@ -1642,10 +1656,10 @@ function Dashboard() {
 
   if (isDashboardLoading) {
     return (
-      <main className="space-y-4">
-        <div className="h-56 animate-pulse rounded-2xl bg-muted" />
+      <main className="space-y-5">
+        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           {[1, 2, 3, 4].map((item) => (
             <div
               key={item}
@@ -1654,11 +1668,11 @@ function Dashboard() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {[1, 2].map((item) => (
             <div
               key={item}
-              className="h-64 animate-pulse rounded-xl border border-border bg-card"
+              className="h-72 animate-pulse rounded-xl border border-border bg-card"
             />
           ))}
         </div>
@@ -1746,8 +1760,26 @@ function Dashboard() {
     )
   }
 
+  // =====================================================
+  // ROLE DISPLAY
+  // =====================================================
+
+  const roleTitle = isAdmin
+    ? 'Administrator'
+    : isFinanceManager
+      ? 'Finance Manager'
+      : isFinance
+        ? 'Finance'
+        : isManager
+          ? 'Manager'
+          : 'Employee'
+
+  // =====================================================
+  // DASHBOARD UI
+  // =====================================================
+
   return (
-    <main className="min-w-0 space-y-4">
+    <main className="min-w-0 space-y-5">
       {/* TODAY SUMMARY */}
       <TodaySummaryBanner
         userName={user.fullName?.split(' ')[0] || 'there'}
@@ -1775,7 +1807,7 @@ function Dashboard() {
 
       {/* MANAGEMENT / COMPANY ANALYTICS */}
       {isApprover && (
-        <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <OverviewPanel
             claims={allClaims}
             proposals={proposals}
@@ -1794,7 +1826,7 @@ function Dashboard() {
 
       {/* PERSONAL BENEFITS + PERSONAL EXPENSE TREND */}
       {!isAdmin && (
-        <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <BenefitOverview benefits={benefitList} />
 
           <ExpenseTrendPanel
