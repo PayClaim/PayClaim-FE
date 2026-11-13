@@ -98,7 +98,7 @@ export function TripProposalTimeline({
 
   return (
     <>
-      <section className="space-y-6 bg-muted/10 p-5 lg:col-span-8 lg:p-8">
+      <section className="min-w-0 space-y-6 bg-muted/10 p-5 lg:col-span-8 lg:p-8 xl:col-span-9">
         {/* Trip Process Header */}
         <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
@@ -522,6 +522,8 @@ function getProcessTasks(stage: ProposalTimelineItem): ProcessTask[] {
     currentStatus = 'Needs Revision'
   } else if (decision === 'forwardedtofinancemanager') {
     currentStatus = 'Forwarded'
+  } else if (decision === 'skipped') {
+    currentStatus = 'Skipped'
   }
 
   if (stage.approvalLevel === 1) {
@@ -584,6 +586,8 @@ function getTaskDotClass(status: string): string {
       return 'bg-purple-600'
     case 'Forwarded':
       return 'bg-sky-600'
+    case 'Skipped':
+      return 'bg-muted-foreground'
     default:
       return 'bg-amber-500'
   }

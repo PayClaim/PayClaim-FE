@@ -116,7 +116,8 @@ function getApprovalStatusConfig(
     (!isOwnProposal || isAdmin) &&
     (
       (norm === 'submitted' && (isAdmin || isManager)) ||
-      (norm === 'underreview' && (isAdmin || isFinance)) ||
+      (norm === 'underreview' &&
+        (isAdmin || isFinance || isFinanceManager)) ||
       (norm === 'financemanagerreview' &&
         (isAdmin || isFinanceManager))
     )
@@ -266,8 +267,10 @@ const statusConfig = getApprovalStatusConfig(
       </td>
 
       {/* Total Amount */}
-      <td className="whitespace-nowrap px-5 py-4 font-mono font-bold text-foreground">
-        {formatCurrency(proposal.totalAmount)}
+      <td className="whitespace-nowrap px-5 py-4">
+        <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+          {formatCurrency(proposal.totalAmount)}
+        </span>
       </td>
 
       {/* Participants with Users Icon and Grammar Fix */}

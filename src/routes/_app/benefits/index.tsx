@@ -226,7 +226,7 @@ function RouteComponent() {
               <Coins className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {idNumberFormatter.format(metrics.totalBalance)}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -494,7 +494,7 @@ function RouteComponent() {
                         </div>
 
                         <div
-                          className={`text-2xl font-bold font-mono tracking-tight ${
+                          className={`text-2xl font-bold tabular-nums tracking-tight ${
                             isAvailable
                               ? 'text-heading'
                               : 'text-muted-foreground line-through decoration-muted-foreground/40'

@@ -202,7 +202,7 @@ function RouteComponent() {
             {metrics.totalCount}
           </p>
           <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.totalAmount)} total value
+            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.totalAmount)}</span> total value
           </p>
         </div>
 
@@ -220,7 +220,7 @@ function RouteComponent() {
             {metrics.waitingCount}
           </p>
           <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.waitingAmount)} pending review
+            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.waitingAmount)}</span> pending review
           </p>
         </div>
 
@@ -238,7 +238,7 @@ function RouteComponent() {
             {metrics.approvedPaidCount}
           </p>
           <p className="text-xs font-medium text-slate-500 mt-1">
-            {idNumberFormatter.format(metrics.approvedPaidAmount)} settled value
+            <span className="tabular-nums font-semibold">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> settled value
           </p>
         </div>
       </div>
@@ -417,7 +417,9 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                       <td className="max-w-[260px] truncate px-5 py-4">
                         <div className="font-medium text-foreground truncate">
                           {claim.benefitName ||
-                            claim.tripProposalDescription ||
+                            (claim.tripProposalDestination
+                              ? `Business Trip to ${claim.tripProposalDestination}`
+                              : claim.tripProposalDescription) ||
                             'Operational Expense'}
                         </div>
                         <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
@@ -431,8 +433,10 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                       </td>
 
                       {/* Amount */}
-                      <td className="px-5 py-4 font-mono font-bold text-foreground">
-                        {idNumberFormatter.format(claim.amount)}
+                      <td className="px-5 py-4">
+                        <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+                          {idNumberFormatter.format(claim.amount)}
+                        </span>
                       </td>
 
                       {/* Submitted Date */}

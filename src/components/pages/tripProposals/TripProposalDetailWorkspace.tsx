@@ -221,7 +221,7 @@ export function TripProposalDetailWorkspace({
 
   // Form limit hanya digunakan pada tahap Finance.
   const isFinanceApprovalStage =
-    isUnderReview && (isFinance || isAdmin)
+    isUnderReview && (isFinance || isFinanceManager || isAdmin)
 
   const canTakeAction =
     Boolean(proposal) &&
@@ -235,7 +235,7 @@ export function TripProposalDetailWorkspace({
         )) ||
       (isManager && isSubmitted) ||
       (isFinance && isUnderReview) ||
-      (isFinanceManager && isFinanceManagerReview)
+      (isFinanceManager && (isUnderReview || isFinanceManagerReview))
     )
 
   const isMutationPending =
@@ -483,6 +483,7 @@ export function TripProposalDetailWorkspace({
   // Finance Limit berlaku untuk total keseluruhan proposal.
   const exceedsFinanceLimit =
     Boolean(proposal) &&
+    !isFinanceManager &&
     (
       isChangingAccommodationBudget
         ? hasValidAccommodationDraft
@@ -656,18 +657,37 @@ export function TripProposalDetailWorkspace({
 
   const financeManagerApproval = getLatestApproval(3)
 
-  const showFinanceStage =
-    Boolean(financeApproval || financeManagerApproval) ||
-    isTripStatus(proposal.status, [
-      TripProposalStatus.UnderReview,
-      TripProposalStatus.FinanceManagerReview,
-      TripProposalStatus.Approved,
-      TripProposalStatus.Completed,
-    ])
+  const isManagerSkipped =
+  !managerApproval &&
+  !isSubmitted &&
+  isTripStatus(proposal.status, [
+    TripProposalStatus.UnderReview,
+    TripProposalStatus.FinanceManagerReview,
+    TripProposalStatus.Approved,
+    TripProposalStatus.Completed,
+  ])
 
-  const showFinanceManagerStage =
-    Boolean(financeManagerApproval) ||
-    isFinanceManagerReview
+const isFinanceSkipped =
+  !financeApproval &&
+  !isUnderReview &&
+  isTripStatus(proposal.status, [
+    TripProposalStatus.FinanceManagerReview,
+    TripProposalStatus.Approved,
+    TripProposalStatus.Completed,
+  ])
+
+const showFinanceStage =
+  Boolean(financeApproval || financeManagerApproval) ||
+  isTripStatus(proposal.status, [
+    TripProposalStatus.UnderReview,
+    TripProposalStatus.FinanceManagerReview,
+    TripProposalStatus.Approved,
+    TripProposalStatus.Completed,
+  ])
+
+const showFinanceManagerStage =
+  Boolean(financeManagerApproval) ||
+  isFinanceManagerReview
 
   const submittedActivity = approvalHistory.find(
     (history) => history.decision.toLowerCase() === 'submitted',
@@ -693,6 +713,7 @@ export function TripProposalDetailWorkspace({
     roleName: string,
     approval: (typeof approvalHistory)[number] | undefined,
     isPending: boolean,
+    isSkipped = false,
   ): ProposalTimelineItem => {
     const parsedNotes = parseAccommodationBudgetNotes(
       approval?.notes,
@@ -703,11 +724,11 @@ export function TripProposalDetailWorkspace({
       title,
       approverName:
         approval?.approverName?.trim() ||
-        (isPending ? roleName : 'Approver name unavailable'),
+        (isPending || isSkipped ? roleName : 'Approver name unavailable'),
       approverRole: roleName,
       decision:
         approval?.decision ||
-        (isPending ? 'Pending' : 'Not recorded'),
+        (isPending ? 'Pending' : isSkipped ? 'Skipped' : 'Not recorded'),
       approvalLevel: level,
       decidedAt: approval?.decidedAt || '',
       notes: parsedNotes.notes,
@@ -741,6 +762,7 @@ export function TripProposalDetailWorkspace({
         'Finance Officer',
         financeApproval,
         isUnderReview,
+        isFinanceSkipped,
       ),
     )
   }
@@ -752,9 +774,10 @@ export function TripProposalDetailWorkspace({
       proposal.managerName || 'Project Manager',
       managerApproval,
       isSubmitted,
+      isManagerSkipped,
     ),
   )
-
+  
   timelineStages.push({
     id: 'submission',
     title: 'Proposal Submission',
@@ -769,7 +792,7 @@ export function TripProposalDetailWorkspace({
 
   const approvalButtonLabel = isSubmitted
     ? 'Approve (Manager)'
-    : isUnderReview
+    : isUnderReview && !isFinanceManager
       ? 'Approve (Finance)'
       : 'Approve (Finance Manager)'
 
