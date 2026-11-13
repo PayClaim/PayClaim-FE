@@ -1,17 +1,18 @@
 import { useGetAllDepartmentsQuery } from '#/features/departments/queries/queries'
 import { createEmployeeForm } from '#/features/employees/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
-import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { ArrowLeft, Users } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 
 export const Route = createFileRoute('/_app/admin/employees/create')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const router = useRouter()
   const form = createEmployeeForm()
 
   const { data: positions = [] } = useGetAllPositionsQuery()
@@ -33,14 +34,22 @@ function RouteComponent() {
     label: (employee) => `${employee.fullName} (${employee.number})`,
   })
 
+  // const managerOptions = employees.map((e) => ({
+  //   label: e.fullName,
+  //   value: e.id,
+  // }))
+
   return (
     <main className="max-w-2xl mx-auto space-y-6">
-      <Link to="/admin/employees">
-        <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Daftar Karyawan</span>
-        </Button>
-      </Link>
+      <Button
+        onClick={() => router.history.back()}
+        variant="outline"
+        size="sm"
+        className="gap-2 text-xs font-semibold"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Back to Employees List</span>
+      </Button>
 
       <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex items-center gap-3 pb-4 border-b border-border/70">
@@ -49,10 +58,11 @@ function RouteComponent() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Tambah Karyawan Baru
+              Create a New Employee
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Daftarkan akun karyawan, posisi, departemen, dan direct manager penilai klaim.
+              Register employee account, position, department, dan direct
+              manager for claims approver.
             </p>
           </div>
         </div>
@@ -70,8 +80,8 @@ function RouteComponent() {
               <form.AppField name="fullName">
                 {(field) => (
                   <field.TextField
-                    label="Nama Lengkap"
-                    placeholder="Contoh: Budi Santoso"
+                    label="Fullname"
+                    placeholder="Budi Santoso"
                   />
                 )}
               </form.AppField>
@@ -80,22 +90,22 @@ function RouteComponent() {
             <form.AppField name="email">
               {(field) => (
                 <field.TextField
-                  label="Email Perusahaan"
+                  label="Work Email"
                   placeholder="budi.santoso@mii.co.id"
                 />
               )}
             </form.AppField>
 
             <form.AppField name="hireDate">
-              {(field) => <field.DatePicker label="Tanggal Bergabung" />}
+              {(field) => <field.DatePicker label="Join Date" />}
             </form.AppField>
 
             <form.AppField name="positionId">
               {(field) => (
                 <field.FormSelect
                   values={positionOptions}
-                  placeholder="Pilih Posisi / Jabatan"
-                  label="Jabatan / Posisi"
+                  placeholder="Pick a job position"
+                  label="Job Position"
                 />
               )}
             </form.AppField>
@@ -104,8 +114,8 @@ function RouteComponent() {
               {(field) => (
                 <field.FormSelect
                   values={departmentOptions}
-                  label="Departemen"
-                  placeholder="Pilih Departemen"
+                  label="Department"
+                  placeholder="Pick a department"
                 />
               )}
             </form.AppField>
@@ -114,7 +124,7 @@ function RouteComponent() {
               {(positionId) => {
                 const selectedPos = positions.find((p) => p.id === positionId)
                 const isManager =
-                  positionId?.toUpperCase() === 'MGR' ||
+                  positionId.toUpperCase() === 'MGR' ||
                   Boolean(selectedPos?.title.toLowerCase().includes('manager'))
 
                 if (isManager) return null
@@ -126,8 +136,8 @@ function RouteComponent() {
                         <field.FormSelect
                           nullable
                           groups={managerGroups}
-                          label="Direct Manager (Penilai Klaim Level 1)"
-                          placeholder="Pilih Direct Manager"
+                          label="Direct Manager (Level 1 claim approver)"
+                          placeholder="Pick a Direct Manager"
                         />
                       )}
                     </form.AppField>
@@ -138,15 +148,18 @@ function RouteComponent() {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
-            <Link to="/admin/employees">
-              <Button variant="outline" type="button" size="sm">
-                Batal
-              </Button>
-            </Link>
+            <Button
+              onClick={() => router.history.back()}
+              variant="outline"
+              type="button"
+              size="sm"
+            >
+              Cancel
+            </Button>
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Simpan Karyawan"
+                label="Create Employee"
               />
             </form.AppForm>
           </div>
