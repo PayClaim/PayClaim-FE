@@ -19,7 +19,10 @@ export interface ClaimFilterParams {
 }
 
 // Digunakan oleh Admin / Manager / Finance untuk melihat semua klaim
-export const useGetAdminAllClaimsQuery = (params?: ClaimFilterParams) =>
+export const useGetAdminAllClaimsQuery = (
+  params?: ClaimFilterParams,
+  enabled = true,
+) =>
   useQuery({
     queryKey: ['admin.claims', params],
     queryFn: async () => {
@@ -27,10 +30,14 @@ export const useGetAdminAllClaimsQuery = (params?: ClaimFilterParams) =>
         params: params as Record<string, string | number>,
       })
     },
+    enabled,
   })
 
 // Digunakan untuk klaim pribadi (My Claims)
-export const useGetAllClaimsQuery = (params?: ClaimFilterParams) =>
+export const useGetAllClaimsQuery = (
+  params?: ClaimFilterParams,
+  enabled = true,
+) =>
   useQuery({
     queryKey: ['claims', params],
     queryFn: async () => {
@@ -38,6 +45,7 @@ export const useGetAllClaimsQuery = (params?: ClaimFilterParams) =>
         params: params as Record<string, string | number>,
       })
     },
+    enabled,
   })
 
 // Digunakan untuk detail klaim & riwayat approval

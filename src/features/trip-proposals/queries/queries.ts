@@ -33,12 +33,16 @@ const getAllProposals = async (
   return result.data ?? []
 }
 
-export const useGetAllProposalsQuery = (employeeId?: string) =>
+export const useGetAllProposalsQuery = (
+  employeeId?: string,
+  enabled = true,
+) =>
   useQuery({
     queryKey: employeeId
       ? ['trip-proposals', { employeeId }]
       : ['trip-proposals'],
     queryFn: () => getAllProposals(employeeId),
+    enabled,
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery
