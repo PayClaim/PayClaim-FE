@@ -5,7 +5,22 @@ import type {
   ClaimResponseWithHistory,
   MyClaimResponse,
 } from '#/types/claims.type'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
+
+function invalidateClaimRelatedQueries(queryClient: QueryClient, id?: string) {
+  return Promise.all([
+    ...(id ? [queryClient.invalidateQueries({ queryKey: ['claims', id] })] : []),
+    queryClient.invalidateQueries({ queryKey: ['claims'] }),
+    queryClient.invalidateQueries({ queryKey: ['admin.claims'] }),
+    queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] }),
+    queryClient.invalidateQueries({ queryKey: ['trip-proposals'] }),
+  ])
+}
 
 export interface ClaimFilterParams {
   search?: string
@@ -64,11 +79,7 @@ export const useCreateClaimMutation = () => {
     mutationFn: (body: FormData) => {
       return api.post('/claims', body)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['claims'] })
-      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
-      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
-    },
+    onSuccess: () => invalidateClaimRelatedQueries(queryClient),
   })
 }
 
@@ -79,12 +90,7 @@ export const useUpdateClaimMutation = (id: string) => {
     mutationFn: (body: FormData) => {
       return api.put(`/claims/${id}`, body)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['claims', id] })
-      queryClient.invalidateQueries({ queryKey: ['claims'] })
-      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
-      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
-    },
+    onSuccess: () => invalidateClaimRelatedQueries(queryClient, id),
   })
 }
 
@@ -95,12 +101,7 @@ export const useApproveClaimMutation = (id: string) => {
     mutationFn: (body: ClaimApprovalActionRequest) => {
       return api.post(`/claims/${id}/approve`, body)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['claims', id] })
-      queryClient.invalidateQueries({ queryKey: ['claims'] })
-      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
-      queryClient.invalidateQueries({ queryKey: ['employeesBenefit.me'] })
-    },
+    onSuccess: () => invalidateClaimRelatedQueries(queryClient, id),
   })
 }
 
@@ -111,11 +112,7 @@ export const useRejectClaimMutation = (id: string) => {
     mutationFn: (body: ClaimApprovalActionRequest) => {
       return api.post(`/claims/${id}/reject`, body)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['claims', id] })
-      queryClient.invalidateQueries({ queryKey: ['claims'] })
-      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
-    },
+    onSuccess: () => invalidateClaimRelatedQueries(queryClient, id),
   })
 }
 
@@ -126,10 +123,6 @@ export const usePayClaimMutation = (id: string) => {
     mutationFn: (body: ClaimPayActionRequest) => {
       return api.post(`/claims/${id}/pay`, body)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['claims', id] })
-      queryClient.invalidateQueries({ queryKey: ['claims'] })
-      queryClient.invalidateQueries({ queryKey: ['admin.claims'] })
-    },
+    onSuccess: () => invalidateClaimRelatedQueries(queryClient, id),
   })
 }
