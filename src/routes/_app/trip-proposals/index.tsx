@@ -554,8 +554,10 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                     </td>
 
                     {/* Total Biaya */}
-                    <td className="py-3.5 px-5 text-right font-mono font-bold text-foreground whitespace-nowrap">
-                      {formatCurrency(proposal.totalAmount)}
+                    <td className="py-3.5 px-5 text-right whitespace-nowrap">
+                      <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+                        {formatCurrency(proposal.totalAmount)}
+                      </span>
                     </td>
 
                     {/* Status */}

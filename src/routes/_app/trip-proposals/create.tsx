@@ -8,6 +8,7 @@ import { cn } from 'cn'
 import { Button } from '#/components/ui/button'
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useAuth } from '#/hooks/auth.hook'
 import { toDateOnly } from '#/lib/utils'
 
@@ -391,6 +392,9 @@ function CreateTripProposalPage({
                   !participant.isPic &&
                   !participant.employeeId
 
+                const employeeGroups =
+                  buildEmployeeGroups(availableEmployees)
+
                 return (
                   <div
                     key={index}
@@ -428,10 +432,17 @@ function CreateTripProposalPage({
                           >
                             <option value="">Select employee</option>
 
-                            {availableEmployees.map((employee) => (
-                              <option key={employee.id} value={employee.id}>
-                                {employee.fullName} ({employee.number})
-                              </option>
+                            {employeeGroups.map((group) => (
+                              <optgroup
+                                key={group.groupLabel}
+                                label={group.groupLabel}
+                              >
+                                {group.items.map((item) => (
+                                  <option key={item.value} value={item.value}>
+                                    {item.label}
+                                  </option>
+                                ))}
+                              </optgroup>
                             ))}
                           </select>
 

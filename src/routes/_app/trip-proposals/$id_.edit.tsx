@@ -25,6 +25,7 @@ import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { editTripProposalForm } from '#/features/trip-proposals/forms/forms'
 import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queries'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
+import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useAuth } from '#/hooks/auth.hook'
 import { downloadFile } from '#/lib/download'
 import {
@@ -557,6 +558,9 @@ function EditTripProposalFormContent({
                   !participant.isPic &&
                   !participant.employeeId
 
+                const employeeGroups =
+                  buildEmployeeGroups(availableEmployees)
+
                 return (
                   <div
                     key={index}
@@ -594,10 +598,17 @@ function EditTripProposalFormContent({
                           >
                             <option value="">Select employee</option>
 
-                            {availableEmployees.map((employee) => (
-                              <option key={employee.id} value={employee.id}>
-                                {employee.fullName} ({employee.number})
-                              </option>
+                            {employeeGroups.map((group) => (
+                              <optgroup
+                                key={group.groupLabel}
+                                label={group.groupLabel}
+                              >
+                                {group.items.map((item) => (
+                                  <option key={item.value} value={item.value}>
+                                    {item.label}
+                                  </option>
+                                ))}
+                              </optgroup>
                             ))}
                           </select>
 
