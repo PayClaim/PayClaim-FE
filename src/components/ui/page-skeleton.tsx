@@ -1,6 +1,26 @@
+import { useEffect, useState } from 'react'
+
+function useDeferredVisibility(delayMs = 200) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), delayMs)
+    return () => clearTimeout(timer)
+  }, [delayMs])
+
+  return visible
+}
+
 export function ListPageSkeleton() {
+  const visible = useDeferredVisibility(200)
+  if (!visible) return null
+
   return (
-    <main className="space-y-6" aria-busy="true" aria-label="Loading content">
+    <main
+      className="space-y-6 animate-in fade-in duration-150"
+      aria-busy="true"
+      aria-label="Loading content"
+    >
       {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
         <div className="space-y-2">
@@ -52,9 +72,12 @@ export function ListPageSkeleton() {
 }
 
 export function DetailPageSkeleton() {
+  const visible = useDeferredVisibility(200)
+  if (!visible) return null
+
   return (
     <main
-      className="w-full max-w-[1600px] mx-auto"
+      className="w-full max-w-[1600px] mx-auto animate-in fade-in duration-150"
       aria-busy="true"
       aria-label="Loading details"
     >
