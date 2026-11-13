@@ -20,7 +20,7 @@ function RouteComponent() {
     return (
       <main className="max-w-2xl mx-auto py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data benefit...</p>
+        <p className="text-sm text-muted-foreground">Loading benefit data...</p>
       </main>
     )
   }
@@ -31,7 +31,7 @@ function RouteComponent() {
         <Link to="/admin/benefits">
           <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Kembali ke Master Benefit</span>
+            <span>Back to Master Benefits</span>
           </Button>
         </Link>
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
@@ -82,7 +82,7 @@ function EditBenefitFormContent({
       <Link to="/admin/benefits">
         <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Master Benefit</span>
+          <span>Back to Master Benefits</span>
         </Button>
       </Link>
 
@@ -154,7 +154,7 @@ function EditBenefitFormContent({
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
             <Link to="/admin/benefits">
               <Button variant="outline" type="button" size="sm">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.AppForm>

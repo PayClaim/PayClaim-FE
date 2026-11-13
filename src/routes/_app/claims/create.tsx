@@ -241,7 +241,7 @@ function RouteComponent() {
       : currentClaimType === 'BusinessTripReimbursement' &&
           selectedTripBudget !== undefined &&
           selectedTripBudget <= MAX_CLAIM_AMOUNT
-        ? `Maksimal klaim untuk perjalanan ini adalah ${idNumberFormatter.format(
+        ? `Maximum claim for this trip is ${idNumberFormatter.format(
             selectedTripBudget,
           )}.`
         : `Maximum claim amount is ${idNumberFormatter.format(
@@ -297,7 +297,7 @@ function RouteComponent() {
     setIsAmountLimitExceeded(false)
 
     if (values.amount <= 0) {
-      const message = 'Nominal klaim harus lebih besar dari 0'
+      const message = 'Claim amount must be greater than 0'
 
       form.setFieldMeta('amount', (prev) => ({
         ...prev,
@@ -319,7 +319,7 @@ function RouteComponent() {
       selectedTrip
     ) {
       if (!values.transactionDate) {
-        const message = 'Tanggal invoice wajib diisi.'
+        const message = 'Invoice date is required.'
 
         form.setFieldMeta('transactionDate', (prev) => ({
           ...prev,
@@ -338,7 +338,7 @@ function RouteComponent() {
         values.transactionDate < selectedTrip.startDate ||
         values.transactionDate > selectedTrip.endDate
       ) {
-        const message = `Tanggal invoice harus berada di dalam periode perjalanan dinas (${selectedTrip.startDate} s/d ${selectedTrip.endDate}).`
+        const message = `Invoice date must be within the business trip period (${selectedTrip.startDate} to ${selectedTrip.endDate}).`
 
         form.setFieldMeta('transactionDate', (prev) => ({
           ...prev,
@@ -391,7 +391,7 @@ function RouteComponent() {
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Lengkapi rincian pengeluaran dan lampirkan bukti kuitansi sah
+              Complete the expense details and attach a valid receipt
               untuk diproses reviewer.
             </p>
           </div>
@@ -446,7 +446,7 @@ function RouteComponent() {
                       <field.FormSelect
                         placeholder={
                           benefitGroups.length > 0
-                            ? 'Pilih benefit...'
+                            ? 'Select benefit...'
                             : 'Belum ada benefit aktif'
                         }
                         label="Benefit"
@@ -469,7 +469,7 @@ function RouteComponent() {
                       <field.FormSelect
                         placeholder={
                           tripSelect.length > 0
-                            ? 'Pilih proposal perjalanan...'
+                            ? 'Select trip proposal...'
                             : 'Tidak ada proposal disetujui'
                         }
                         label="Trip Proposal"
@@ -504,7 +504,7 @@ function RouteComponent() {
                   </label>
 
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
-                    Penggantian operasional langsung diajukan tanpa penautan
+                    Operational reimbursement is submitted directly without linking
                     benefit atau trip.
                   </div>
                 </div>
@@ -586,7 +586,7 @@ function RouteComponent() {
                       helperText={
                         currentClaimType === 'BusinessTripReimbursement' &&
                         selectedTrip
-                          ? `Periode perjalanan dinas: ${selectedTrip.startDate} s/d ${selectedTrip.endDate}`
+                          ? `Business trip period: ${selectedTrip.startDate} to ${selectedTrip.endDate}`
                           : undefined
                       }
                     />
@@ -609,7 +609,7 @@ function RouteComponent() {
 
                     onSubmit: ({ value }) => {
                       if (value <= 0) {
-                        return 'Nominal klaim harus lebih besar dari 0'
+                        return 'Claim amount must be greater than 0'
                       }
 
                       if (value > claimAmountLimit) {
@@ -744,7 +744,7 @@ function RouteComponent() {
                 variant="outline"
                 className="cursor-pointer"
               >
-                Batal
+                Cancel
               </Button>
             </Link>
 
@@ -790,7 +790,7 @@ function RouteComponent() {
 
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">
-                    Tanggal Invoice:
+                    Invoice Date:
                   </span>
 
                   <span className="font-semibold text-foreground">
@@ -800,7 +800,7 @@ function RouteComponent() {
 
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">
-                    Nominal Pengajuan:
+                    Submitted Amount:
                   </span>
 
                   <span className="font-bold text-base text-blue-600 dark:text-blue-400 font-mono">
@@ -938,7 +938,7 @@ function TripInfoBanner({
       <div>
         <div className="flex items-center gap-2">
           <span className="font-bold text-sm text-heading">
-            Perjalanan Dinas: {selectedTrip.destination}
+            Business Trip: {selectedTrip.destination}
           </span>
 
           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">

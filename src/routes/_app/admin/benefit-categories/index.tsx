@@ -41,7 +41,7 @@ function RouteComponent() {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat daftar kategori benefit. Silakan coba kembali nanti.
+          An error occurred while loading benefit categories. Please try again later.
         </div>
       </main>
     )
@@ -51,7 +51,7 @@ function RouteComponent() {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data kategori benefit...</p>
+        <p className="text-sm text-muted-foreground">Loading benefit categories...</p>
       </main>
     )
   }
@@ -74,7 +74,7 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Kelola kategori klasifikasi tunjangan dan klaim karyawan.
+              Manage employee benefit and claim classification categories.
             </p>
           </div>
         </div>
@@ -128,7 +128,7 @@ function RouteComponent() {
                 onClick={() => setSearchFilter('')}
                 className="text-xs font-semibold h-8"
               >
-                Reset Pencarian
+                Reset Search
               </Button>
             )}
           </div>
@@ -223,14 +223,14 @@ function DeleteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Hapus Kategori Benefit</DialogTitle>
+          <DialogTitle>Delete Benefit Category</DialogTitle>
           <DialogDescription className="text-sm pt-1">
             Apakah Anda yakin ingin menghapus kategori <strong>"{name}"</strong>? Tindakan ini tidak dapat dibatalkan jika kategori telah terkait dengan jenis benefit.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Batal</Button>
+            <Button variant="outline" size="sm">Cancel</Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -240,7 +240,7 @@ function DeleteDialog({
             }}
           >
             <Button variant="destructive" size="sm" type="submit">
-              Hapus Kategori
+              Delete Category
             </Button>
           </form>
         </DialogFooter>

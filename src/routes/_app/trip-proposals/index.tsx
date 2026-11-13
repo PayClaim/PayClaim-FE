@@ -273,7 +273,7 @@ const sortedProposals = useMemo(() => {
   if (isError) {
     return (
       <div className="p-8 text-center space-y-3 bg-card rounded-2xl border border-border">
-        <p className="font-semibold text-rose-600">Gagal memuat data proposal perjalanan dinas.</p>
+        <p className="font-semibold text-rose-600">Failed to load business trip proposals.</p>
         <p className="text-xs text-muted-foreground">{error instanceof Error ? error.message : 'Unknown error'}</p>
       </div>
     )
@@ -282,7 +282,7 @@ const sortedProposals = useMemo(() => {
   if (isFetching && proposals.length === 0) {
     return (
       <div className="p-12 text-center text-muted-foreground">
-        <p className="text-sm">Memuat proposal perjalanan dinas Anda...</p>
+        <p className="text-sm">Loading your business trip proposals...</p>
       </div>
     )
   }
@@ -296,7 +296,7 @@ const sortedProposals = useMemo(() => {
             My Trip Proposals
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Kelola dan pantau proposal perjalanan dinas Anda (sebagai PIC atau peserta).
+            Manage and track your business trip proposals (as PIC or participant).
           </p>
         </div>
 
@@ -306,7 +306,7 @@ const sortedProposals = useMemo(() => {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5 shadow-2xs h-9 px-3.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
-            Ajukan Proposal Baru
+            Submit New Proposal
           </Button>
         </Link>
       </div>
@@ -317,7 +317,7 @@ const sortedProposals = useMemo(() => {
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Total Proposal Perjalanan
+              Total Proposals
             </span>
             <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
               <Plane className="w-4 h-4" aria-hidden="true" />
@@ -327,7 +327,7 @@ const sortedProposals = useMemo(() => {
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.totalAmount)}</span> total estimasi budget
+            <span className="tabular-nums font-medium">{formatCurrency(metrics.totalAmount)}</span> total estimated budget
           </p>
         </div>
 
@@ -335,7 +335,7 @@ const sortedProposals = useMemo(() => {
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Menunggu Review
+              Waiting for Review
             </span>
             <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <Clock className="w-4 h-4" aria-hidden="true" />
@@ -345,7 +345,7 @@ const sortedProposals = useMemo(() => {
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingAmount)}</span> dalam proses approval
+            <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingAmount)}</span> pending review
           </p>
         </div>
 
@@ -353,7 +353,7 @@ const sortedProposals = useMemo(() => {
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Disetujui / Selesai
+              Approved / Completed
             </span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
@@ -363,7 +363,7 @@ const sortedProposals = useMemo(() => {
             {metrics.approvedCompletedCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedCompletedAmount)}</span> telah disetujui / selesai
+            <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedCompletedAmount)}</span> approved / completed
           </p>
         </div>
       </div>
@@ -440,7 +440,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Cari destinasi, PIC..."
+                placeholder="Search destination, PIC..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8.5 pr-8 py-1.5 text-xs bg-muted/40 border border-border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/50 transition-colors"
@@ -463,12 +463,12 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 <table className="w-full min-w-[1100px] text-left border-collapse text-xs">            <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-5">Destinasi</th>
-                <th className="py-3 px-5">Periode Perjalanan</th>
+                <th className="py-3 px-5">Trip Period</th>
                 <th className="py-3 px-5">PIC</th>
                 <th className="py-3 px-5">Peserta</th>
                 <th className="py-3 px-5 text-right">Total Biaya</th>
                 <th className="py-3 px-5 text-center">Status</th>
-                <th className="py-3 px-5 text-right">Aksi</th>
+                <th className="py-3 px-5 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -604,7 +604,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
         {/* Footer info bar */}
         <div className="px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground flex items-center justify-between">
-          <span>Menampilkan {filteredProposals.length} dari {proposals.length} total proposal</span>
+          <span>Showing {filteredProposals.length} of {proposals.length} total proposals</span>
           {activeTab !== 'ALL' && (
             <span className="font-medium text-foreground">
               Filter aktif: {activeTab}

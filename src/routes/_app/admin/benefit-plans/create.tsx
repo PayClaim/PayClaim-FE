@@ -39,7 +39,7 @@ function CreateBenefitPlanPage() {
       <Link to="/admin/benefit-plans">
         <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Benefit Plans</span>
+          <span>Back to Benefit Plans</span>
         </Button>
       </Link>
 
@@ -50,7 +50,7 @@ function CreateBenefitPlanPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Tambah Aturan Plafon Benefit
+              Add Benefit Limit Rule
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Tetapkan batas nominal klaim untuk kombinasi departemen, jabatan, dan jenis benefit.
@@ -114,13 +114,13 @@ function CreateBenefitPlanPage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
             <Link to="/admin/benefit-plans">
               <Button variant="outline" type="button" size="sm">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Simpan Aturan Plafon"
+                label="Save Limit Rule"
               />
             </form.AppForm>
           </div>

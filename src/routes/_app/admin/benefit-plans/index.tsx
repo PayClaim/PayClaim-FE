@@ -136,7 +136,7 @@ function BenefitPlansIndexPage() {
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-muted-foreground">
-          Memuat data matriks plafon benefit...
+          Loading benefit limit matrix...
         </p>
       </main>
     )
@@ -283,7 +283,7 @@ function BenefitPlansIndexPage() {
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
                   ? 'Tidak ada aturan plafon yang cocok dengan filter yang dipilih.'
-                  : 'Belum ada data aturan plafon benefit yang terdaftar di sistem.'}
+                  : 'No benefit limit rules are registered in the system yet.'}
               </p>
             </div>
             {hasActiveFilters && (
@@ -433,7 +433,7 @@ function DeletePlanDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Hapus Aturan Plafon Benefit</DialogTitle>
+          <DialogTitle>Delete Benefit Limit Rule</DialogTitle>
           <DialogDescription className="text-sm pt-1">
             Apakah Anda yakin ingin menghapus aturan plafon untuk{' '}
             <strong>{plan.benefitName || plan.benefitId}</strong> pada
@@ -445,7 +445,7 @@ function DeletePlanDialog({
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
             <Button variant="outline" size="sm">
-              Batal
+              Cancel
             </Button>
           </DialogClose>
           <form
@@ -456,7 +456,7 @@ function DeletePlanDialog({
             }}
           >
             <Button variant="destructive" size="sm" type="submit">
-              Hapus Plafon
+              Delete Limit
             </Button>
           </form>
         </DialogFooter>

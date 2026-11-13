@@ -47,7 +47,7 @@ function RouteComponent() {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data departemen. Silakan coba kembali nanti.
+          An error occurred while loading departments. Please try again later.
         </div>
       </main>
     )
@@ -57,7 +57,7 @@ function RouteComponent() {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data departemen...</p>
+        <p className="text-sm text-muted-foreground">Loading departments...</p>
       </main>
     )
   }
@@ -80,7 +80,7 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Kelola struktur divisi, departemen, dan hirarki organisasi perusahaan.
+              Manage company divisions, departments, and organizational hierarchy.
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ function RouteComponent() {
                 onClick={() => setSearchFilter('')}
                 className="text-xs font-semibold h-8"
               >
-                Reset Pencarian
+                Reset Search
               </Button>
             )}
           </div>
@@ -249,14 +249,14 @@ function DeleteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Hapus Departemen</DialogTitle>
+          <DialogTitle>Delete Department</DialogTitle>
           <DialogDescription className="text-sm pt-1">
             Apakah Anda yakin ingin menghapus departemen <strong>"{name || id}"</strong>? Pastikan tidak ada data karyawan atau sub-departemen yang masih terkait.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Batal</Button>
+            <Button variant="outline" size="sm">Cancel</Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -266,7 +266,7 @@ function DeleteDialog({
             }}
           >
             <Button variant="destructive" size="sm" type="submit">
-              Hapus Departemen
+              Delete Department
             </Button>
           </form>
         </DialogFooter>

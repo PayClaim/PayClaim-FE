@@ -149,7 +149,7 @@ function RouteComponent() {
               Sign In
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Masuk dengan kredensial akun korporat Anda.
+              Sign in with your corporate account credentials.
             </p>
           </div>
 
@@ -192,7 +192,7 @@ function RouteComponent() {
                       name={field.name}
                       type="text"
                       autoComplete="username"
-                      placeholder="Masukkan username Anda"
+                      placeholder="Enter your username"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -239,7 +239,7 @@ function RouteComponent() {
                         onClick={() => setForgotDialogOpen(true)}
                         className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline cursor-pointer transition-colors"
                       >
-                        Lupa password?
+                        Forgot password?
                       </button>
                     </div>
                     <div className="relative">
@@ -248,7 +248,7 @@ function RouteComponent() {
                         name={field.name}
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
-                        placeholder="Masukkan password Anda"
+                        placeholder="Enter your password"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
@@ -304,7 +304,7 @@ function RouteComponent() {
                         <span>Memproses...</span>
                       </>
                     ) : (
-                      <span>Masuk ke PayClaim</span>
+                      <span>Sign in to PayClaim</span>
                     )}
                   </button>
                 )}
@@ -337,9 +337,9 @@ function RouteComponent() {
       <Dialog open={forgotDialogOpen} onOpenChange={setForgotDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Bantuan Kredensial Akun</DialogTitle>
+            <DialogTitle>Account Credential Help</DialogTitle>
             <DialogDescription>
-              Informasi pengaturan ulang kata sandi akun domain korporat PT Mitra Integrasi Informatika.
+              Password reset information for PT Mitra Integrasi Informatika corporate domain accounts.
             </DialogDescription>
           </DialogHeader>
 

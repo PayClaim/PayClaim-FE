@@ -22,7 +22,7 @@ function RouteComponent() {
       <Link to="/admin/departments">
         <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Departemen</span>
+          <span>Back to Departments</span>
         </Button>
       </Link>
 
@@ -33,7 +33,7 @@ function RouteComponent() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Tambah Departemen
+              Add Department
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Daftarkan unit departemen baru dan tentukan induk organisasinya jika ada.
@@ -83,13 +83,13 @@ function RouteComponent() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
             <Link to="/admin/departments">
               <Button variant="outline" type="button" size="sm">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Simpan Departemen"
+                label="Save Department"
               />
             </form.AppForm>
           </div>

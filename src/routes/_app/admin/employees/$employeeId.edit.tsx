@@ -31,9 +31,7 @@ function RouteComponent() {
     return (
       <main className="max-w-2xl mx-auto py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">
-          Loading employee data...
-        </p>
+        <p className="text-sm text-muted-foreground">Loading employee data...</p>
       </main>
     )
   }
