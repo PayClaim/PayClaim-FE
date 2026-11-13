@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 
 import type { TripProposalDetailResponse } from '#/types/tripProposals.type'
@@ -20,6 +20,17 @@ export function TripProposalHeader({
   backTo = '/trip-proposals',
   backLabel = 'Back to My Trip Proposals',
 }: Props) {
+  const router = useRouter()
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.history.back()
+    } else {
+      navigate({ to: backTo })
+    }
+  }
+
   const isAccommodationPaid = [
     'financemanagerreview',
     'approved',
@@ -31,16 +42,15 @@ export function TripProposalHeader({
       {/* Judul, informasi submit, dan status. */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <Link to={backTo}>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              title={backLabel}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            title={backLabel}
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
 
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
