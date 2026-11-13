@@ -19,7 +19,6 @@ import {
   ArrowUpRight,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   FileText,
   HandCoins,
   Plane,
@@ -45,6 +44,8 @@ type DashboardRoute =
   | '/approvals/trip-proposals'
 
 type PeriodFilter = 'month' | 'sixMonths' | 'year' | 'all'
+
+type OverviewView = 'claims' | 'trips'
 
 type DashboardClaim = {
   id: string
@@ -114,6 +115,92 @@ type ExpenseBucket = {
   label: string
   amount: number
 }
+
+type StatusDefinition = {
+  key: string
+  label: string
+  color: string
+}
+
+// =====================================================
+// STATUS DEFINITIONS
+// =====================================================
+
+const CLAIM_STATUSES: StatusDefinition[] = [
+  {
+    key: 'submitted',
+    label: 'Submitted',
+    color: 'bg-amber-500',
+  },
+  {
+    key: 'underreview',
+    label: 'Under Review',
+    color: 'bg-[#2F81F7]',
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    color: 'bg-emerald-500',
+  },
+  {
+    key: 'paid',
+    label: 'Paid',
+    color: 'bg-teal-500',
+  },
+  {
+    key: 'needsrevision',
+    label: 'Needs Revision',
+    color: 'bg-orange-500',
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    color: 'bg-rose-500',
+  },
+]
+
+const TRIP_STATUSES: StatusDefinition[] = [
+  {
+    key: 'submitted',
+    label: 'Submitted',
+    color: 'bg-amber-500',
+  },
+  {
+    key: 'underreview',
+    label: 'Under Review',
+    color: 'bg-[#2F81F7]',
+  },
+  {
+    key: 'financemanagerreview',
+    label: 'Finance Manager Review',
+    color: 'bg-violet-500',
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    color: 'bg-emerald-500',
+  },
+  {
+    key: 'completed',
+    label: 'Completed',
+    color: 'bg-teal-500',
+  },
+  {
+    key: 'needsrevision',
+    label: 'Needs Revision',
+    color: 'bg-orange-500',
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    color: 'bg-rose-500',
+  },
+  {
+    key: 'cancelled',
+    label: 'Cancelled',
+    color: 'bg-rose-500',
+  },
+]
 
 // =====================================================
 // HELPER FUNCTIONS
@@ -310,7 +397,9 @@ function getExpenseBuckets(
     )
 
     paidClaims.forEach((claim) => {
-      const day = Number(getDateKey(claim.transactionDate).slice(8, 10))
+      const day = Number(
+        getDateKey(claim.transactionDate).slice(8, 10),
+      )
 
       if (!day) return
 
@@ -414,8 +503,6 @@ function benefitMatchesPeriod(
   const current = getJakartaDateParts()
   const today = `${current.year}-${current.month}-${current.day}`
 
-  // Jika API tidak mengirim periode alokasi,
-  // jangan sembunyikan benefit yang masih aktif.
   if (!start && !end) return true
 
   if (start && start > today) return false
@@ -454,34 +541,26 @@ function PeriodFilter({
 
 function DashboardPanel({
   title,
-  description,
   children,
   action,
 }: {
   title: string
-  description?: string
   children: ReactNode
   action?: ReactNode
 }) {
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-foreground">
-            {title}
-          </h2>
-
-          {description && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </div>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-2">
+        <h2 className="min-w-0 text-base font-semibold text-foreground">
+          {title}
+        </h2>
 
         {action}
       </div>
 
-      <div className="min-w-0 p-5">{children}</div>
+      <div className="min-w-0 px-4 pt-2 pb-4">
+        {children}
+      </div>
     </section>
   )
 }
@@ -498,7 +577,7 @@ function TodayActionButton({
   return (
     <Link
       to={action.to}
-      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-blue-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-slate-700 dark:bg-[#161B22] dark:hover:border-[#2F81F7] dark:hover:bg-[#1C2532]"
+      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-[#B8CCE8] bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-[#789FD2] hover:bg-[#EAF1FC] dark:border-slate-700 dark:bg-[#161B22] dark:hover:border-[#2F81F7] dark:hover:bg-[#1C2532]"
     >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800 dark:text-[#E6EDF3]">
@@ -510,12 +589,13 @@ function TodayActionButton({
         </p>
       </div>
 
-      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-[#E7F0FF] px-3 text-xl font-bold tabular-nums text-[#245DA8] transition-colors group-hover:bg-[#D7E7FF] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
+      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] px-3 text-xl font-bold tabular-nums text-[#244E83] transition-colors group-hover:bg-[#C3D8F4] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
         {formatNumber(action.count)}
       </div>
     </Link>
   )
 }
+
 
 function TodaySummaryBanner({
   userName,
@@ -529,32 +609,27 @@ function TodaySummaryBanner({
   isEmployee: boolean
 }) {
   return (
-    <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#D4E2F6] bg-gradient-to-br from-[#DCEAFF] via-[#EAF2FF] to-[#D3E3F8] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-7">
-      <div className="grid min-w-0 grid-cols-1 items-center gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-8">
-        {/* LEFT: NAME AND DATE */}
+    <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#B8CCE8] bg-gradient-to-br from-[#C9DDF7] via-[#DCE9FA] to-[#C6D9F2] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-6">
+      <div className="grid min-w-0 grid-cols-1 items-center gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-7">
         <div className="min-w-0">
-          <p className="text-sm font-bold tracking-wide text-[#315B91] dark:text-[#79B8FF]">
-            TODAY SUMMARY
-          </p>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
+
+            <span className="text-sm font-semibold leading-none text-[#294B76] dark:text-[#C9D8EA]">
+              {date}
+            </span>
+          </div>
 
           <h1 className="mt-4 break-words text-2xl font-bold tracking-tight text-[#172B49] dark:text-[#E6EDF3] sm:text-3xl">
             Welcome back, {userName}!
           </h1>
 
-          <p className="mt-2 text-sm text-[#526B8C] dark:text-[#8B949E]">
+          <p className="mt-2 text-sm text-[#405F87] dark:text-[#8B949E]">
             {isEmployee
               ? "Here's what's happening with your benefits and requests."
               : "Here's what's happening with your team and approvals."}
           </p>
-
-          <div className="mt-6 border-t border-[#BED2EF] pt-4 dark:border-[#30363D]">
-            <p className="text-sm font-semibold text-[#294B76] dark:text-[#C9D8EA]">
-              {date}
-            </p>
-          </div>
         </div>
 
-        {/* RIGHT: ATTENTION / APPROVAL */}
         <div className="min-w-0">
           <h2 className="mb-3 text-sm font-bold tracking-wide text-[#294B76] dark:text-[#C9D8EA]">
             {isEmployee
@@ -563,7 +638,7 @@ function TodaySummaryBanner({
           </h2>
 
           {actions.length > 0 ? (
-            <div className="grid min-w-0 grid-cols-1 gap-2.5">
+            <div className="grid min-w-0 grid-cols-1 gap-2">
               {actions.map((action) => (
                 <TodayActionButton
                   key={action.id}
@@ -572,7 +647,7 @@ function TodaySummaryBanner({
               ))}
             </div>
           ) : (
-            <div className="flex min-h-[90px] items-center gap-3 rounded-xl border border-[#BED2EF] bg-white/70 px-4 py-4 dark:border-[#30363D] dark:bg-[#161B22]">
+            <div className="flex min-h-[80px] items-center gap-3 rounded-xl border border-[#B8CCE8] bg-white/75 px-4 py-3 dark:border-[#30363D] dark:bg-[#161B22]">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
@@ -594,6 +669,7 @@ function TodaySummaryBanner({
   )
 }
 
+
 // =====================================================
 // STATUS BADGE
 // =====================================================
@@ -604,7 +680,9 @@ function StatusBadge({ status }: { status: string }) {
   let label = status
 
   if (normalized === 'underreview') label = 'Under Review'
-  if (normalized === 'financemanagerreview') label = 'Finance Review'
+  if (normalized === 'financemanagerreview') {
+    label = 'Finance Review'
+  }
   if (normalized === 'needsrevision') label = 'Needs Revision'
 
   let style = 'border-border bg-muted text-muted-foreground'
@@ -656,10 +734,10 @@ function QuickAccessCard({
   return (
     <Link
       to={to}
-      className="group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:border-[#2F81F7]/50 hover:bg-blue-50/50 dark:hover:bg-[#1C2532]"
+      className="group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-[#2F81F7]/50 hover:bg-[#EAF1FC] dark:hover:bg-[#1C2532]"
     >
       <div className="flex items-center justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E7F0FF] text-[#315F9E] transition-colors group-hover:bg-[#D7E7FF] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] transition-colors group-hover:bg-[#C3D8F4] dark:bg-[#243A59] dark:text-[#79B8FF] dark:group-hover:bg-[#304D75]">
           <Icon className="h-4.5 w-4.5" />
         </div>
 
@@ -680,17 +758,162 @@ function QuickAccessCard({
 }
 
 // =====================================================
+// STATUS DISTRIBUTION
+// =====================================================
+
+function StatusDistribution({
+  items,
+  statuses,
+}: {
+  items: Array<{ status: string }>
+  statuses: StatusDefinition[]
+}) {
+  return (
+    <div className="space-y-3">
+      {statuses.map((status) => {
+        const count = items.filter(
+          (item) =>
+            normalizeStatus(item.status) === status.key,
+        ).length
+
+        const percentage =
+          items.length > 0
+            ? (count / items.length) * 100
+            : 0
+
+        return (
+          <div key={status.key}>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-foreground">
+                {status.label}
+              </span>
+
+              <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                {count}
+              </span>
+            </div>
+
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full rounded-full transition-all ${status.color}`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// =====================================================
+// COMBINED OVERVIEW PANEL
+// =====================================================
+
+function OverviewPanel({
+  claims,
+  proposals,
+}: {
+  claims: DashboardClaim[]
+  proposals: DashboardProposal[]
+}) {
+  const [view, setView] = useState<OverviewView>('claims')
+  const [period, setPeriod] = useState<PeriodFilter>('year')
+
+  const filteredClaims = claims.filter((claim) =>
+    matchesPeriod(
+      claim.submittedAt || claim.transactionDate,
+      period,
+    ),
+  )
+
+  const filteredProposals = proposals.filter((proposal) =>
+    matchesPeriod(proposal.submittedAt, period),
+  )
+
+  const isClaimsView = view === 'claims'
+
+  const totalCount = isClaimsView
+    ? filteredClaims.length
+    : filteredProposals.length
+
+  return (
+    <DashboardPanel
+      title={
+        isClaimsView
+          ? 'Reimbursement Claims Overview'
+          : 'Business Trip Overview'
+      }
+      action={
+        <div className="flex min-w-0 items-center gap-2">
+          <select
+            aria-label="Select overview"
+            value={view}
+            onChange={(event) =>
+              setView(event.target.value as OverviewView)
+            }
+            className="h-8 max-w-40 cursor-pointer rounded-lg border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition-colors hover:border-primary/50 focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="claims">
+              Reimbursement Claims
+            </option>
+            <option value="trips">
+              Business Trips
+            </option>
+          </select>
+
+          <PeriodFilter
+            value={period}
+            onChange={setPeriod}
+          />
+        </div>
+      }
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {isClaimsView ? 'Total claims' : 'Total proposals'}
+          </p>
+
+          <p className="mt-1 text-2xl font-bold text-foreground">
+            {formatNumber(totalCount)}
+          </p>
+        </div>
+
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
+          {isClaimsView ? (
+            <Receipt className="h-5 w-5" />
+          ) : (
+            <Plane className="h-5 w-5" />
+          )}
+        </div>
+      </div>
+
+      {isClaimsView ? (
+        <StatusDistribution
+          items={filteredClaims}
+          statuses={CLAIM_STATUSES}
+        />
+      ) : (
+        <StatusDistribution
+          items={filteredProposals}
+          statuses={TRIP_STATUSES}
+        />
+      )}
+    </DashboardPanel>
+  )
+}
+
+// =====================================================
 // EXPENSE TREND CHART
 // =====================================================
 
 function ExpenseTrendPanel({
   claims,
   title,
-  description,
 }: {
   claims: DashboardClaim[]
   title: string
-  description: string
 }) {
   const [period, setPeriod] = useState<PeriodFilter>('sixMonths')
 
@@ -721,7 +944,6 @@ function ExpenseTrendPanel({
   return (
     <DashboardPanel
       title={title}
-      description={description}
       action={
         <PeriodFilter
           value={period}
@@ -729,7 +951,7 @@ function ExpenseTrendPanel({
         />
       }
     >
-      <div className="mb-5 flex items-end justify-between gap-3">
+      <div className="mb-4 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">
             Total paid reimbursement
@@ -744,14 +966,14 @@ function ExpenseTrendPanel({
           </p>
         </div>
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E7F0FF] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#D5E4F8] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
           <TrendingUp className="h-5 w-5" />
         </div>
       </div>
 
       {paidClaims.length > 0 ? (
         <>
-          <div className="flex h-44 items-end justify-between gap-2 border-b border-border pb-2">
+          <div className="flex h-40 items-end justify-between gap-2 pb-2">
             {buckets.map((bucket) => {
               const height =
                 maxAmount > 0
@@ -772,7 +994,7 @@ function ExpenseTrendPanel({
                       className={`w-full max-w-10 rounded-t-md transition-all ${
                         isActive
                           ? 'bg-[#2F81F7] dark:bg-[#58A6FF]'
-                          : 'bg-[#B7D2F6] dark:bg-[#273E5C]'
+                          : 'bg-[#A9C5EC] dark:bg-[#273E5C]'
                       }`}
                       style={{
                         height:
@@ -791,7 +1013,7 @@ function ExpenseTrendPanel({
             })}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-emerald-50/70 p-3 dark:bg-emerald-950/30">
               <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                 <TrendingUp className="h-3.5 w-3.5" />
@@ -826,7 +1048,7 @@ function ExpenseTrendPanel({
           </div>
         </>
       ) : (
-        <div className="flex h-44 flex-col items-center justify-center text-center">
+        <div className="flex h-32 flex-col items-center justify-center text-center">
           <HandCoins className="h-8 w-8 text-muted-foreground/40" />
 
           <p className="mt-2 text-sm font-medium text-foreground">
@@ -838,244 +1060,6 @@ function ExpenseTrendPanel({
           </p>
         </div>
       )}
-    </DashboardPanel>
-  )
-}
-
-// =====================================================
-// CLAIM STATUS OVERVIEW
-// =====================================================
-
-function ClaimStatusPanel({
-  claims,
-  title = 'Claims Status Overview',
-  description = 'Reimbursement claim distribution',
-}: {
-  claims: DashboardClaim[]
-  title?: string
-  description?: string
-}) {
-  const [period, setPeriod] = useState<PeriodFilter>('year')
-
-  const filteredClaims = claims.filter((claim) =>
-    matchesPeriod(
-      claim.submittedAt || claim.transactionDate,
-      period,
-    ),
-  )
-
-  const statuses = [
-    {
-      key: 'submitted',
-      label: 'Submitted',
-      color: 'bg-amber-500',
-    },
-    {
-      key: 'underreview',
-      label: 'Under Review',
-      color: 'bg-[#2F81F7]',
-    },
-    {
-      key: 'approved',
-      label: 'Approved',
-      color: 'bg-emerald-500',
-    },
-    {
-      key: 'paid',
-      label: 'Paid',
-      color: 'bg-teal-500',
-    },
-    {
-      key: 'needsrevision',
-      label: 'Needs Revision',
-      color: 'bg-orange-500',
-    },
-    {
-      key: 'rejected',
-      label: 'Rejected',
-      color: 'bg-rose-500',
-    },
-  ]
-
-  return (
-    <DashboardPanel
-      title={title}
-      description={description}
-      action={
-        <PeriodFilter
-          value={period}
-          onChange={setPeriod}
-        />
-      }
-    >
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            Total claims
-          </p>
-
-          <p className="mt-1 text-2xl font-bold text-foreground">
-            {formatNumber(filteredClaims.length)}
-          </p>
-        </div>
-
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#E7F0FF] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
-          <Receipt className="h-5 w-5" />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {statuses.map((status) => {
-          const count = filteredClaims.filter(
-            (claim) =>
-              normalizeStatus(claim.status) === status.key,
-          ).length
-
-          const percentage =
-            filteredClaims.length > 0
-              ? (count / filteredClaims.length) * 100
-              : 0
-
-          return (
-            <div key={status.key}>
-              <div className="mb-1.5 flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-foreground">
-                  {status.label}
-                </span>
-
-                <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                  {count}
-                </span>
-              </div>
-
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={`h-full rounded-full transition-all ${status.color}`}
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </DashboardPanel>
-  )
-}
-
-// =====================================================
-// TRIP PROPOSAL STATUS OVERVIEW
-// =====================================================
-
-function TripProposalStatusPanel({
-  proposals,
-}: {
-  proposals: DashboardProposal[]
-}) {
-  const [period, setPeriod] = useState<PeriodFilter>('year')
-
-  const filteredProposals = proposals.filter((proposal) =>
-    matchesPeriod(proposal.submittedAt, period),
-  )
-
-  const statuses = [
-    {
-      key: 'submitted',
-      label: 'Submitted',
-      color: 'bg-amber-500',
-    },
-    {
-      key: 'underreview',
-      label: 'Under Review',
-      color: 'bg-[#2F81F7]',
-    },
-    {
-      key: 'financemanagerreview',
-      label: 'Finance Manager Review',
-      color: 'bg-violet-500',
-    },
-    {
-      key: 'approved',
-      label: 'Approved',
-      color: 'bg-emerald-500',
-    },
-    {
-      key: 'completed',
-      label: 'Completed',
-      color: 'bg-teal-500',
-    },
-    {
-      key: 'needsrevision',
-      label: 'Needs Revision',
-      color: 'bg-orange-500',
-    },
-    {
-      key: 'rejected',
-      label: 'Rejected',
-      color: 'bg-rose-500',
-    },
-  ]
-
-  return (
-    <DashboardPanel
-      title="Business Trip Overview"
-      description="Trip proposal status distribution"
-      action={
-        <PeriodFilter
-          value={period}
-          onChange={setPeriod}
-        />
-      }
-    >
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            Total proposals
-          </p>
-
-          <p className="mt-1 text-2xl font-bold text-foreground">
-            {formatNumber(filteredProposals.length)}
-          </p>
-        </div>
-
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#E7F0FF] text-[#315F9E] dark:bg-[#243A59] dark:text-[#79B8FF]">
-          <Plane className="h-5 w-5" />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {statuses.map((status) => {
-          const count = filteredProposals.filter(
-            (proposal) =>
-              normalizeStatus(proposal.status) === status.key,
-          ).length
-
-          const percentage =
-            filteredProposals.length > 0
-              ? (count / filteredProposals.length) * 100
-              : 0
-
-          return (
-            <div key={status.key}>
-              <div className="mb-1.5 flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-foreground">
-                  {status.label}
-                </span>
-
-                <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                  {count}
-                </span>
-              </div>
-
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={`h-full rounded-full transition-all ${status.color}`}
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
     </DashboardPanel>
   )
 }
@@ -1103,7 +1087,6 @@ function BenefitOverview({
   return (
     <DashboardPanel
       title="My Benefits"
-      description="Your available benefit allocations"
       action={
         <div className="flex items-center gap-2">
           <span className="hidden whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 sm:inline-flex">
@@ -1117,12 +1100,12 @@ function BenefitOverview({
         </div>
       }
     >
-      <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#E8F6EF] to-[#DFF1E8] p-4 dark:border-emerald-900/50 dark:from-[#142A22] dark:to-[#182A25] sm:p-5">
+      <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#E8F6EF] to-[#DFF1E8] p-4 dark:border-emerald-900/50 dark:from-[#142A22] dark:to-[#182A25]">
         <p className="text-xs font-medium text-emerald-800/80 dark:text-emerald-300">
           Remaining Benefit Balance
         </p>
 
-        <p className="mt-2 break-words text-3xl font-bold tracking-tight text-emerald-800 sm:text-4xl dark:text-emerald-300">
+        <p className="mt-2 break-words text-3xl font-bold tracking-tight text-emerald-800 dark:text-emerald-300 sm:text-4xl">
           {formatCurrency(totalBalance)}
         </p>
 
@@ -1131,8 +1114,8 @@ function BenefitOverview({
         </p>
       </div>
 
-      <div className="mt-5">
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold text-foreground">
             Benefit Breakdown
           </h3>
@@ -1147,7 +1130,7 @@ function BenefitOverview({
             {filteredBenefits.map((benefit) => (
               <div
                 key={benefit.employeeBenefitId}
-                className="flex min-w-0 items-center justify-between gap-3 border-b border-border py-3 last:border-0"
+                className="flex min-w-0 items-center justify-between gap-3 border-b border-border py-2.5 last:border-0"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -1166,7 +1149,7 @@ function BenefitOverview({
             ))}
           </div>
         ) : (
-          <div className="py-6 text-center text-xs text-muted-foreground">
+          <div className="py-5 text-center text-xs text-muted-foreground">
             No benefit allocations available for this period.
           </div>
         )}
@@ -1189,7 +1172,6 @@ function RecentActions({
   return (
     <DashboardPanel
       title={isAdmin ? 'Recent Company Activities' : 'Recent Actions'}
-      description="Latest claim and trip proposal activities"
       action={
         <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">
           Latest 5
@@ -1206,7 +1188,7 @@ function RecentActions({
               <a
                 key={`${action.type}-${action.id}`}
                 href={action.href}
-                className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-card p-3.5 transition-colors hover:border-[#2F81F7]/40 hover:bg-blue-50/40 dark:hover:bg-[#1C2532]"
+                className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-[#2F81F7]/40 hover:bg-[#EAF1FC] dark:hover:bg-[#1C2532]"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -1244,7 +1226,7 @@ function RecentActions({
           })}
         </div>
       ) : (
-        <div className="py-10 text-center">
+        <div className="py-8 text-center">
           <FileText className="mx-auto h-8 w-8 text-muted-foreground/40" />
 
           <p className="mt-2 text-sm font-medium text-foreground">
@@ -1353,9 +1335,6 @@ function Dashboard() {
   const todayKey =
     `${currentDate.year}-${currentDate.month}-${currentDate.day}`
 
-  const currentMonthKey =
-    `${currentDate.year}-${currentDate.month}`
-
   const currentDateObject = new Date(
     `${todayKey}T12:00:00+07:00`,
   )
@@ -1368,23 +1347,9 @@ function Dashboard() {
     timeZone: 'Asia/Jakarta',
   }).format(currentDateObject)
 
-  const currentMonthLabel = new Intl.DateTimeFormat('id-ID', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Asia/Jakarta',
-  }).format(currentDateObject)
-
   // =====================================================
   // PERSONAL CLAIMS
   // =====================================================
-
-  const myPaidClaims = getPaidClaims(myClaims)
-
-  const myPendingClaims = myClaims.filter((claim) =>
-    ['submitted', 'underreview'].includes(
-      normalizeStatus(claim.status),
-    ),
-  )
 
   const myAttentionClaims = myClaims.filter((claim) =>
     ['needsrevision', 'rejected'].includes(
@@ -1557,7 +1522,6 @@ function Dashboard() {
       to: '/approvals/trip-proposals',
     })
 
-    // Personal requests that need attention.
     addTodayAction({
       id: 'personal-claim-revision',
       title: 'Your Claims Need Attention',
@@ -1678,10 +1642,10 @@ function Dashboard() {
 
   if (isDashboardLoading) {
     return (
-      <main className="space-y-5">
-        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+      <main className="space-y-4">
+        <div className="h-56 animate-pulse rounded-2xl bg-muted" />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           {[1, 2, 3, 4].map((item) => (
             <div
               key={item}
@@ -1690,11 +1654,11 @@ function Dashboard() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {[1, 2].map((item) => (
             <div
               key={item}
-              className="h-72 animate-pulse rounded-xl border border-border bg-card"
+              className="h-64 animate-pulse rounded-xl border border-border bg-card"
             />
           ))}
         </div>
@@ -1782,22 +1746,8 @@ function Dashboard() {
     )
   }
 
-  // =====================================================
-  // ROLE DISPLAY
-  // =====================================================
-
-  const roleTitle = isAdmin
-    ? 'Administrator'
-    : isFinanceManager
-      ? 'Finance Manager'
-      : isFinance
-        ? 'Finance'
-        : isManager
-          ? 'Manager'
-          : 'Employee'
-
   return (
-    <main className="min-w-0 space-y-6">
+    <main className="min-w-0 space-y-4">
       {/* TODAY SUMMARY */}
       <TodaySummaryBanner
         userName={user.fullName?.split(' ')[0] || 'there'}
@@ -1808,10 +1758,7 @@ function Dashboard() {
 
       {/* QUICK ACCESS - ADMIN DOES NOT NEED THIS */}
       {!isAdmin && (
-        <DashboardPanel
-          title="Quick Access"
-          description={`Frequently used pages for ${roleTitle.toLowerCase()}`}
-        >
+        <DashboardPanel title="Quick Access">
           <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
             {quickAccessItems.map((item) => (
               <QuickAccessCard
@@ -1828,15 +1775,10 @@ function Dashboard() {
 
       {/* MANAGEMENT / COMPANY ANALYTICS */}
       {isApprover && (
-        <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
-          <ClaimStatusPanel
+        <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
+          <OverviewPanel
             claims={allClaims}
-            title={
-              isManager
-                ? 'Team Claims Overview'
-                : 'Reimbursement Claims Overview'
-            }
-            description="Distribution of claims by approval status"
+            proposals={proposals}
           />
 
           <ExpenseTrendPanel
@@ -1846,70 +1788,18 @@ function Dashboard() {
                 ? 'Team Reimbursement Trend'
                 : 'Company Reimbursement Trend'
             }
-            description="Successfully paid reimbursement claims"
           />
-
-          <TripProposalStatusPanel proposals={proposals} />
         </div>
       )}
 
       {/* PERSONAL BENEFITS + PERSONAL EXPENSE TREND */}
       {!isAdmin && (
-        <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
           <BenefitOverview benefits={benefitList} />
 
           <ExpenseTrendPanel
             claims={myClaims}
             title="My Expense Trend"
-            description={`Your paid reimbursement expenses · ${currentMonthLabel}`}
-          />
-        </div>
-      )}
-
-      {/* ADMIN ADDITIONAL FINANCIAL OVERVIEW */}
-      {isAdmin && (
-        <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
-          <DashboardPanel
-            title="Reimbursement Performance"
-            description="Financial summary from retrieved claim records"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <p className="text-xs text-muted-foreground">
-                  Total Paid Claims
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-foreground">
-                  {getPaidClaims(allClaims).length}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <p className="text-xs text-muted-foreground">
-                  Total Reimbursement Paid
-                </p>
-
-                <p className="mt-2 break-words text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(
-                    getPaidClaims(allClaims).reduce(
-                      (total, claim) =>
-                        total + getAmount(claim.amount),
-                      0,
-                    ),
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-4 text-[10px] text-muted-foreground">
-              Based on the claims returned by the current API query.
-            </p>
-          </DashboardPanel>
-
-          <ExpenseTrendPanel
-            claims={allClaims}
-            title="Company Expense Trend"
-            description="Monthly paid reimbursement performance"
           />
         </div>
       )}
@@ -1919,10 +1809,6 @@ function Dashboard() {
         actions={recentActions}
         isAdmin={isAdmin}
       />
-
-      <p className="text-right text-[10px] text-muted-foreground">
-        Financial summaries are calculated from the records returned by the current API queries.
-      </p>
     </main>
   )
 }
