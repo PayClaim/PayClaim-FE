@@ -62,7 +62,7 @@ function RouteComponent() {
     return (
       <main className="p-6">
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Terjadi kesalahan saat memuat data master benefit. Silakan coba kembali nanti.
+          An error occurred while loading benefit master data. Please try again later.
         </div>
       </main>
     )
@@ -72,7 +72,7 @@ function RouteComponent() {
     return (
       <main className="py-20 text-center space-y-3">
         <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Memuat data master benefit...</p>
+        <p className="text-sm text-muted-foreground">Loading benefit master data...</p>
       </main>
     )
   }
@@ -95,7 +95,7 @@ function RouteComponent() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Katalog jenis benefit tunjangan klaim karyawan beserta periode dan kategorinya.
+              Catalog of employee benefit claim types, periods, and categories.
             </p>
           </div>
         </div>
@@ -174,7 +174,7 @@ function RouteComponent() {
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {hasActiveFilters
                   ? 'Tidak ada data benefit yang sesuai dengan kriteria filter saat ini.'
-                  : 'Belum ada data jenis benefit yang terdaftar di sistem.'}
+                  : 'No benefit types are registered in the system yet.'}
               </p>
             </div>
             {hasActiveFilters && (
@@ -297,14 +297,14 @@ function DeleteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Hapus Benefit</DialogTitle>
+          <DialogTitle>Delete Benefit</DialogTitle>
           <DialogDescription className="text-sm pt-1">
             Apakah Anda yakin ingin menghapus benefit <strong>"{name}"</strong>? Data plafon dan riwayat yang terkait akan terpengaruh.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <DialogClose asChild>
-            <Button variant="outline" size="sm">Batal</Button>
+            <Button variant="outline" size="sm">Cancel</Button>
           </DialogClose>
           <form
             onSubmit={(e) => {
@@ -314,7 +314,7 @@ function DeleteDialog({
             }}
           >
             <Button variant="destructive" size="sm" type="submit">
-              Hapus Benefit
+              Delete Benefit
             </Button>
           </form>
         </DialogFooter>

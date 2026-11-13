@@ -38,7 +38,7 @@ export default function Header() {
     .join(' ')}!`
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-card/90 dark:bg-[#0f0f0f]/90 backdrop-blur-sm border-b border-border sticky top-0 z-40">
+    <header className="h-16 flex items-center justify-between px-6 bg-card/10 dark:bg-[#0f0f0f]/10 backdrop-blur-md border-b border-border/10 sticky top-0 z-40">
       <div className="flex items-center gap-3 min-w-0 mr-4">
         <span
           className="text-sm text-slate-500 dark:text-muted-foreground hidden sm:inline truncate"

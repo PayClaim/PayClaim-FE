@@ -199,7 +199,7 @@ function RouteComponent() {
             My Benefits
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Pantau alokasi plafon aktif, sisa kuota saldo, dan ajukan klaim tunjangan Anda.
+            Monitor your active benefit allocations, remaining balance quota, and submit benefit claims.
           </p>
         </div>
 
@@ -209,7 +209,7 @@ function RouteComponent() {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5 shadow-2xs h-9 px-3.5"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
-            Ajukan Klaim Baru
+            Submit New Claim
           </Button>
         </Link>
       </div>
@@ -220,7 +220,7 @@ function RouteComponent() {
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Total Plafon Tersedia
+              Total Available Balance
             </span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Coins className="w-4 h-4" aria-hidden="true" />
@@ -230,15 +230,15 @@ function RouteComponent() {
             {idNumberFormatter.format(metrics.totalBalance)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Akumulasi saldo klaim aktif yang siap digunakan
+            Accumulated active claim balance ready to use
           </p>
         </div>
 
-        {/* KPI 2: Program Tunjangan Aktif */}
+        {/* KPI 2: Active Benefit Programs */}
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Program Aktif
+              Active Programs
             </span>
             <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Layers className="w-4 h-4" aria-hidden="true" />
@@ -247,19 +247,19 @@ function RouteComponent() {
           <div className="text-2xl font-bold font-mono tracking-tight text-heading">
             {metrics.activeWithBalanceCount}{' '}
             <span className="text-sm font-sans font-medium text-muted-foreground">
-              / {metrics.totalCount} Tunjangan
+              / {metrics.totalCount} Benefits
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            {metrics.categoriesCount} kategori tunjangan terdaftar
+            {metrics.categoriesCount} registered benefit categories
           </p>
         </div>
 
-        {/* KPI 3: Masa Berlaku Terdekat */}
+        {/* KPI 3: Nearest Expiry */}
         <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Batas Periode Terdekat
+              Nearest Period Limit
             </span>
             <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <Calendar className="w-4 h-4" aria-hidden="true" />
@@ -288,7 +288,7 @@ function RouteComponent() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari tunjangan atau kategori..."
+              placeholder="Search benefits or categories..."
               className="pl-9 pr-8 h-9 text-xs bg-card border-border w-full shadow-2xs"
             />
             {searchQuery && (
@@ -381,12 +381,12 @@ function RouteComponent() {
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground space-y-2">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm font-medium">Memuat alokasi benefit Anda...</p>
+              <p className="text-sm font-medium">Loading your benefit allocations...</p>
             </div>
           ) : isError ? (
             <div className="p-8 rounded-xl border border-destructive/60 bg-destructive/5 text-destructive text-center space-y-2">
               <AlertCircle className="w-8 h-8 mx-auto text-destructive" />
-              <p className="font-semibold text-sm">Gagal memuat alokasi benefit</p>
+              <p className="font-semibold text-sm">Failed to load benefit allocations</p>
               <p className="text-xs text-muted-foreground">
                 Pastikan koneksi backend aktif dan token autentikasi Anda masih valid.
               </p>
@@ -560,7 +560,7 @@ function RouteComponent() {
                             size="sm"
                             className="w-full h-9 rounded-lg font-semibold text-xs bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
                           >
-                            <span>Ajukan Klaim</span>
+                            <span>Submit Claim</span>
                             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                           </Button>
                         </Link>

@@ -61,7 +61,7 @@ function EditBenefitPlanPage() {
         className="gap-2 text-xs font-semibold"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Kembali ke Benefit Plans</span>
+        <span>Back to Benefit Plans</span>
       </Button>
 
       <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
@@ -136,7 +136,7 @@ function EditBenefitPlanPage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/70">
             <Link to="/admin/benefit-plans">
               <Button variant="outline" type="button" size="sm">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.AppForm>

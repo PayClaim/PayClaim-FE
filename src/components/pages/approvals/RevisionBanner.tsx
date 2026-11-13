@@ -10,7 +10,7 @@ export function RevisionBanner() {
       <div className="text-sm">
         <p className="font-semibold">Revisi Diperlukan</p>
         <p className="text-xs mt-0.5">
-          Klaim ini dikembalikan oleh reviewer untuk diperbaiki. Silakan periksa catatan pada kartu proses, lalu klik tombol <strong>Edit & Resubmit Claim</strong> untuk mengajukan ulang.
+          This claim was returned by the reviewer for revision. Please check the notes on the process card, then click <strong>Edit & Resubmit Claim</strong> to resubmit.
         </p>
       </div>
     </div>

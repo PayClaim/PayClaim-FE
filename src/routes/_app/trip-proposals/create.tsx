@@ -217,8 +217,8 @@ function CreateTripProposalPage({
             </div>
 
             <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-              Lengkapi informasi perjalanan dinas dan peserta yang akan
-              mengikuti perjalanan.
+              Complete the business trip details and participants joining
+              the trip.
             </p>
           </div>
         </div>
@@ -322,8 +322,8 @@ function CreateTripProposalPage({
             </form.AppField>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              Total biaya akomodasi dan perjalanan untuk seluruh proposal,
-              seperti hotel dan tiket. Bukan limit reimbursement per peserta.
+              Total accommodation and travel cost for the entire proposal,
+              such as hotel and tickets. Not a per-participant reimbursement limit.
             </p>
           </div>
 
