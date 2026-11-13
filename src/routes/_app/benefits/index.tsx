@@ -230,7 +230,7 @@ function RouteComponent() {
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             <AnimatedNumber
               value={metrics.totalBalance}
-              duration={200}
+              duration={400}
               formatter={(v) => idNumberFormatter.format(Math.round(v))}
             />
           </div>
@@ -250,7 +250,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
-            <AnimatedNumber value={metrics.activeWithBalanceCount} duration={200} />{' '}
+            <AnimatedNumber value={metrics.activeWithBalanceCount} duration={400} />{' '}
             <span className="text-sm font-sans font-medium text-muted-foreground">
               / {metrics.totalCount} Benefits
             </span>

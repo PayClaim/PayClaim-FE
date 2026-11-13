@@ -2,7 +2,7 @@ import { api } from '#/lib/api-client'
 import { idNumberFormatter } from '#/lib/formatter'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Calendar, Check, Copy, Loader2 } from 'lucide-react'
+import { ArrowUpRight, Calendar, Check, Copy, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   getDescriptionText,
@@ -128,9 +128,13 @@ export function ClaimInfoSection({
                 <Link
                   to="/trip-proposals/$id"
                   params={{ id: claim.tripProposalId }}
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800 cursor-pointer transition-colors"
+                  className="group/detail inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800 cursor-pointer transition-colors"
                 >
-                  Detail
+                  <span>Detail</span>
+                  <ArrowUpRight
+                    className="w-3 h-3 transition-transform duration-150 group-hover/detail:translate-x-0.5 group-hover/detail:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
                 </Link>
 
                 <div

@@ -223,7 +223,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
-            <AnimatedNumber value={metrics.totalCount} duration={200} />
+            <AnimatedNumber value={metrics.totalCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.totalAmount)}</span> total value
@@ -241,7 +241,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
-            <AnimatedNumber value={metrics.waitingCount} duration={200} />
+            <AnimatedNumber value={metrics.waitingCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.waitingAmount)}</span> pending review
@@ -259,7 +259,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
-            <AnimatedNumber value={metrics.approvedPaidCount} duration={200} />
+            <AnimatedNumber value={metrics.approvedPaidCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> settled value
