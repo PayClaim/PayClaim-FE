@@ -826,7 +826,6 @@ function StatusDistribution<T extends { status: string }>({
 // REIMBURSEMENT CLAIMS + BUSINESS TRIP OVERVIEW
 // ONE PANEL WITH DROPDOWN
 // =====================================================
-
 function OverviewPanel({
   claims,
   proposals,
@@ -882,27 +881,31 @@ function OverviewPanel({
         </div>
       }
     >
-      <div className="mb-5">
-        <p className="text-xs text-muted-foreground">
-          {isClaimsView ? 'Total claims' : 'Total proposals'}
-        </p>
+      <div className="flex h-[320px] min-h-0 flex-col">
+        <div className="mb-5 shrink-0">
+          <p className="text-xs text-muted-foreground">
+            {isClaimsView ? 'Total claims' : 'Total proposals'}
+          </p>
 
-        <p className="mt-1 text-2xl font-bold text-foreground">
-          {formatNumber(totalCount)}
-        </p>
+          <p className="mt-1 text-2xl font-bold text-foreground">
+            {formatNumber(totalCount)}
+          </p>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          {isClaimsView ? (
+            <StatusDistribution
+              items={filteredClaims}
+              statuses={CLAIM_STATUSES}
+            />
+          ) : (
+            <StatusDistribution
+              items={filteredProposals}
+              statuses={TRIP_STATUSES}
+            />
+          )}
+        </div>
       </div>
-
-      {isClaimsView ? (
-        <StatusDistribution
-          items={filteredClaims}
-          statuses={CLAIM_STATUSES}
-        />
-      ) : (
-        <StatusDistribution
-          items={filteredProposals}
-          statuses={TRIP_STATUSES}
-        />
-      )}
     </DashboardPanel>
   )
 }
