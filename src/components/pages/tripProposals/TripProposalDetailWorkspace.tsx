@@ -47,6 +47,7 @@ import {
 
 import { Label } from '#/components/ui/label'
 import { Textarea } from '#/components/ui/textarea'
+import { RECORD_CARD_TRANSITION } from '#/lib/view-transition'
 
 type ApprovalAction = 'Approved' | 'Rejected' | 'NeedsRevision'
 
@@ -1017,7 +1018,10 @@ const showFinanceManagerStage =
         backLabel={backLabel}
       />
 
-      <div className="grid min-h-[720px] min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12">
+      <div
+        className="grid min-h-[720px] min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12"
+        style={{ viewTransitionName: RECORD_CARD_TRANSITION }}
+      >
         <TripProposalSidebar
           proposal={proposal}
           attachmentUrl={attachmentUrl}

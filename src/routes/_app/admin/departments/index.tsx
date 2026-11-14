@@ -168,7 +168,7 @@ function DepartmentTable({
           {departments.map((d) => (
             <TableRow
               key={d.id}
-              className="hover:bg-muted/30 transition-colors border-b border-border/60"
+              className="row-enter hover:bg-muted/30 transition-colors border-b border-border/60"
             >
               <TableCell className="px-5 py-4 font-mono font-semibold text-xs text-heading">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 border border-border/60">

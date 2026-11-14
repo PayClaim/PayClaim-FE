@@ -9,6 +9,10 @@ import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   ArrowRight,
@@ -226,13 +230,15 @@ const statusConfig = getApprovalStatusConfig(
 
   return (
     <tr
-      className="cursor-pointer transition-colors hover:bg-muted/50 group"
-      onClick={() =>
+      className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
+      onClick={(event) => {
+        markRecordCardSource(event.currentTarget)
         navigate({
           to: '/approvals/trip-proposals/$id',
           params: { id: proposal.id },
+          ...viewTransitionNavOptions(),
         })
-      }
+      }}
     >
       {/* Destination & Proposal Code */}
       <td className="px-5 py-4">

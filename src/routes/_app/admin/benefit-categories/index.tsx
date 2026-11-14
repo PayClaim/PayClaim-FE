@@ -160,7 +160,7 @@ function CategoryTable({
           {categories.map((c) => (
             <TableRow
               key={c.id}
-              className="hover:bg-muted/30 transition-colors border-b border-border/60"
+              className="row-enter hover:bg-muted/30 transition-colors border-b border-border/60"
             >
               <TableCell className="px-5 py-3.5 font-mono text-xs text-muted-foreground">
                 #{c.id}

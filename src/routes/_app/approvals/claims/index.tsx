@@ -32,6 +32,10 @@ import { FilterSelect } from '#/components/FilterSelect'
 import { DatePickerWithRange } from '#/components/DateRangePicker'
 import { PaginationSection } from '#/components/PaginationSection'
 import { toDateOnly } from '#/lib/utils'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
   validateSearch: (s) => s as ClaimFilterParams,
@@ -379,15 +383,17 @@ function RouteComponent() {
                   return (
                     <tr
                       key={claim.id}
-                      onClick={() =>
+                      onClick={(event) => {
+                        markRecordCardSource(event.currentTarget)
                         navigate({
                           to: '/approvals/claims/$claimId',
                           params: {
                             claimId: claim.id,
                           },
+                          ...viewTransitionNavOptions(),
                         })
-                      }
-                      className="cursor-pointer transition-colors hover:bg-muted/50 group"
+                      }}
+                      className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
                     >
                       {/* Employee with Initials Avatar */}
                       <td className="px-5 py-4">

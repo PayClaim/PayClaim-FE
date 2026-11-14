@@ -11,9 +11,14 @@ import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
 import { ErrorComponent } from '#/components/ErrorAndLoading'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 import { AnimatedNumber } from '#/components/ui/animated-number'
 import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 import { Button } from '#/components/ui/button'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   ArrowRight,
@@ -180,13 +185,25 @@ function RouteComponent() {
 }, [filteredClaims])
 
   if (isError) return <ErrorComponent pageTitle="My Claims" />
-  if (isPending) return <ListPageSkeleton />
 
+  if (isPending) {
+    return (
+      <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
+    )
+  }
+
+  // Runtime safety: cache could be emptied even though the query type is
+  // non-nullable.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!claimResponse) return <NotFoundPage />
+
   const { data, errors, message, statusCode, success, ...paginationProp } =
     claimResponse
 
   return (
+    <SkeletonSwap loading={isPending} skeleton={<ListPageSkeleton />}>
     <main className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
@@ -386,13 +403,15 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 return (
                   <tr
                     key={claim.id}
-                    onClick={() =>
+                    onClick={(event) => {
+                      markRecordCardSource(event.currentTarget)
                       navigate({
                         to: '/claims/$claimId',
                         params: { claimId: claim.id },
+                        ...viewTransitionNavOptions(),
                       })
-                    }
-                    className="hover:bg-muted/40 transition-colors cursor-pointer group"
+                    }}
+                    className="row-enter hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
                     {/* Keterangan / Manfaat */}
                     <td className="py-3.5 px-5 min-w-[240px] max-w-[300px]">
@@ -500,5 +519,6 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         </div>
       </section>
     </main>
+    </SkeletonSwap>
   )
 }

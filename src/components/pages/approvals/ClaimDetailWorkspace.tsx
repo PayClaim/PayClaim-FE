@@ -13,6 +13,7 @@ import {
 } from '#/features/approvals/helper/claim-helpers'
 import { useClaimActions } from '#/features/approvals/hooks/use-claim-actions'
 import { useClaimPermissions } from '#/features/approvals/hooks/use-claim-permissions'
+import { RECORD_CARD_TRANSITION } from '#/lib/view-transition'
 
 interface ClaimDetailWorkspaceProps {
   claimId: string
@@ -57,7 +58,10 @@ export function ClaimDetailWorkspace({
         <RevisionBanner />
       )}
 
-      <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-180">
+      <div
+        className="bg-card rounded-xl border border-border shadow-xs overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-180"
+        style={{ viewTransitionName: RECORD_CARD_TRANSITION }}
+      >
         <ClaimSummaryPane
           claim={claim}
           receipt={receipt}

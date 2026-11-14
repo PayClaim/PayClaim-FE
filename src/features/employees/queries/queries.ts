@@ -87,7 +87,44 @@ export const useDeleteEmployeeMutation = () => {
     mutationFn: (id: string) => {
       return api.delete(`/employees/${id}`)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+    // Optimistic remove dari semua cache list karyawan (paged & dropdown),
+    // supaya baris langsung hilang tanpa menunggu refetch.
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['employees'] })
+
+      const previous = queryClient.getQueriesData({
+        queryKey: ['employees'],
+      })
+
+      queryClient.setQueriesData(
+        { queryKey: ['employees'] },
+        (old: EmployeePagination | EmployeeResponse[] | undefined) => {
+          if (!old) return old
+
+          if (Array.isArray(old)) {
+            return old.filter((employee) => employee.id !== id)
+          }
+
+          if (Array.isArray(old.data)) {
+            return {
+              ...old,
+              data: old.data.filter((employee) => employee.id !== id),
+              totalCount: Math.max(0, old.totalCount - 1),
+            }
+          }
+
+          return old
+        },
+      )
+
+      return { previous }
+    },
+    onError: (_error, _id, context) => {
+      context?.previous.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
   })
 }
 

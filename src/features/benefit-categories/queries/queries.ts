@@ -48,7 +48,32 @@ export const useDeleteCategoryMutation = () => {
     mutationFn: (id: number) => {
       return api.delete(`/benefitCategories/${id}`)
     },
-    onSuccess: () =>
+    // Optimistic remove: baris hilang segera, rollback bila gagal.
+    onMutate: async (id: number) => {
+      await queryClient.cancelQueries({ queryKey: ['benefit-categories'] })
+
+      const previous = queryClient.getQueryData<BenefitCategoryResponse[]>([
+        'benefit-categories',
+      ])
+
+      if (previous) {
+        queryClient.setQueryData<BenefitCategoryResponse[]>(
+          ['benefit-categories'],
+          previous.filter((category) => category.id !== id),
+        )
+      }
+
+      return { previous }
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ['benefit-categories'],
+          context.previous,
+        )
+      }
+    },
+    onSettled: () =>
       queryClient.invalidateQueries({ queryKey: ['benefit-categories'] }),
   })
 }

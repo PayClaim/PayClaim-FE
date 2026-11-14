@@ -31,6 +31,8 @@ import {
   DialogTrigger,
 } from '#/components/ui/dialog'
 import { FilterSelect } from '#/components/FilterSelect'
+import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 import {
   useGetAllEmployeeQuery,
   useActivateEmployeeMutation,
@@ -134,12 +136,9 @@ function RouteComponent() {
 
   if (isPending) {
     return (
-      <main className="py-20 text-center space-y-3">
-        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">
-          Loading employees data...
-        </p>
-      </main>
+      <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
     )
   }
 
@@ -147,6 +146,7 @@ function RouteComponent() {
     employeesResponse
 
   return (
+    <SkeletonSwap loading={isPending} skeleton={<ListPageSkeleton />}>
     <main className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -305,6 +305,7 @@ function RouteComponent() {
         )}
       </div>
     </main>
+    </SkeletonSwap>
   )
 }
 
@@ -334,7 +335,7 @@ function EmployeeTable({ employees }: { employees: EmployeeResponse[] }) {
           {employees.map((e) => (
             <TableRow
               key={e.id}
-              className="hover:bg-muted/30 transition-colors border-b border-border/60"
+              className="row-enter hover:bg-muted/30 transition-colors border-b border-border/60"
             >
               {/* Employee Name & Number with Avatar */}
               <TableCell className="px-5 py-4 whitespace-nowrap">

@@ -11,8 +11,13 @@ import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import { Button } from '#/components/ui/button'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 import { AnimatedNumber } from '#/components/ui/animated-number'
 import { useSearchShortcut } from '#/hooks/use-search-shortcut'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   ArrowRight,
@@ -285,10 +290,18 @@ const sortedProposals = useMemo(() => {
   }
 
   if (isFetching && proposals.length === 0) {
-    return <ListPageSkeleton />
+    return (
+      <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
+    )
   }
 
   return (
+    <SkeletonSwap
+      loading={isFetching && proposals.length === 0}
+      skeleton={<ListPageSkeleton />}
+    >
     <main className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
@@ -495,13 +508,15 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 return (
                   <tr
                     key={proposal.id}
-                    onClick={() =>
+                    onClick={(event) => {
+                      markRecordCardSource(event.currentTarget)
                       navigate({
                         to: '/trip-proposals/$id',
                         params: { id: proposal.id },
+                        ...viewTransitionNavOptions(),
                       })
-                    }
-                    className="hover:bg-muted/40 transition-colors cursor-pointer group"
+                    }}
+                    className="row-enter hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
                     {/* Destinasi */}
                     <td className="py-3.5 px-5 min-w-[180px]">
@@ -619,5 +634,6 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         </div>
       </section>
     </main>
+    </SkeletonSwap>
   )
 }
