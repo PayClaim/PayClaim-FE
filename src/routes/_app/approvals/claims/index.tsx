@@ -1,26 +1,29 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
-
-import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
-import type { ClaimFilterParams } from '#/features/claims/queries/queries'
-import { idNumberFormatter } from '#/lib/formatter'
 
 import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Filter,
-  Receipt,
-  Search,
-} from 'lucide-react'
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import type { DateRange } from 'react-day-picker'
+
+import { getCurrentUser } from '#/features/auth/queries/queries'
+import {
+  useGetAdminAllClaimsQuery,
+} from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
+
+import { idNumberFormatter } from '#/lib/formatter'
+import { toDateOnly } from '#/lib/utils'
+
 import {
   formatDate,
   getClaimTypeBadge,
   getInitials,
-  getStatusBadgeConfig,
 } from '#/features/claims/utils/claim-badges'
+
 import { ButtonGroup } from '#/components/ui/button-group'
-import type { DateRange } from 'react-day-picker'
 import { Button } from '#/components/ui/button'
 import {
   Popover,
@@ -30,16 +33,30 @@ import {
 import { FilterSelect } from '#/components/FilterSelect'
 import { DatePickerWithRange } from '#/components/DateRangePicker'
 import { PaginationSection } from '#/components/PaginationSection'
-import { toDateOnly } from '#/lib/utils'
+
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Filter,
+  Receipt,
+  Search,
+} from 'lucide-react'
+
+// =====================================================
+// ROUTE
+// =====================================================
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
   validateSearch: (s) => s as ClaimFilterParams,
+
   beforeLoad: ({ context }) => {
     const roles = context.user.roles
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
-        (allowedRole) => allowedRole.toLowerCase() === role.toLowerCase(),
+        (allowedRole) =>
+          allowedRole.toLowerCase() === role.toLowerCase(),
       ),
     )
 
@@ -47,13 +64,152 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
       throw redirect({ to: '/dashboard' })
     }
   },
+
   component: RouteComponent,
 })
+
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+function normalizeStatus(status: unknown): string {
+  return String(status ?? '')
+    .replace(/[\s_-]/g, '')
+    .toLowerCase()
+}
+
+function getClaimApprovalStatusConfig(
+  status: string,
+  roles: string[],
+  isOwnClaim: boolean,
+) {
+  const normalized = normalizeStatus(status)
+
+  const roleLower = roles.map((role) =>
+    role.trim().toLowerCase(),
+  )
+
+  const isAdmin = roleLower.includes('admin')
+
+  const isFinanceManager = roleLower.includes('finance manager')
+
+  const isManager =
+    (
+      roleLower.includes('manager') ||
+      roleLower.includes('project manager')
+    ) && !isFinanceManager
+
+  const isFinance = roleLower.includes('finance')
+
+  const needsMyApproval =
+    !isOwnClaim &&
+    (
+      (normalized === 'submitted' && (isAdmin || isManager)) ||
+      (
+        normalized === 'underreview' &&
+        (isAdmin || isFinance)
+      )
+    )
+
+  if (needsMyApproval) {
+    return {
+      label: 'Waiting for Your Approval',
+      className:
+        'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+      dotColor: 'bg-amber-500',
+    }
+  }
+
+  switch (normalized) {
+    case 'submitted':
+      return {
+        label: 'Waiting for Manager',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
+      }
+
+    case 'underreview':
+      return {
+        label: 'Waiting for Finance',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
+      }
+
+    case 'approved':
+      return {
+        label: 'Approved',
+        className:
+          'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+        dotColor: 'bg-emerald-500',
+      }
+
+    case 'paid':
+      return {
+        label: 'Paid',
+        className:
+          'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800',
+        dotColor: 'bg-teal-500',
+      }
+
+    case 'needsrevision':
+      return {
+        label: 'Needs Revision',
+        className:
+          'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800',
+        dotColor: 'bg-orange-500',
+      }
+
+    case 'rejected':
+      return {
+        label: 'Rejected',
+        className:
+          'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800',
+        dotColor: 'bg-rose-500',
+      }
+
+    default:
+      return {
+        label: status,
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-500',
+      }
+  }
+}
+
+// =====================================================
+// MAIN COMPONENT
+// =====================================================
 
 function RouteComponent() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
 
+  // Logged-in user
+  const {
+    data: user,
+    isLoading: isLoadingUser,
+  } = useQuery(getCurrentUser())
+
+  const roles = (user?.roles ?? []).map((role) =>
+    role.trim().toLowerCase(),
+  )
+
+  const isAdmin = roles.includes('admin')
+
+  const isFinanceManager = roles.includes('finance manager')
+
+  const isManager =
+    (
+      roles.includes('manager') ||
+      roles.includes('project manager')
+    ) && !isFinanceManager
+
+  const isFinance = roles.includes('finance')
+
+  // Claims query
   const {
     data: response,
     isFetching,
@@ -61,22 +217,31 @@ function RouteComponent() {
     error,
   } = useGetAdminAllClaimsQuery(searchRoute)
 
-  // Array Claim berada di dalam response.data.
   const claims = response?.data ?? []
+
+  // =====================================================
+  // FILTER STATES
+  // =====================================================
+
   const initialDateRange = {
-    from: searchRoute.startDate ? new Date(searchRoute.startDate) : undefined,
-    to: searchRoute.endDate ? new Date(searchRoute.endDate) : undefined,
+    from: searchRoute.startDate
+      ? new Date(searchRoute.startDate)
+      : undefined,
+    to: searchRoute.endDate
+      ? new Date(searchRoute.endDate)
+      : undefined,
   }
 
-  // Filter & Search states
   const [searchFilter, setSearchFilter] = useState('')
 
   const [claimType, setClaimType] = useState<string | undefined>(
     searchRoute.claimType,
   )
+
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    searchRoute.claimType,
+    searchRoute.status,
   )
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>(
     initialDateRange,
   )
@@ -86,9 +251,10 @@ function RouteComponent() {
     { label: 'Rejected', optionValue: 'Rejected' },
     { label: 'Submitted', optionValue: 'Submitted' },
     { label: 'Under Review', optionValue: 'UnderReview' },
-    { label: 'Need Revision', optionValue: 'NeedRevision' },
+    { label: 'Needs Revision', optionValue: 'NeedsRevision' },
     { label: 'Paid', optionValue: 'Paid' },
   ]
+
   const claimTypeOptions = [
     { label: 'Benefit', optionValue: 'Benefit' },
     {
@@ -101,26 +267,64 @@ function RouteComponent() {
     },
   ]
 
-  // KPI Calculations
+  // =====================================================
+  // KPI CALCULATIONS
+  // =====================================================
+
   const metrics = useMemo(() => {
     const totalCount = response?.totalCount ?? claims.length
-    const totalAmount = claims.reduce((sum, c) => sum + (c.amount || 0), 0)
 
-    const waitingClaims = claims.filter((c) =>
-      ['Submitted', 'UnderReview'].includes(c.status),
-    )
-    const waitingCount = waitingClaims.length
-    const waitingAmount = waitingClaims.reduce(
-      (sum, c) => sum + (c.amount || 0),
+    const totalAmount = claims.reduce(
+      (sum, claim) => sum + (claim.amount || 0),
       0,
     )
 
-    const approvedPaidClaims = claims.filter((c) =>
-      ['Approved', 'Paid'].includes(c.status),
+    // Only count claims that require action from the logged-in user.
+    const waitingClaims = claims.filter((claim) => {
+      const status = normalizeStatus(claim.status)
+
+      const isOwnClaim = Boolean(
+        claim.employeeId &&
+        user?.employeeId &&
+        claim.employeeId.toLowerCase() ===
+          user.employeeId.toLowerCase(),
+      )
+
+      // Users do not approve their own claims.
+      if (isOwnClaim) {
+        return false
+      }
+
+      // Admin can process both approval levels.
+      if (isAdmin) {
+        return ['submitted', 'underreview'].includes(status)
+      }
+
+      // Manager handles Submitted claims.
+      // Finance and Finance Manager handle UnderReview claims.
+      return (
+        (isManager && status === 'submitted') ||
+        (isFinance && status === 'underreview')
+      )
+    })
+
+    const waitingCount = waitingClaims.length
+
+    const waitingAmount = waitingClaims.reduce(
+      (sum, claim) => sum + (claim.amount || 0),
+      0,
     )
+
+    const approvedPaidClaims = claims.filter((claim) =>
+      ['approved', 'paid'].includes(
+        normalizeStatus(claim.status),
+      ),
+    )
+
     const approvedPaidCount = approvedPaidClaims.length
+
     const approvedPaidAmount = approvedPaidClaims.reduce(
-      (sum, c) => sum + (c.amount || 0),
+      (sum, claim) => sum + (claim.amount || 0),
       0,
     )
 
@@ -132,17 +336,28 @@ function RouteComponent() {
       approvedPaidCount,
       approvedPaidAmount,
     }
-  }, [claims, response?.totalCount])
+  }, [
+    claims,
+    response?.totalCount,
+    user?.employeeId,
+    isAdmin,
+    isManager,
+    isFinance,
+  ])
+
+  // =====================================================
+  // FILTER ACTIONS
+  // =====================================================
 
   const hasActiveFilters = Boolean(
     searchFilter || claimType || dateRange || statusFilter,
   )
+
   const applyFilterClick = () => {
-    searchRoute
     navigate({
       to: '.',
       search: {
-        claimType: claimType,
+        claimType,
         search: searchFilter,
         status: statusFilter,
         startDate: toDateOnly(dateRange?.from),
@@ -151,19 +366,25 @@ function RouteComponent() {
     })
   }
 
+  // =====================================================
+  // ERROR & LOADING
+  // =====================================================
+
   if (isError) {
     return (
       <main className="p-6">
         <div className="p-10 text-center text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load claims.'}
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load claims.'}
         </div>
       </main>
     )
   }
 
-  if (isFetching || !response) {
+  if (isFetching || isLoadingUser || !response) {
     return (
-      <main className="py-20 text-center space-y-3">
+      <main className="space-y-3 py-20 text-center">
         <div className="p-10 text-center text-sm text-muted-foreground">
           Loading claims...
         </div>
@@ -171,8 +392,18 @@ function RouteComponent() {
     )
   }
 
-  const { data, errors, message, statusCode, success, ...paginationProp } =
-    response
+  const {
+    data,
+    errors,
+    message,
+    statusCode,
+    success,
+    ...paginationProp
+  } = response
+
+  // =====================================================
+  // PAGE UI
+  // =====================================================
 
   return (
     <main className="min-w-0 space-y-6">
@@ -193,102 +424,140 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* 3 KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* KPI 1: Total Claims */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Total Claims */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Claims
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-              <Receipt className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
+              <Receipt
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-heading">
             {metrics.totalCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.totalAmount)}</span> total value
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.totalAmount)}
+            </span>{' '}
+            total value
           </p>
         </div>
 
-        {/* KPI 2: Waiting for Review */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+        {/* Waiting for Your Approval */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Waiting for Review
+              {isAdmin
+                ? 'Waiting for Approval'
+                : 'Waiting for Your Approval'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+              <Clock
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.waitingAmount)}</span> pending review
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.waitingAmount)}
+            </span>{' '}
+            value awaiting your decision
           </p>
         </div>
 
-        {/* KPI 3: Approved / Paid */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+        {/* Approved / Paid */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Approved / Paid
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+              <CheckCircle2
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> settled value
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.approvedPaidAmount)}
+            </span>{' '}
+            settled value
           </p>
         </div>
       </div>
 
-      {/* Claims Table Container */}
+      {/* Claims Table */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-        {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 border-b border-border">
+        {/* Table Header & Toolbar */}
+        <div className="flex flex-col justify-between gap-4 border-b border-border p-5 xl:flex-row xl:items-center">
           <div>
-            <h2 className="font-semibold text-foreground text-base">
+            <h2 className="text-base font-semibold text-foreground">
               Claim Requests
             </h2>
+
             <p className="mt-0.5 text-xs text-muted-foreground">
               Select a claim to view its details and approval workflow.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
             <div className="flex flex-wrap items-center gap-3">
               <ButtonGroup>
-                <div className="relative grow max-w-70 sm:w-64">
-                  <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <div className="relative max-w-70 grow sm:w-64">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
                   <input
                     type="text"
                     value={searchFilter}
-                    onChange={(e) => setSearchFilter(e.target.value)}
+                    onChange={(event) =>
+                      setSearchFilter(event.target.value)
+                    }
                     placeholder="Search employee name, or benefits..."
-                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                    className="w-full rounded-lg rounded-br-none rounded-tr-none border border-border bg-background py-2.25 pr-4 pl-9 text-sm text-heading placeholder:text-muted-foreground focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 focus:outline-hidden"
                   />
                 </div>
-                <Button onClick={applyFilterClick}>Search</Button>
+
+                <Button onClick={applyFilterClick}>
+                  Search
+                </Button>
               </ButtonGroup>
             </div>
 
             <Popover>
               <PopoverTrigger asChild>
                 <Button>
-                  <Filter /> Filter
+                  <Filter />
+                  Filter
                 </Button>
               </PopoverTrigger>
+
               <PopoverContent
                 align="end"
-                className="grid grid-cols-1 gap-4 w-fit"
+                className="grid w-fit grid-cols-1 gap-4"
               >
                 <FilterSelect
                   val={statusFilter}
@@ -308,7 +577,11 @@ function RouteComponent() {
                   nullLabel="All Claims"
                 />
 
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                <DatePickerWithRange
+                  date={dateRange}
+                  setDate={setDateRange}
+                />
+
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -319,12 +592,15 @@ function RouteComponent() {
                       setDateRange(undefined)
                       setStatusFilter(undefined)
                     }}
-                    className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                    className="h-9 border text-xs text-muted-foreground hover:text-foreground"
                   >
                     Reset Filter
                   </Button>
                 )}
-                <Button onClick={applyFilterClick}>Apply</Button>
+
+                <Button onClick={applyFilterClick}>
+                  Apply
+                </Button>
               </PopoverContent>
             </Popover>
           </div>
@@ -333,10 +609,15 @@ function RouteComponent() {
         {/* Table Content */}
         {claims.length === 0 ? (
           <div className="p-12 text-center">
-            <Receipt size={36} className="mx-auto text-muted-foreground/40" />
+            <Receipt
+              size={36}
+              className="mx-auto text-muted-foreground/40"
+            />
+
             <h3 className="mt-3 font-medium text-foreground">
               No claims found
             </h3>
+
             <p className="mt-1 text-sm text-muted-foreground">
               {searchFilter
                 ? 'No claims match your filter criteria.'
@@ -346,26 +627,61 @@ function RouteComponent() {
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
             <table className="w-full min-w-262.5 whitespace-nowrap text-left text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+              <thead className="border-b border-border bg-muted/50 text-xs tracking-wide text-muted-foreground uppercase">
                 <tr>
-                  <th className="px-5 py-3.5 font-medium">Employee</th>
-                  <th className="px-5 py-3.5 font-medium">Claim Type</th>
+                  <th className="px-5 py-3.5 font-medium">
+                    Employee
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Claim Type
+                  </th>
+
                   <th className="px-5 py-3.5 font-medium">
                     Benefit / Trip Details
                   </th>
-                  <th className="px-5 py-3.5 font-medium">Invoice Date</th>
-                  <th className="px-5 py-3.5 font-medium">Amount</th>
-                  <th className="px-5 py-3.5 font-medium">Submitted</th>
-                  <th className="px-5 py-3.5 font-medium">Status</th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Invoice Date
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Amount
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Submitted
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Status
+                  </th>
+
                   <th className="px-5 py-3.5" />
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-border">
                 {claims.map((claim) => {
-                  const typeBadge = getClaimTypeBadge(claim.claimType)
+                  const typeBadge = getClaimTypeBadge(
+                    claim.claimType,
+                  )
+
                   const TypeIcon = typeBadge.icon
-                  const statusConfig = getStatusBadgeConfig(claim.status)
+
+                  const isOwnClaim = Boolean(
+                    claim.employeeId &&
+                    user?.employeeId &&
+                    claim.employeeId.toLowerCase() ===
+                      user.employeeId.toLowerCase(),
+                  )
+
+                  const statusConfig =
+                    getClaimApprovalStatusConfig(
+                      claim.status,
+                      roles,
+                      isOwnClaim,
+                    )
 
                   return (
                     <tr
@@ -378,35 +694,36 @@ function RouteComponent() {
                           },
                         })
                       }
-                      className="cursor-pointer transition-colors hover:bg-muted/50 group"
+                      className="group cursor-pointer transition-colors hover:bg-muted/50"
                     >
-                      {/* Employee with Initials Avatar */}
+                      {/* Employee */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-semibold text-xs flex items-center justify-center shrink-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">
                             {getInitials(claim.employeeName)}
                           </div>
+
                           <div>
-                            <p className="font-semibold text-foreground text-sm leading-tight">
+                            <p className="text-sm leading-tight font-semibold text-foreground">
                               {claim.employeeName || '-'}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      {/* Claim Type Badge */}
+                      {/* Claim Type */}
                       <td className="px-5 py-4">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${typeBadge.className}`}
+                          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${typeBadge.className}`}
                         >
-                          <TypeIcon className="w-3.5 h-3.5" />
+                          <TypeIcon className="h-3.5 w-3.5" />
                           <span>{typeBadge.label}</span>
                         </span>
                       </td>
 
-                      {/* Benefit / Trip details with Claim ID code */}
+                      {/* Benefit / Trip Details */}
                       <td className="max-w-65 truncate px-5 py-4">
-                        <div className="font-medium text-foreground truncate">
+                        <div className="truncate font-medium text-foreground">
                           {claim.benefitName ||
                             (claim.tripProposalDestination
                               ? `Business Trip to ${claim.tripProposalDestination}`
@@ -416,39 +733,40 @@ function RouteComponent() {
                       </td>
 
                       {/* Transaction Date */}
-                      <td className="px-5 py-4 text-muted-foreground text-xs">
+                      <td className="px-5 py-4 text-xs text-muted-foreground">
                         {formatDate(claim.transactionDate)}
                       </td>
 
                       {/* Amount */}
                       <td className="px-5 py-4">
-                        <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+                        <span className="text-sm font-semibold tracking-tight text-foreground tabular-nums">
                           {idNumberFormatter.format(claim.amount)}
                         </span>
                       </td>
 
                       {/* Submitted Date */}
-                      <td className="px-5 py-4 text-muted-foreground text-xs">
+                      <td className="px-5 py-4 text-xs text-muted-foreground">
                         {formatDate(claim.submittedAt)}
                       </td>
 
-                      {/* Status Badge with Dot */}
+                      {/* Status */}
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${statusConfig.className}`}
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor} mr-1.5`}
+                            className={`mr-1.5 h-1.5 w-1.5 rounded-full ${statusConfig.dotColor}`}
                           />
+
                           {statusConfig.label}
                         </span>
                       </td>
 
-                      {/* Row Action Arrow */}
+                      {/* Row Action */}
                       <td className="px-5 py-4 text-right">
                         <ArrowRight
                           size={18}
-                          className="ml-auto text-muted-foreground/60 group-hover:text-foreground transition-colors"
+                          className="ml-auto text-muted-foreground/60 transition-colors group-hover:text-foreground"
                         />
                       </td>
                     </tr>
@@ -457,13 +775,15 @@ function RouteComponent() {
               </tbody>
             </table>
 
-            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+            {/* Pagination */}
+            <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
                   Menampilkan {claims.length} dari {response.totalCount} total
                   claims
                 </span>
               </div>
+
               <div className="w-fit grow-0">
                 <PaginationSection pagination={paginationProp} />
               </div>

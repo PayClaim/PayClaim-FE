@@ -124,7 +124,7 @@ function getApprovalStatusConfig(
 
   if (needsMyApproval) {
     return {
-      label: 'Need Your Approval',
+      label: 'Waiting for Your Approval',
       className:
         'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
       dotColor: 'bg-amber-500',
@@ -414,7 +414,7 @@ const roles = user?.roles || []
       isOwnProposal(proposal),
     )
 
-    if (statusConfig.label === 'Need Your Approval') {
+    if (statusConfig.label === 'Waiting for Your Approval') {
       return 0
     }
 

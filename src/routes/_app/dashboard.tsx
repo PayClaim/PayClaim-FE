@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -104,6 +104,7 @@ type RecentAction = {
   title: string
   description: string
   status: string
+  isOwn: boolean
   amount: number
   date: string
   timestamp: number
@@ -469,6 +470,133 @@ function getExpenseBuckets(
 }
 
 // =====================================================
+// APPROVAL STATUS DISPLAY
+// =====================================================
+
+function getApprovalStatusConfig({
+  status,
+  type,
+  isOwn,
+  roles,
+}: {
+  status: string
+  type: 'Claim' | 'Trip'
+  isOwn: boolean
+  roles: string[]
+}) {
+  const normalized = normalizeStatus(status)
+  const roleLower = roles.map((role) => role.trim().toLowerCase())
+
+  const isAdmin = roleLower.includes('admin')
+
+  const isFinanceManager = roleLower.includes('finance manager')
+
+  const isManager =
+    (
+      roleLower.includes('manager') ||
+      roleLower.includes('project manager')
+    ) && !isFinanceManager
+
+  const isFinance =
+    roleLower.includes('finance') && !isFinanceManager
+
+  const needsMyApproval =
+    !isOwn &&
+    (
+      (normalized === 'submitted' && (isAdmin || isManager)) ||
+      (
+        normalized === 'underreview' &&
+        (isAdmin || isFinance || isFinanceManager)
+      ) ||
+      (
+        type === 'Trip' &&
+        normalized === 'financemanagerreview' &&
+        (isAdmin || isFinanceManager)
+      )
+    )
+
+  if (needsMyApproval) {
+    return {
+      label: 'Waiting for Your Approval',
+      style:
+        'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+    }
+  }
+
+  switch (normalized) {
+    case 'submitted':
+      return {
+        label: 'Waiting for Manager',
+        style:
+          'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+      }
+
+    case 'underreview':
+      return {
+        label: 'Waiting for Finance',
+        style:
+          'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+      }
+
+    case 'financemanagerreview':
+      return {
+        label: 'Waiting for Finance Manager',
+        style:
+          'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
+      }
+
+    case 'approved':
+      return {
+        label: 'Approved',
+        style:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+      }
+
+    case 'paid':
+      return {
+        label: 'Paid',
+        style:
+          'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300',
+      }
+
+    case 'completed':
+      return {
+        label: 'Completed',
+        style:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+      }
+
+    case 'needsrevision':
+      return {
+        label: 'Needs Revision',
+        style:
+          'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300',
+      }
+
+    case 'rejected':
+      return {
+        label: 'Rejected',
+        style:
+          'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300',
+      }
+
+    case 'cancelled':
+      return {
+        label: 'Cancelled',
+        style:
+          'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300',
+      }
+
+    default:
+      return {
+        label: status,
+        style:
+          'border-border bg-muted text-muted-foreground',
+      }
+  }
+}
+
+// =====================================================
 // BENEFIT FREQUENCY
 // =====================================================
 
@@ -629,7 +757,6 @@ function TodaySummaryBanner({
         {/* LEFT CONTENT */}
         <div className="flex min-w-0 flex-col items-start justify-start self-start text-left">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-
             <span className="text-sm font-bold leading-none text-[#294B76] dark:text-[#C9D8EA]">
               {date}
             </span>
@@ -687,47 +814,104 @@ function TodaySummaryBanner({
 }
 
 // =====================================================
-// STATUS BADGE
+// REJECTED NOTIFICATIONS
 // =====================================================
 
-function StatusBadge({ status }: { status: string }) {
-  const normalized = normalizeStatus(status)
-
-  let label = status
-
-  if (normalized === 'underreview') label = 'Under Review'
-  if (normalized === 'financemanagerreview') {
-    label = 'Finance Review'
-  }
-  if (normalized === 'needsrevision') label = 'Needs Revision'
-
-  let style = 'border-border bg-muted text-muted-foreground'
-
-  if (['approved', 'paid', 'completed'].includes(normalized)) {
-    style =
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-  } else if (
-    [
-      'submitted',
-      'underreview',
-      'financemanagerreview',
-    ].includes(normalized)
-  ) {
-    style =
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
-  } else if (normalized === 'needsrevision') {
-    style =
-      'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
-  } else if (['rejected', 'cancelled'].includes(normalized)) {
-    style =
-      'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+function RejectedNotifications({
+  claims,
+  proposals,
+  onDismiss,
+}: {
+  claims: DashboardClaim[]
+  proposals: DashboardProposal[]
+  onDismiss: (ids: string[]) => void
+}) {
+  if (claims.length === 0 && proposals.length === 0) {
+    return null
   }
 
   return (
+    <div className="flex min-h-11 w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rose-200 bg-rose-100/90 px-4 py-2.5 dark:border-rose-900/60 dark:bg-rose-950/40">
+      {claims.length > 0 && (
+        <a
+          href={
+            claims.length === 1
+              ? `/claims/${claims[0].id}`
+              : '/claims'
+          }
+          onClick={() =>
+            onDismiss(claims.map((claim) => `claim:${claim.id}`))
+          }
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
+        >
+          <span>
+            {formatNumber(claims.length)} rejected{' '}
+            {claims.length === 1 ? 'claim' : 'claims'}
+          </span>
+
+          <span className="font-normal underline underline-offset-2">
+            View details
+          </span>
+        </a>
+      )}
+
+      {proposals.length > 0 && (
+        <a
+          href={
+            proposals.length === 1
+              ? `/trip-proposals/${proposals[0].id}`
+              : '/trip-proposals'
+          }
+          onClick={() =>
+            onDismiss(
+              proposals.map((proposal) => `trip:${proposal.id}`),
+            )
+          }
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
+        >
+          <span>
+            {formatNumber(proposals.length)} rejected{' '}
+            {proposals.length === 1
+              ? 'trip proposal'
+              : 'trip proposals'}
+          </span>
+
+          <span className="font-normal underline underline-offset-2">
+            View details
+          </span>
+        </a>
+      )}
+    </div>
+  )
+}
+
+// =====================================================
+// STATUS BADGE
+// =====================================================
+
+function StatusBadge({
+  status,
+  type,
+  isOwn,
+  roles,
+}: {
+  status: string
+  type: 'Claim' | 'Trip'
+  isOwn: boolean
+  roles: string[]
+}) {
+  const statusConfig = getApprovalStatusConfig({
+    status,
+    type,
+    isOwn,
+    roles,
+  })
+
+  return (
     <span
-      className={`inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${style}`}
+      className={`inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusConfig.style}`}
     >
-      {label}
+      {statusConfig.label}
     </span>
   )
 }
@@ -826,6 +1010,7 @@ function StatusDistribution<T extends { status: string }>({
 // REIMBURSEMENT CLAIMS + BUSINESS TRIP OVERVIEW
 // ONE PANEL WITH DROPDOWN
 // =====================================================
+
 function OverviewPanel({
   claims,
   proposals,
@@ -1176,9 +1361,11 @@ function BenefitOverview({
 function RecentActions({
   actions,
   isAdmin,
+  roles,
 }: {
   actions: RecentAction[]
   isAdmin: boolean
+  roles: string[]
 }) {
   return (
     <DashboardPanel
@@ -1216,7 +1403,12 @@ function RecentActions({
                     </p>
 
                     <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                      <StatusBadge status={action.status} />
+                      <StatusBadge
+                        status={action.status}
+                        type={action.type}
+                        isOwn={action.isOwn}
+                        roles={roles}
+                      />
 
                       <span className="text-[10px] text-muted-foreground">
                         {formatDate(action.date)}
@@ -1258,6 +1450,10 @@ function RecentActions({
 // =====================================================
 
 function Dashboard() {
+  const [dismissedRejectedIds, setDismissedRejectedIds] = useState<
+    string[]
+  >([])
+
   const {
     data: user,
     isLoading: isLoadingUser,
@@ -1286,6 +1482,55 @@ function Dashboard() {
   const isEmployee = Boolean(user) && !isApprover
 
   const hasUser = Boolean(user)
+
+  const rejectedStorageKey = user?.employeeId
+    ? `payclaim-dismissed-rejected-${user.employeeId.toLowerCase()}`
+    : null
+
+  // =====================================================
+  // REJECTED NOTIFICATION STORAGE
+  // =====================================================
+
+  useEffect(() => {
+    if (!rejectedStorageKey) {
+      setDismissedRejectedIds([])
+      return
+    }
+
+    try {
+      const stored = window.localStorage.getItem(rejectedStorageKey)
+      const parsed: unknown = stored ? JSON.parse(stored) : []
+
+      setDismissedRejectedIds(
+        Array.isArray(parsed)
+          ? parsed.filter(
+              (item): item is string => typeof item === 'string',
+            )
+          : [],
+      )
+    } catch {
+      setDismissedRejectedIds([])
+    }
+  }, [rejectedStorageKey])
+
+  const dismissRejectedItems = (ids: string[]) => {
+    const updatedIds = Array.from(
+      new Set([...dismissedRejectedIds, ...ids]),
+    )
+
+    setDismissedRejectedIds(updatedIds)
+
+    if (!rejectedStorageKey) return
+
+    try {
+      window.localStorage.setItem(
+        rejectedStorageKey,
+        JSON.stringify(updatedIds),
+      )
+    } catch {
+      // Notification tetap dihilangkan selama halaman ini terbuka.
+    }
+  }
 
   // =====================================================
   // API QUERIES
@@ -1367,18 +1612,19 @@ function Dashboard() {
   // PERSONAL CLAIMS
   // =====================================================
 
-  const myAttentionClaims = myClaims.filter((claim) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(claim.status),
-    ),
+  const myAttentionClaims = myClaims.filter(
+    (claim) =>
+      normalizeStatus(claim.status) === 'needsrevision',
   )
 
-  const myUpdatedClaims = myClaims.filter((claim) =>
-    isUpdatedToday(
-      claim.submittedAt,
-      getUpdatedAt(claim),
-      todayKey,
-    ),
+  const myUpdatedClaims = myClaims.filter(
+    (claim) =>
+      normalizeStatus(claim.status) !== 'rejected' &&
+      isUpdatedToday(
+        claim.submittedAt,
+        getUpdatedAt(claim),
+        todayKey,
+      ),
   )
 
   // =====================================================
@@ -1395,32 +1641,46 @@ function Dashboard() {
             user.employeeId.toLowerCase(),
       )
 
-  const myAttentionProposals = myProposals.filter((proposal) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(proposal.status),
-    ),
+  const rejectedClaims = myClaims.filter(
+    (claim) =>
+      normalizeStatus(claim.status) === 'rejected' &&
+      !dismissedRejectedIds.includes(`claim:${claim.id}`),
   )
 
-  const myUpdatedProposals = myProposals.filter((proposal) =>
-    isUpdatedToday(
-      proposal.submittedAt,
-      getUpdatedAt(proposal),
-      todayKey,
-    ),
+  const rejectedProposals = myProposals.filter(
+    (proposal) =>
+      normalizeStatus(proposal.status) === 'rejected' &&
+      !dismissedRejectedIds.includes(`trip:${proposal.id}`),
+  )
+
+  const myAttentionProposals = myProposals.filter(
+    (proposal) =>
+      normalizeStatus(proposal.status) === 'needsrevision',
+  )
+
+  const myUpdatedProposals = myProposals.filter(
+    (proposal) =>
+      normalizeStatus(proposal.status) !== 'rejected' &&
+      isUpdatedToday(
+        proposal.submittedAt,
+        getUpdatedAt(proposal),
+        todayKey,
+      ),
   )
 
   // =====================================================
   // APPROVAL QUEUE
   // =====================================================
 
+  const loggedInEmployeeId = user?.employeeId?.toLowerCase()
+
   const pendingClaimApprovals = allClaims.filter((claim) => {
     const status = normalizeStatus(claim.status)
 
+    // User cannot approve their own claim.
     if (
-      claim.employeeId &&
-      user?.employeeId &&
-      claim.employeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
+      loggedInEmployeeId &&
+      claim.employeeId?.toLowerCase() === loggedInEmployeeId
     ) {
       return false
     }
@@ -1429,20 +1689,19 @@ function Dashboard() {
       return ['submitted', 'underreview'].includes(status)
     }
 
-    if (isManager) {
-      return status === 'submitted'
-    }
-
-    if (isFinance) {
-      return status === 'underreview'
-    }
-
-    return false
+    return (
+      (isManager && status === 'submitted') ||
+      (
+        (isFinance || isFinanceManager) &&
+        status === 'underreview'
+      )
+    )
   })
 
   const pendingTripApprovals = proposals.filter((proposal) => {
     const status = normalizeStatus(proposal.status)
 
+    // PIC cannot approve their own proposal.
     if (
       proposal.picEmployeeId &&
       user?.employeeId &&
@@ -1460,19 +1719,14 @@ function Dashboard() {
       ].includes(status)
     }
 
-    if (isManager) {
-      return status === 'submitted'
-    }
-
-    if (isFinance) {
-      return status === 'underreview'
-    }
-
-    if (isFinanceManager) {
-      return status === 'financemanagerreview'
-    }
-
-    return false
+    return (
+      (isManager && status === 'submitted') ||
+      (isFinance && status === 'underreview') ||
+      (
+        isFinanceManager &&
+        status === 'financemanagerreview'
+      )
+    )
   })
 
   // =====================================================
@@ -1597,9 +1851,13 @@ function Dashboard() {
     ...uniqueClaims.map((claim): RecentAction => {
       const isOwnClaim = myClaimIds.has(claim.id)
 
+      const activityDate =
+        getUpdatedAt(claim) || claim.submittedAt || ''
+
       return {
         id: claim.id,
         type: 'Claim',
+        isOwn: isOwnClaim,
         title:
           claim.benefitName ||
           claim.tripProposalDescription ||
@@ -1610,8 +1868,8 @@ function Dashboard() {
           : `${claim.employeeName || 'Employee'} · ${claim.claimType || 'Claim'}`,
         status: claim.status,
         amount: getAmount(claim.amount),
-        date: claim.submittedAt || '',
-        timestamp: getTimestamp(claim.submittedAt),
+        date: activityDate,
+        timestamp: getTimestamp(activityDate),
         href:
           isApprover && !isOwnClaim
             ? `/approvals/claims/${claim.id}`
@@ -1622,15 +1880,19 @@ function Dashboard() {
     ...proposals.map((proposal): RecentAction => {
       const isOwnProposal = myProposalIds.has(proposal.id)
 
+      const activityDate =
+        getUpdatedAt(proposal) || proposal.submittedAt || ''
+
       return {
         id: proposal.id,
         type: 'Trip',
+        isOwn: isOwnProposal,
         title: proposal.destination || 'Business Trip',
         description: `Business Trip · ${formatDate(proposal.submittedAt)}`,
         status: proposal.status,
         amount: getAmount(proposal.totalAmount),
-        date: proposal.submittedAt || '',
-        timestamp: getTimestamp(proposal.submittedAt),
+        date: activityDate,
+        timestamp: getTimestamp(activityDate),
         href:
           isApprover && !isOwnProposal
             ? `/approvals/trip-proposals/${proposal.id}`
@@ -1764,20 +2026,6 @@ function Dashboard() {
   }
 
   // =====================================================
-  // ROLE DISPLAY
-  // =====================================================
-
-  const roleTitle = isAdmin
-    ? 'Administrator'
-    : isFinanceManager
-      ? 'Finance Manager'
-      : isFinance
-        ? 'Finance'
-        : isManager
-          ? 'Manager'
-          : 'Employee'
-
-  // =====================================================
   // DASHBOARD UI
   // =====================================================
 
@@ -1789,6 +2037,13 @@ function Dashboard() {
         date={formattedDate}
         actions={todayActions}
         isEmployee={isEmployee}
+      />
+
+      {/* REJECTED NOTIFICATIONS */}
+      <RejectedNotifications
+        claims={rejectedClaims}
+        proposals={rejectedProposals}
+        onDismiss={dismissRejectedItems}
       />
 
       {/* QUICK ACCESS - ADMIN DOES NOT NEED THIS */}
@@ -1843,6 +2098,7 @@ function Dashboard() {
       <RecentActions
         actions={recentActions}
         isAdmin={isAdmin}
+        roles={roles}
       />
     </main>
   )
