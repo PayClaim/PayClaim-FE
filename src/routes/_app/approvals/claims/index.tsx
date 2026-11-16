@@ -1,4 +1,3 @@
-
 import {
   createFileRoute,
   redirect,
@@ -76,6 +75,14 @@ function normalizeStatus(status: unknown): string {
   return String(status ?? '')
     .replace(/[\s_-]/g, '')
     .toLowerCase()
+}
+
+function getSubmittedAtTime(date?: string | null): number {
+  if (!date) return 0
+
+  const timestamp = new Date(date).getTime()
+
+  return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
 function getClaimApprovalStatusConfig(
@@ -187,7 +194,10 @@ function RouteComponent() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
 
-  // Logged-in user
+  // =====================================================
+  // LOGGED-IN USER
+  // =====================================================
+
   const {
     data: user,
     isLoading: isLoadingUser,
@@ -199,17 +209,10 @@ function RouteComponent() {
 
   const isAdmin = roles.includes('admin')
 
-  const isFinanceManager = roles.includes('finance manager')
+  // =====================================================
+  // CLAIMS QUERY
+  // =====================================================
 
-  const isManager =
-    (
-      roles.includes('manager') ||
-      roles.includes('project manager')
-    ) && !isFinanceManager
-
-  const isFinance = roles.includes('finance')
-
-  // Claims query
   const {
     data: response,
     isFetching,
@@ -218,6 +221,57 @@ function RouteComponent() {
   } = useGetAdminAllClaimsQuery(searchRoute)
 
   const claims = response?.data ?? []
+
+  // =====================================================
+  // SORT CLAIMS
+  // =====================================================
+
+  const sortedClaims = useMemo(() => {
+    return [...claims].sort((a, b) => {
+      const aIsOwnClaim = Boolean(
+        a.employeeId &&
+        user?.employeeId &&
+        a.employeeId.toLowerCase() ===
+          user.employeeId.toLowerCase(),
+      )
+
+      const bIsOwnClaim = Boolean(
+        b.employeeId &&
+        user?.employeeId &&
+        b.employeeId.toLowerCase() ===
+          user.employeeId.toLowerCase(),
+      )
+
+      const aWaiting =
+        getClaimApprovalStatusConfig(
+          a.status,
+          roles,
+          aIsOwnClaim,
+        ).label === 'Waiting for Your Approval'
+
+      const bWaiting =
+        getClaimApprovalStatusConfig(
+          b.status,
+          roles,
+          bIsOwnClaim,
+        ).label === 'Waiting for Your Approval'
+
+      // 1. Waiting for Your Approval first.
+      if (aWaiting !== bWaiting) {
+        return aWaiting ? -1 : 1
+      }
+
+      // 2. Sort by SubmittedAt, newest first.
+      return (
+        getSubmittedAtTime(b.submittedAt) -
+        getSubmittedAtTime(a.submittedAt)
+      )
+    })
+  }, [
+    claims,
+    roles,
+    user?.employeeId,
+  ])
 
   // =====================================================
   // FILTER STATES
@@ -245,6 +299,10 @@ function RouteComponent() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(
     initialDateRange,
   )
+
+  // =====================================================
+  // FILTER OPTIONS
+  // =====================================================
 
   const statusOptions = [
     { label: 'Approved', optionValue: 'Approved' },
@@ -281,8 +339,6 @@ function RouteComponent() {
 
     // Only count claims that require action from the logged-in user.
     const waitingClaims = claims.filter((claim) => {
-      const status = normalizeStatus(claim.status)
-
       const isOwnClaim = Boolean(
         claim.employeeId &&
         user?.employeeId &&
@@ -290,21 +346,12 @@ function RouteComponent() {
           user.employeeId.toLowerCase(),
       )
 
-      // Users do not approve their own claims.
-      if (isOwnClaim) {
-        return false
-      }
-
-      // Admin can process both approval levels.
-      if (isAdmin) {
-        return ['submitted', 'underreview'].includes(status)
-      }
-
-      // Manager handles Submitted claims.
-      // Finance and Finance Manager handle UnderReview claims.
       return (
-        (isManager && status === 'submitted') ||
-        (isFinance && status === 'underreview')
+        getClaimApprovalStatusConfig(
+          claim.status,
+          roles,
+          isOwnClaim,
+        ).label === 'Waiting for Your Approval'
       )
     })
 
@@ -340,9 +387,7 @@ function RouteComponent() {
     claims,
     response?.totalCount,
     user?.employeeId,
-    isAdmin,
-    isManager,
-    isFinance,
+    roles,
   ])
 
   // =====================================================
@@ -366,8 +411,26 @@ function RouteComponent() {
     })
   }
 
+  const resetFilters = () => {
+    setSearchFilter('')
+    setClaimType(undefined)
+    setDateRange(undefined)
+    setStatusFilter(undefined)
+
+    navigate({
+      to: '.',
+      search: {
+        claimType: undefined,
+        search: undefined,
+        status: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
+    })
+  }
+
   // =====================================================
-  // ERROR & LOADING
+  // ERROR
   // =====================================================
 
   if (isError) {
@@ -382,6 +445,10 @@ function RouteComponent() {
     )
   }
 
+  // =====================================================
+  // LOADING
+  // =====================================================
+
   if (isFetching || isLoadingUser || !response) {
     return (
       <main className="space-y-3 py-20 text-center">
@@ -392,12 +459,16 @@ function RouteComponent() {
     )
   }
 
+  // =====================================================
+  // PAGINATION PROPS
+  // =====================================================
+
   const {
-    data,
-    errors,
-    message,
-    statusCode,
-    success,
+    data: _data,
+    errors: _errors,
+    message: _message,
+    statusCode: _statusCode,
+    success: _success,
     ...paginationProp
   } = response
 
@@ -407,7 +478,7 @@ function RouteComponent() {
 
   return (
     <main className="min-w-0 space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
           <Receipt size={24} />
@@ -424,9 +495,9 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
+      {/* KPI SUMMARY */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* Total Claims */}
+        {/* TOTAL CLAIMS */}
         <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
@@ -446,14 +517,14 @@ function RouteComponent() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">
+            <span className="font-medium tabular-nums">
               {idNumberFormatter.format(metrics.totalAmount)}
             </span>{' '}
             total value
           </p>
         </div>
 
-        {/* Waiting for Your Approval */}
+        {/* WAITING FOR YOUR APPROVAL */}
         <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
@@ -475,14 +546,14 @@ function RouteComponent() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">
+            <span className="font-medium tabular-nums">
               {idNumberFormatter.format(metrics.waitingAmount)}
             </span>{' '}
             value awaiting your decision
           </p>
         </div>
 
-        {/* Approved / Paid */}
+        {/* APPROVED / PAID */}
         <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
@@ -502,7 +573,7 @@ function RouteComponent() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">
+            <span className="font-medium tabular-nums">
               {idNumberFormatter.format(metrics.approvedPaidAmount)}
             </span>{' '}
             settled value
@@ -510,9 +581,9 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Claims Table */}
+      {/* CLAIMS TABLE */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-        {/* Table Header & Toolbar */}
+        {/* TABLE HEADER & TOOLBAR */}
         <div className="flex flex-col justify-between gap-4 border-b border-border p-5 xl:flex-row xl:items-center">
           <div>
             <h2 className="text-base font-semibold text-foreground">
@@ -524,6 +595,7 @@ function RouteComponent() {
             </p>
           </div>
 
+          {/* SEARCH AND FILTER */}
           <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
             <div className="flex flex-wrap items-center gap-3">
               <ButtonGroup>
@@ -586,12 +658,7 @@ function RouteComponent() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setSearchFilter('')
-                      setClaimType(undefined)
-                      setDateRange(undefined)
-                      setStatusFilter(undefined)
-                    }}
+                    onClick={resetFilters}
                     className="h-9 border text-xs text-muted-foreground hover:text-foreground"
                   >
                     Reset Filter
@@ -606,7 +673,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        {/* Table Content */}
+        {/* TABLE CONTENT */}
         {claims.length === 0 ? (
           <div className="p-12 text-center">
             <Receipt
@@ -662,7 +729,7 @@ function RouteComponent() {
               </thead>
 
               <tbody className="divide-y divide-border">
-                {claims.map((claim) => {
+                {sortedClaims.map((claim) => {
                   const typeBadge = getClaimTypeBadge(
                     claim.claimType,
                   )
@@ -696,7 +763,7 @@ function RouteComponent() {
                       }
                       className="group cursor-pointer transition-colors hover:bg-muted/50"
                     >
-                      {/* Employee */}
+                      {/* EMPLOYEE */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">
@@ -711,7 +778,7 @@ function RouteComponent() {
                         </div>
                       </td>
 
-                      {/* Claim Type */}
+                      {/* CLAIM TYPE */}
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${typeBadge.className}`}
@@ -721,7 +788,7 @@ function RouteComponent() {
                         </span>
                       </td>
 
-                      {/* Benefit / Trip Details */}
+                      {/* BENEFIT / TRIP DETAILS */}
                       <td className="max-w-65 truncate px-5 py-4">
                         <div className="truncate font-medium text-foreground">
                           {claim.benefitName ||
@@ -732,24 +799,24 @@ function RouteComponent() {
                         </div>
                       </td>
 
-                      {/* Transaction Date */}
+                      {/* TRANSACTION DATE */}
                       <td className="px-5 py-4 text-xs text-muted-foreground">
                         {formatDate(claim.transactionDate)}
                       </td>
 
-                      {/* Amount */}
+                      {/* AMOUNT */}
                       <td className="px-5 py-4">
                         <span className="text-sm font-semibold tracking-tight text-foreground tabular-nums">
                           {idNumberFormatter.format(claim.amount)}
                         </span>
                       </td>
 
-                      {/* Submitted Date */}
+                      {/* SUBMITTED DATE */}
                       <td className="px-5 py-4 text-xs text-muted-foreground">
                         {formatDate(claim.submittedAt)}
                       </td>
 
-                      {/* Status */}
+                      {/* STATUS */}
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${statusConfig.className}`}
@@ -762,7 +829,7 @@ function RouteComponent() {
                         </span>
                       </td>
 
-                      {/* Row Action */}
+                      {/* ROW ACTION */}
                       <td className="px-5 py-4 text-right">
                         <ArrowRight
                           size={18}
@@ -775,7 +842,7 @@ function RouteComponent() {
               </tbody>
             </table>
 
-            {/* Pagination */}
+            {/* PAGINATION */}
             <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>

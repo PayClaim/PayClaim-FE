@@ -1,35 +1,48 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+
 import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
+import type { TripProposalFilterParams } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
 
 import {
   ArrowRight,
-  Calendar,
+  CalendarDays,
   CheckCircle2,
   Clock,
+  Filter,
   Plane,
   Search,
   Users,
-  X,
 } from 'lucide-react'
 
-export const Route = createFileRoute(
-  '/_app/approvals/trip-proposals/',
-)({
+import { PaginationSection } from '#/components/PaginationSection'
+import { ButtonGroup } from '#/components/ui/button-group'
+import { Button } from '#/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { FilterSelect } from '#/components/FilterSelect'
+
+// =====================================================
+// ROUTE
+// =====================================================
+
+export const Route = createFileRoute('/_app/approvals/trip-proposals/')({
+  validateSearch: (s) => s as TripProposalFilterParams,
+
   beforeLoad: ({ context }) => {
-    const roles = context.user?.roles || []
+    const roles = context.user?.roles ?? []
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
-        (allowedRole) => allowedRole.toLowerCase() === role.toLowerCase(),
+        (allowedRole) =>
+          allowedRole.toLowerCase() === role.toLowerCase(),
       ),
     )
 
@@ -37,33 +50,22 @@ export const Route = createFileRoute(
       throw redirect({ to: '/dashboard' })
     }
   },
+
   component: RouteComponent,
 })
 
-function formatDate(date: string) {
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+function formatDate(date?: string | null) {
   if (!date) return '-'
+
   return new Date(date).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   })
-}
-
-function getDateDistanceFromToday(date: string) {
-  if (!date) return -1
-
-  const [year, month, day] = date.slice(0, 10).split('-').map(Number)
-
-  if (![year, month, day].every(Number.isFinite)) {
-    return -1
-  }
-
-  const tripDate = new Date(year, month - 1, day)
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  return Math.abs(tripDate.getTime() - today.getTime())
 }
 
 function formatCurrency(amount: number) {
@@ -75,51 +77,117 @@ function formatCurrency(amount: number) {
 }
 
 function normalizeStatus(status: string) {
-  return (status || '').replace(/[\s_-]/g, '').toLowerCase()
-}
-
-function getSubmittedAtTime(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
+  return (status || '')
+    .replace(/[\s_-]/g, '')
+    .toLowerCase()
 }
 
 function getInitials(name?: string | null): string {
   if (!name) return '?'
+
   const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+
+  return (
+    parts[0][0] + parts[parts.length - 1][0]
+  ).toUpperCase()
 }
-function getApprovalStatusConfig(
-  status: string,
-  roles: string[],
-  isOwnProposal: boolean,
-) {
-  const norm = normalizeStatus(status)
-  const roleLower = roles.map((role) => role.toLowerCase())
+
+function getSubmittedAtTime(date?: string | null): number {
+  if (!date) return 0
+
+  const timestamp = new Date(date).getTime()
+
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+function isOwnProposal(
+  proposal: TripProposal,
+  currentEmployeeId?: string,
+  currentFullName?: string,
+): boolean {
+  return Boolean(
+    (
+      proposal.picEmployeeId &&
+      currentEmployeeId &&
+      proposal.picEmployeeId.toLowerCase() ===
+        currentEmployeeId.toLowerCase()
+    ) ||
+    (
+      currentFullName &&
+      proposal.picName &&
+      currentFullName.trim().toLowerCase() ===
+        proposal.picName.trim().toLowerCase()
+    ),
+  )
+}
+
+// =====================================================
+// ROLE HELPERS
+// =====================================================
+
+function getRoleFlags(roles: string[]) {
+  const roleLower = roles.map((role) =>
+    role.trim().toLowerCase(),
+  )
 
   const isAdmin = roleLower.includes('admin')
+
   const isFinanceManager = roleLower.includes('finance manager')
 
   const isFinance =
     roleLower.includes('finance') && !isFinanceManager
 
   const isManager =
-    (roleLower.includes('manager') ||
-      roleLower.includes('project manager')) &&
-    !isFinanceManager
-
-  // Determine whether this proposal is waiting for the current user's action.
-  const needsMyApproval =
-    (!isOwnProposal || isAdmin) &&
     (
-      (norm === 'submitted' && (isAdmin || isManager)) ||
-      (norm === 'underreview' &&
-        (isAdmin || isFinance || isFinanceManager)) ||
-      (norm === 'financemanagerreview' &&
-        (isAdmin || isFinanceManager))
+      roleLower.includes('manager') ||
+      roleLower.includes('project manager')
+    ) && !isFinanceManager
+
+  return {
+    isAdmin,
+    isManager,
+    isFinance,
+    isFinanceManager,
+  }
+}
+
+// =====================================================
+// APPROVAL STATUS CONFIGURATION
+// =====================================================
+
+function getApprovalStatusConfig(
+  status: string,
+  roles: string[],
+  isOwn: boolean,
+) {
+  const normalized = normalizeStatus(status)
+
+  const {
+    isAdmin,
+    isManager,
+    isFinance,
+    isFinanceManager,
+  } = getRoleFlags(roles)
+
+  const needsMyApproval =
+    !isOwn &&
+    (
+      (
+        normalized === 'submitted' &&
+        (isAdmin || isManager)
+      ) ||
+      (
+        normalized === 'underreview' &&
+        (isAdmin || isFinance || isFinanceManager)
+      ) ||
+      (
+        normalized === 'financemanagerreview' &&
+        (isAdmin || isFinanceManager)
+      )
     )
 
   if (needsMyApproval) {
@@ -131,12 +199,26 @@ function getApprovalStatusConfig(
     }
   }
 
-  switch (norm) {
+  switch (normalized) {
     case 'submitted':
+      return {
+        label: 'Waiting for Manager',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
+      }
+
     case 'underreview':
+      return {
+        label: 'Waiting for Finance',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        dotColor: 'bg-slate-400',
+      }
+
     case 'financemanagerreview':
       return {
-        label: 'Waiting for Approval',
+        label: 'Waiting for Finance Manager',
         className:
           'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
         dotColor: 'bg-slate-400',
@@ -162,8 +244,8 @@ function getApprovalStatusConfig(
       return {
         label: 'Needs Revision',
         className:
-          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800',
-        dotColor: 'bg-amber-500',
+          'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800',
+        dotColor: 'bg-orange-500',
       }
 
     case 'rejected':
@@ -192,7 +274,9 @@ function getApprovalStatusConfig(
   }
 }
 
-type TripStatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'REVISION_OR_REJECTED'
+// =====================================================
+// PROPOSAL ROW
+// =====================================================
 
 function ProposalRow({
   proposal,
@@ -205,75 +289,77 @@ function ProposalRow({
   currentEmployeeId?: string
   currentFullName?: string
 }) {
-
   const navigate = useNavigate()
-const isOwnProposal = Boolean(
-  (proposal.picEmployeeId &&
-    currentEmployeeId &&
-    proposal.picEmployeeId.toLowerCase() ===
-      currentEmployeeId.toLowerCase()) ||
-    (currentFullName &&
-      proposal.picName &&
-      currentFullName.trim().toLowerCase() ===
-        proposal.picName.trim().toLowerCase()),
-)
 
-const statusConfig = getApprovalStatusConfig(
-  proposal.status,
-  roles,
-  isOwnProposal,
-)
+  const ownProposal = isOwnProposal(
+    proposal,
+    currentEmployeeId,
+    currentFullName,
+  )
+
+  const statusConfig = getApprovalStatusConfig(
+    proposal.status,
+    roles,
+    ownProposal,
+  )
 
   return (
     <tr
-      className="cursor-pointer transition-colors hover:bg-muted/50 group"
+      className="group cursor-pointer transition-colors hover:bg-muted/50"
       onClick={() =>
         navigate({
           to: '/approvals/trip-proposals/$id',
-          params: { id: proposal.id },
+          params: {
+            id: proposal.id,
+          },
         })
       }
     >
-      {/* Destination & Proposal Code */}
+      {/* Destination */}
       <td className="px-5 py-4">
-        <div className="font-semibold text-foreground text-sm">
+        <div className="text-sm font-semibold text-foreground">
           {proposal.destination}
         </div>
       </td>
 
-      {/* PIC with Initials Avatar */}
+      {/* PIC */}
       <td className="px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-semibold text-xs flex items-center justify-center shrink-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">
             {getInitials(proposal.picName)}
           </div>
+
           <div>
-            <p className="font-semibold text-foreground text-sm leading-tight">
+            <p className="text-sm leading-tight font-semibold text-foreground">
               {proposal.picName || '-'}
             </p>
           </div>
         </div>
       </td>
 
-      {/* Trip Period Dates */}
+      {/* Trip Period */}
       <td className="whitespace-nowrap px-5 py-4 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5 text-foreground font-medium">
-          <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          <span>{formatDate(proposal.startDate)} – {formatDate(proposal.endDate)}</span>
+        <div className="flex items-center gap-1.5 font-medium text-foreground">
+          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+
+          <span>
+            {formatDate(proposal.startDate)} – {formatDate(proposal.endDate)}
+          </span>
         </div>
       </td>
 
       {/* Total Amount */}
       <td className="whitespace-nowrap px-5 py-4">
-        <span className="font-semibold text-sm tabular-nums tracking-tight text-foreground">
+        <span className="text-sm font-semibold tracking-tight text-foreground tabular-nums">
           {formatCurrency(proposal.totalAmount)}
         </span>
       </td>
 
-      {/* Participants with Users Icon and Grammar Fix */}
-      <td className="px-5 py-4 text-foreground text-xs">
+      {/* Participants */}
+      <td className="px-5 py-4 text-xs text-foreground">
         <div className="flex items-center gap-1.5 font-medium">
-          <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+
           <span>
             {proposal.participantCount}{' '}
             {proposal.participantCount === 1 ? 'person' : 'people'}
@@ -281,68 +367,172 @@ const statusConfig = getApprovalStatusConfig(
         </div>
       </td>
 
-      {/* Status Badge with Dot */}
+      {/* Status */}
       <td className="px-5 py-4">
         <span
           className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${statusConfig.className}`}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor} mr-1.5`}
+            className={`mr-1.5 h-1.5 w-1.5 rounded-full ${statusConfig.dotColor}`}
           />
+
           {statusConfig.label}
         </span>
       </td>
 
-      {/* Arrow Navigation */}
+      {/* Arrow */}
       <td className="px-5 py-4 text-right">
         <ArrowRight
           size={18}
-          className="ml-auto text-muted-foreground/60 group-hover:text-foreground transition-colors"
+          className="ml-auto text-muted-foreground/60 transition-colors group-hover:text-foreground"
         />
       </td>
     </tr>
   )
 }
 
+// =====================================================
+// PAGE COMPONENT
+// =====================================================
+
 function RouteComponent() {
+  const routeQuery = Route.useSearch()
+  const navigate = useNavigate()
+
   const { data: user } = useQuery(getCurrentUser())
-const roles = user?.roles || []
+
+  const roles = user?.roles ?? []
+
   const {
-    data: proposals = [],
-    isLoading,
+    isAdmin,
+    isManager,
+    isFinance,
+    isFinanceManager,
+  } = getRoleFlags(roles)
+
+  const {
+    data: proposalResponse,
+    isFetching,
     isError,
     error,
-  } = useGetAllProposalsQuery()
+  } = useGetAllProposalsQuery(routeQuery)
 
-  // Filter & Search states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<TripStatusTab>('ALL')
+  // =====================================================
+  // FILTER STATES
+  // =====================================================
 
-  // KPI Calculations
+  const [searchQuery, setSearchQuery] = useState(
+    routeQuery.destination ?? '',
+  )
+
+  const [statusQuery, setStatusQuery] = useState(
+    routeQuery.status,
+  )
+
+  const proposals = proposalResponse?.data ?? []
+
+  const currentEmployeeId = user?.employeeId
+  const currentFullName = user?.fullName
+
+  // =====================================================
+  // SORT PROPOSALS
+  // =====================================================
+
+  const sortedProposals = useMemo(() => {
+    return [...proposals].sort((a, b) => {
+      const aOwnProposal = isOwnProposal(
+        a,
+        currentEmployeeId,
+        currentFullName,
+      )
+
+      const bOwnProposal = isOwnProposal(
+        b,
+        currentEmployeeId,
+        currentFullName,
+      )
+
+      const aWaiting =
+        getApprovalStatusConfig(
+          a.status,
+          roles,
+          aOwnProposal,
+        ).label === 'Waiting for Your Approval'
+
+      const bWaiting =
+        getApprovalStatusConfig(
+          b.status,
+          roles,
+          bOwnProposal,
+        ).label === 'Waiting for Your Approval'
+
+      // 1. Waiting for Your Approval first.
+      if (aWaiting !== bWaiting) {
+        return aWaiting ? -1 : 1
+      }
+
+      // 2. Sort by SubmittedAt, newest first.
+      return (
+        getSubmittedAtTime(b.submittedAt) -
+        getSubmittedAtTime(a.submittedAt)
+      )
+    })
+  }, [
+    proposals,
+    roles,
+    currentEmployeeId,
+    currentFullName,
+  ])
+
+  // =====================================================
+  // KPI CALCULATIONS
+  // =====================================================
+
   const metrics = useMemo(() => {
-    const totalCount = proposals.length
+    const totalCount =
+      proposalResponse?.totalCount ?? proposals.length
+
     const totalBudget = proposals.reduce(
-      (acc, p) => acc + (p.totalAmount || 0),
+      (total, proposal) =>
+        total + (proposal.totalAmount || 0),
       0,
     )
 
-    const waitingProposals = proposals.filter((p) =>
-      ['submitted', 'underreview', 'financemanagerreview'].includes(
-        normalizeStatus(p.status),
+    const waitingProposals = proposals.filter((proposal) => {
+      const ownProposal = isOwnProposal(
+        proposal,
+        currentEmployeeId,
+        currentFullName,
+      )
+
+      return (
+        getApprovalStatusConfig(
+          proposal.status,
+          roles,
+          ownProposal,
+        ).label === 'Waiting for Your Approval'
+      )
+    })
+
+    const waitingCount = waitingProposals.length
+
+    const waitingBudget = waitingProposals.reduce(
+      (total, proposal) =>
+        total + (proposal.totalAmount || 0),
+      0,
+    )
+
+    const approvedProposals = proposals.filter((proposal) =>
+      ['approved', 'completed'].includes(
+        normalizeStatus(proposal.status),
       ),
     )
-    const waitingCount = waitingProposals.length
-    const waitingBudget = waitingProposals.reduce(
-      (acc, p) => acc + (p.totalAmount || 0),
-      0,
-    )
 
-    const approvedProposals = proposals.filter((p) =>
-      ['approved', 'completed'].includes(normalizeStatus(p.status)),
-    )
     const approvedCount = approvedProposals.length
+
     const approvedBudget = approvedProposals.reduce(
-      (acc, p) => acc + (p.totalAmount || 0),
+      (total, proposal) =>
+        total + (proposal.totalAmount || 0),
       0,
     )
 
@@ -354,111 +544,126 @@ const roles = user?.roles || []
       approvedCount,
       approvedBudget,
     }
-  }, [proposals])
+  }, [
+    proposalResponse?.totalCount,
+    proposals,
+    currentEmployeeId,
+    currentFullName,
+    roles,
+  ])
 
-  // Filtered proposals based on search & active tab
-  const filteredProposals = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+  // =====================================================
+  // FILTER OPTIONS
+  // =====================================================
 
-    return proposals.filter((proposal) => {
-      const norm = normalizeStatus(proposal.status)
+  const statusOptions = [
+    { label: 'Submitted', optionValue: 'Submitted' },
+    { label: 'Under Review', optionValue: 'UnderReview' },
+    { label: 'Needs Revision', optionValue: 'NeedsRevision' },
+    { label: 'Approved', optionValue: 'Approved' },
+    { label: 'Rejected', optionValue: 'Rejected' },
+    { label: 'Completed', optionValue: 'Completed' },
+    { label: 'Cancelled', optionValue: 'Cancelled' },
+    {
+      label: 'Finance Manager Review',
+      optionValue: 'FinanceManagerReview',
+    },
+  ]
 
-      // Tab filter
-      if (activeTab === 'WAITING') {
-        if (!['submitted', 'underreview', 'financemanagerreview'].includes(norm))
-          return false
-      } else if (activeTab === 'APPROVED') {
-        if (!['approved', 'completed'].includes(norm)) return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm))
-          return false
-      }
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+    statusQuery ||
+    routeQuery.startDateFrom ||
+    routeQuery.startDateTo,
+  )
 
-      // Search query
-      if (q) {
-        const destMatch = (proposal.destination || '').toLowerCase().includes(q)
-        const picMatch = (proposal.picName || '').toLowerCase().includes(q)
-        const idMatch = proposal.id.toLowerCase().includes(q)
-        return destMatch || picMatch || idMatch
-      }
+  // =====================================================
+  // APPLY FILTER
+  // =====================================================
 
-      return true
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        destination: searchQuery.trim() || undefined,
+        status: statusQuery,
+        startDateFrom: routeQuery.startDateFrom,
+        startDateTo: routeQuery.startDateTo,
+      },
     })
-  }, [proposals, searchQuery, activeTab])
-
-  const sortedProposals = useMemo(() => {
-  const isOwnProposal = (proposal: TripProposal) =>
-    Boolean(
-      (proposal.picEmployeeId &&
-        user?.employeeId &&
-        proposal.picEmployeeId.toLowerCase() ===
-          user.employeeId.toLowerCase()) ||
-        (user?.fullName &&
-          proposal.picName &&
-          user.fullName.trim().toLowerCase() ===
-            proposal.picName.trim().toLowerCase()),
-    )
-
-  const getProposalPriority = (proposal: TripProposal): number => {
-    const normalized = normalizeStatus(proposal.status)
-
-    // Urgent: perlu revisi.
-    if (normalized === 'needsrevision') {
-      return 0
-    }
-
-    // Urgent: memerlukan tindakan pengguna yang login.
-    const statusConfig = getApprovalStatusConfig(
-      proposal.status,
-      roles,
-      isOwnProposal(proposal),
-    )
-
-    if (statusConfig.label === 'Waiting for Your Approval') {
-      return 0
-    }
-
-    // Masih menunggu proses approval lainnya.
-    if (
-      [
-        'submitted',
-        'underreview',
-        'financemanagerreview',
-        'pending',
-      ].includes(normalized)
-    ) {
-      return 1
-    }
-
-    if (['approved', 'completed'].includes(normalized)) {
-      return 2
-    }
-
-    if (['rejected', 'cancelled'].includes(normalized)) {
-      return 3
-    }
-
-    return 4
   }
 
-  return [...filteredProposals].sort((a, b) => {
-    const priorityDifference =
-      getProposalPriority(a) - getProposalPriority(b)
+  // =====================================================
+  // RESET FILTER
+  // =====================================================
 
-    if (priorityDifference !== 0) {
-      return priorityDifference
-    }
+  const resetFilters = () => {
+    setSearchQuery('')
+    setStatusQuery(undefined)
 
+    navigate({
+      to: '.',
+      search: {
+        destination: undefined,
+        status: undefined,
+        startDateFrom: undefined,
+        startDateTo: undefined,
+      },
+    })
+  }
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  if (isError) {
     return (
-      getSubmittedAtTime(b.submittedAt) -
-      getSubmittedAtTime(a.submittedAt)
+      <main className="p-6">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load trip proposals.'}
+        </div>
+      </main>
     )
-  })
-}, [filteredProposals, roles, user?.employeeId, user?.fullName])
+  }
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (isFetching || !proposalResponse) {
+    return (
+      <main className="space-y-3 py-20 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+
+        <p className="text-sm text-muted-foreground">
+          Loading trip proposals...
+        </p>
+      </main>
+    )
+  }
+
+  // =====================================================
+  // PAGINATION PROPS
+  // =====================================================
+
+  const {
+    data: _data,
+    errors: _errors,
+    message: _message,
+    statusCode: _statusCode,
+    success: _success,
+    ...paginationProp
+  } = proposalResponse
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
     <main className="min-w-0 space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
           <Plane size={24} />
@@ -468,168 +673,187 @@ const roles = user?.roles || []
           <h1 className="text-2xl font-semibold text-foreground">
             Approval Trip Proposals
           </h1>
+
           <p className="mt-1 text-sm text-muted-foreground">
             Review and process submitted business trip proposals.
           </p>
         </div>
       </div>
 
-      {/* 3 KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* KPI 1: Total Proposals */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+      {/* KPI SUMMARY */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* TOTAL PROPOSALS */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Proposals
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-              <Plane className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
+              <Plane className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-heading">
             {metrics.totalCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.totalBudget)}</span> total budget
+            <span className="font-medium tabular-nums">
+              {formatCurrency(metrics.totalBudget)}
+            </span>{' '}
+            total budget
           </p>
         </div>
 
-        {/* KPI 2: Waiting for Review */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+        {/* WAITING FOR APPROVAL */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              Waiting for Review
+              {isAdmin
+                ? 'Waiting for Approval'
+                : 'Waiting for Your Approval'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+              <Clock className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingBudget)}</span> pending review
+            <span className="font-medium tabular-nums">
+              {formatCurrency(metrics.waitingBudget)}
+            </span>{' '}
+            value awaiting your decision
           </p>
         </div>
 
-        {/* KPI 3: Approved / Completed */}
-        <div className="bg-card rounded-xl border border-border p-4.5 shadow-2xs space-y-1.5">
+        {/* APPROVED / COMPLETED */}
+        <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Approved / Completed
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+
+          <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedCount}
           </div>
+
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedBudget)}</span> approved budget
+            <span className="font-medium tabular-nums">
+              {formatCurrency(metrics.approvedBudget)}
+            </span>{' '}
+            approved budget
           </p>
         </div>
       </div>
 
-      {/* Proposal Table Container */}
+      {/* PROPOSAL TABLE */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
-        {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-<div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
-            <h2 className="font-semibold text-foreground text-base">
+        {/* TABLE HEADER */}
+        <div className="flex min-w-0 flex-col gap-4 border-b border-border p-5">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
               Trip Proposal Requests
             </h2>
+
             <p className="mt-0.5 text-xs text-muted-foreground">
               Select a proposal to view its details and approval history.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
-                type="button"
-                onClick={() => setActiveTab('ALL')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
-                    ? 'bg-card text-foreground shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('WAITING')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
-                    ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Waiting Review
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('APPROVED')}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
-                    ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
-                    ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Needs Revision / Rejected
-              </button>
+          {/* SEARCH AND FILTER */}
+          <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
+            <div className="flex grow items-center gap-3">
+              <ButtonGroup>
+                <div className="relative max-w-70 grow sm:w-64">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) =>
+                      setSearchQuery(event.target.value)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        applyFilterClick()
+                      }
+                    }}
+                    placeholder="Search destination..."
+                    className="w-full rounded-lg rounded-br-none rounded-tr-none border border-border bg-background py-2.25 pr-4 pl-9 text-sm text-heading placeholder:text-muted-foreground focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 focus:outline-hidden"
+                  />
+                </div>
+
+                <Button onClick={applyFilterClick}>
+                  Search
+                </Button>
+              </ButtonGroup>
             </div>
 
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64 shrink-0">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search destination, PIC..."
-                className="w-full h-9 pl-9 pr-8 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button>
+                  <Filter />
+                  Filter
+                </Button>
+              </PopoverTrigger>
+
+              <PopoverContent
+                align="end"
+                className="grid w-fit grid-cols-1 gap-4"
+              >
+                <FilterSelect
+                  val={statusQuery}
+                  setValue={setStatusQuery}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullLabel="All Status"
+                  nullable
+                />
+
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetFilters}
+                    className="h-9 border text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
+
+                <Button onClick={applyFilterClick}>
+                  Apply
+                </Button>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
-        {/* Table Content */}
-        {isLoading ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Loading trip proposals...
-          </div>
-        ) : isError ? (
-          <div className="p-10 text-center text-sm text-destructive">
-            {error instanceof Error
-              ? error.message
-              : 'Failed to load trip proposals.'}
-          </div>
-        ) : filteredProposals.length === 0 ? (
+        {/* TABLE CONTENT */}
+        {proposals.length === 0 ? (
           <div className="p-12 text-center">
-            <Plane className="mx-auto text-muted-foreground/40" size={36} />
+            <Plane
+              className="mx-auto text-muted-foreground/40"
+              size={36}
+            />
+
             <h3 className="mt-3 font-medium text-foreground">
               No trip proposals found
             </h3>
+
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchQuery || activeTab !== 'ALL'
+              {searchQuery || statusQuery
                 ? 'No trip proposals match your filter criteria.'
                 : 'There are currently no trip proposals available for review.'}
             </p>
@@ -637,30 +861,63 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
             <table className="w-full min-w-[1050px] whitespace-nowrap text-left text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+              <thead className="border-b border-border bg-muted/50 text-xs tracking-wide text-muted-foreground uppercase">
                 <tr>
-                  <th className="px-5 py-3.5 font-medium">Destination</th>
-                  <th className="px-5 py-3.5 font-medium">PIC</th>
-                  <th className="px-5 py-3.5 font-medium">Trip Period</th>
-                  <th className="px-5 py-3.5 font-medium">Total Amount</th>
-                  <th className="px-5 py-3.5 font-medium">Participants</th>
-                  <th className="px-5 py-3.5 font-medium">Status</th>
+                  <th className="px-5 py-3.5 font-medium">
+                    Destination
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    PIC
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Trip Period
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Total Amount
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Participants
+                  </th>
+
+                  <th className="px-5 py-3.5 font-medium">
+                    Status
+                  </th>
+
                   <th className="px-5 py-3.5" />
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-border">
-               {sortedProposals.map((proposal) => (
+                {sortedProposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
                     proposal={proposal}
                     roles={roles}
-                    currentEmployeeId={user?.employeeId}
-                    currentFullName={user?.fullName}
+                    currentEmployeeId={currentEmployeeId}
+                    currentFullName={currentFullName}
                   />
                 ))}
               </tbody>
             </table>
+
+            {/* PAGINATION */}
+            <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>
+                  Showing {proposals.length} of{' '}
+                  {proposalResponse.totalCount ?? proposals.length}{' '}
+                  total proposals
+                </span>
+              </div>
+
+              <div className="w-fit grow-0">
+                <PaginationSection pagination={paginationProp} />
+              </div>
+            </div>
           </div>
         )}
       </section>

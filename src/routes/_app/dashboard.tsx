@@ -619,7 +619,6 @@ function getBenefitFrequency(
     return 'yearly'
   }
 
-  // Fallback apabila API belum mengirimkan PeriodType.
   const start = getDateKey(
     benefit.periodStartDate ||
       benefit.startDate ||
@@ -754,7 +753,6 @@ function TodaySummaryBanner({
   return (
     <section className="relative min-w-0 overflow-hidden rounded-2xl border border-[#A4C1E8] bg-gradient-to-br from-[#B6D2F7] via-[#D8E7FA] to-[#9FC1F0] p-5 shadow-sm dark:border-[#30363D] dark:bg-gradient-to-br dark:from-[#0D1117] dark:via-[#161B22] dark:to-[#1B2A3D] sm:p-6">
       <div className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-7">
-        {/* LEFT CONTENT */}
         <div className="flex min-w-0 flex-col items-start justify-start self-start text-left">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="text-sm font-bold leading-none text-[#294B76] dark:text-[#C9D8EA]">
@@ -773,12 +771,9 @@ function TodaySummaryBanner({
           </p>
         </div>
 
-        {/* RIGHT CONTENT */}
         <div className="w-full min-w-0 self-start">
           <h2 className="mb-3 text-sm font-bold tracking-wide text-[#294B76] dark:text-[#C9D8EA]">
-            {isEmployee
-              ? 'NEEDS YOUR ATTENTION'
-              : 'NEEDS YOUR APPROVAL'}
+            {isEmployee ? 'NEEDS YOUR ATTENTION' : 'NEEDS YOUR APPROVAL'}
           </h2>
 
           {actions.length > 0 ? (
@@ -1564,10 +1559,16 @@ function Dashboard() {
     isApprover,
   )
 
+  const dashboardProposalParams = {
+    pageNumber: 1,
+    pageSize: DASHBOARD_PAGE_SIZE,
+  }
+
   const {
-    data: proposalResponse = [],
+    data: proposalResponse,
     isLoading: isLoadingProposals,
   } = useGetAllProposalsQuery(
+    dashboardProposalParams,
     isEmployee ? user?.employeeId : undefined,
     hasUser,
   )
@@ -1582,7 +1583,9 @@ function Dashboard() {
       : myClaimsResponse?.data ?? []
   ) as DashboardClaim[]
 
-  const proposals = proposalResponse as DashboardProposal[]
+  const proposals = (
+    proposalResponse?.data ?? []
+  ) as DashboardProposal[]
 
   const benefitList =
     employeeBenefits as unknown as DashboardBenefit[]
@@ -1635,10 +1638,18 @@ function Dashboard() {
     ? proposals
     : proposals.filter(
         (proposal) =>
-          proposal.picEmployeeId &&
-          user?.employeeId &&
-          proposal.picEmployeeId.toLowerCase() ===
-            user.employeeId.toLowerCase(),
+          (
+            proposal.picEmployeeId &&
+            user?.employeeId &&
+            proposal.picEmployeeId.toLowerCase() ===
+              user.employeeId.toLowerCase()
+          ) ||
+          (
+            proposal.picName &&
+            user?.fullName &&
+            proposal.picName.trim().toLowerCase() ===
+              user.fullName.trim().toLowerCase()
+          ),
       )
 
   const rejectedClaims = myClaims.filter(
@@ -1701,13 +1712,23 @@ function Dashboard() {
   const pendingTripApprovals = proposals.filter((proposal) => {
     const status = normalizeStatus(proposal.status)
 
+    const isOwnProposal = Boolean(
+      (
+        proposal.picEmployeeId &&
+        user?.employeeId &&
+        proposal.picEmployeeId.toLowerCase() ===
+          user.employeeId.toLowerCase()
+      ) ||
+      (
+        proposal.picName &&
+        user?.fullName &&
+        proposal.picName.trim().toLowerCase() ===
+          user.fullName.trim().toLowerCase()
+      ),
+    )
+
     // PIC cannot approve their own proposal.
-    if (
-      proposal.picEmployeeId &&
-      user?.employeeId &&
-      proposal.picEmployeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
-    ) {
+    if (isOwnProposal) {
       return false
     }
 
@@ -1721,7 +1742,10 @@ function Dashboard() {
 
     return (
       (isManager && status === 'submitted') ||
-      (isFinance && status === 'underreview') ||
+      (
+        (isFinance || isFinanceManager) &&
+        status === 'underreview'
+      ) ||
       (
         isFinanceManager &&
         status === 'financemanagerreview'
