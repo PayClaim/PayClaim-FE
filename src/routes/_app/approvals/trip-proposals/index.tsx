@@ -26,6 +26,9 @@ import {
   PopoverTrigger,
 } from '#/components/ui/popover'
 import { FilterSelect } from '#/components/FilterSelect'
+import { DatePickerWithRange } from '#/components/DateRangePicker'
+import type { DateRange } from 'react-day-picker'
+import { toDateOnly } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/approvals/trip-proposals/')({
   validateSearch: (s) => s as TripProposalFilterParams,
@@ -289,11 +292,19 @@ function RouteComponent() {
     error,
   } = useGetAllProposalsQuery(routeQuery)
 
+  const initialDateRange = {
+    from: routeQuery.startDateFrom
+      ? new Date(routeQuery.startDateFrom)
+      : undefined,
+    to: routeQuery.startDateTo ? new Date(routeQuery.startDateTo) : undefined,
+  }
+
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState(routeQuery.destination)
   const [statusQuery, setStatusQuery] = useState(routeQuery.status)
-  const [startFrom, setStartFrom] = useState(routeQuery.startDateFrom)
-  const [startTo, setStartTo] = useState(routeQuery.startDateTo)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialDateRange,
+  )
 
   const proposals = proposalResponse?.data || []
 
@@ -347,7 +358,7 @@ function RouteComponent() {
   ]
 
   const hasActiveFilters = Boolean(
-    searchQuery || statusQuery || startFrom || startTo,
+    searchQuery || statusQuery || dateRange?.from || dateRange?.to,
   )
 
   const applyFilterClick = () => {
@@ -356,8 +367,8 @@ function RouteComponent() {
       search: {
         destination: searchQuery,
         status: statusQuery,
-        startDateFrom: startFrom,
-        startDateTo: startTo,
+        startDateFrom: toDateOnly(dateRange?.from),
+        startDateTo: toDateOnly(dateRange?.to),
       },
     })
   }
@@ -524,6 +535,11 @@ function RouteComponent() {
                   nullable
                 />
 
+                <DatePickerWithRange
+                  placeholder="Trip start date"
+                  date={dateRange}
+                  setDate={setDateRange}
+                />
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -531,8 +547,7 @@ function RouteComponent() {
                     onClick={() => {
                       setSearchQuery(undefined)
                       setStatusQuery(undefined)
-                      setStartFrom(undefined)
-                      setStartTo(undefined)
+                      setDateRange(undefined)
                     }}
                     className="text-xs text-muted-foreground hover:text-foreground h-9 border"
                   >

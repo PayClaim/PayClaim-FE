@@ -61,7 +61,7 @@ export function PaginationSection({ pagination }: Props) {
         </PaginationItem>
 
         {/* One number higher */}
-        {pagination.pageNumber !== pagination.totalPages && (
+        {pagination.pageNumber < pagination.totalPages && (
           <PaginationItem>
             <PaginationLink onClick={() => toPage(pagination.pageNumber + 1)}>
               {pagination.pageNumber + 1}
