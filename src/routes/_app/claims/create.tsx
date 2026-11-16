@@ -1,4 +1,3 @@
-
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
@@ -65,7 +64,8 @@ function RouteComponent() {
   } = Route.useSearch()
 
   const { data: empBenefits = [] } = useGetAllEmployeeBenefitsQuery()
-  const { data: tripProposals = [] } = useGetAllTripProposalsQuery()
+  const { data: tripProposalResponse } = useGetAllTripProposalsQuery()
+  const tripProposals = tripProposalResponse?.data || []
 
   const form = createClaimForm(searchBenefitId)
 
@@ -81,8 +81,7 @@ function RouteComponent() {
     searchTripId ?? null,
   )
 
-  const [isAmountLimitExceeded, setIsAmountLimitExceeded] =
-    useState(false)
+  const [isAmountLimitExceeded, setIsAmountLimitExceeded] = useState(false)
 
   const claimTypeSelect = [
     { label: 'Benefit', value: 'Benefit' },
@@ -147,14 +146,10 @@ function RouteComponent() {
 
   // Kelompokkan Benefit berdasarkan kategori.
   const benefitGroups: SelectOptionGroup[] = useMemo(() => {
-    const groupMap = new Map<
-      string,
-      Array<{ label: string; value: string }>
-    >()
+    const groupMap = new Map<string, Array<{ label: string; value: string }>>()
 
     empBenefits.forEach((benefit) => {
-      const category =
-        benefit.categoryName.trim() || 'General Benefits'
+      const category = benefit.categoryName.trim() || 'General Benefits'
 
       if (!groupMap.has(category)) {
         groupMap.set(category, [])
@@ -205,9 +200,7 @@ function RouteComponent() {
     (benefit) => benefit.employeeBenefitId === selectedBenefitId,
   )
 
-  const selectedTrip = approvedTrips.find(
-    (trip) => trip.id === selectedTripId,
-  )
+  const selectedTrip = approvedTrips.find((trip) => trip.id === selectedTripId)
 
   // Sisa saldo Benefit yang dipilih.
   const selectedBenefitBudget = selectedBenefit
@@ -222,8 +215,7 @@ function RouteComponent() {
   // Batas nominal mengikuti plafon yang dipilih,
   // tetapi tidak pernah melebihi Rp100 juta.
   const claimAmountLimit =
-    currentClaimType === 'Benefit' &&
-    selectedBenefitBudget !== undefined
+    currentClaimType === 'Benefit' && selectedBenefitBudget !== undefined
       ? Math.min(MAX_CLAIM_AMOUNT, selectedBenefitBudget)
       : currentClaimType === 'BusinessTripReimbursement' &&
           selectedTripBudget !== undefined
@@ -250,10 +242,7 @@ function RouteComponent() {
 
   // Menyesuaikan tanggal invoice dengan periode perjalanan.
   useEffect(() => {
-    if (
-      currentClaimType === 'BusinessTripReimbursement' &&
-      selectedTrip
-    ) {
+    if (currentClaimType === 'BusinessTripReimbursement' && selectedTrip) {
       const currentDate = form.state.values.transactionDate
 
       if (
@@ -261,10 +250,7 @@ function RouteComponent() {
         currentDate < selectedTrip.startDate ||
         currentDate > selectedTrip.endDate
       ) {
-        form.setFieldValue(
-          'transactionDate',
-          selectedTrip.startDate,
-        )
+        form.setFieldValue('transactionDate', selectedTrip.startDate)
       }
     }
   }, [selectedTripId, currentClaimType, selectedTrip, form])
@@ -273,10 +259,7 @@ function RouteComponent() {
     const values = form.state.values
 
     // Validasi nominal dengan plafon yang sedang dipilih.
-    if (
-      !Number.isFinite(values.amount) ||
-      values.amount > claimAmountLimit
-    ) {
+    if (!Number.isFinite(values.amount) || values.amount > claimAmountLimit) {
       const message = claimAmountLimitMessage
 
       setIsAmountLimitExceeded(true)
@@ -391,8 +374,8 @@ function RouteComponent() {
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Complete the expense details and attach a valid receipt
-              untuk diproses reviewer.
+              Complete the expense details and attach a valid receipt untuk
+              diproses reviewer.
             </p>
           </div>
         </div>
@@ -422,9 +405,7 @@ function RouteComponent() {
                       key={type.value}
                       type="button"
                       variant={
-                        currentClaimType === type.value
-                          ? 'default'
-                          : 'outline'
+                        currentClaimType === type.value ? 'default' : 'outline'
                       }
                       className={`grow h-10 cursor-pointer font-semibold transition-all ${
                         currentClaimType === type.value
@@ -504,8 +485,8 @@ function RouteComponent() {
                   </label>
 
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground italic">
-                    Operational reimbursement is submitted directly without linking
-                    benefit atau trip.
+                    Operational reimbursement is submitted directly without
+                    linking benefit atau trip.
                   </div>
                 </div>
               )}
@@ -522,10 +503,7 @@ function RouteComponent() {
             {/* Trip Info */}
             {currentClaimType === 'BusinessTripReimbursement' &&
               selectedTripId && (
-                <TripInfoBanner
-                  tripId={selectedTripId}
-                  trips={approvedTrips}
-                />
+                <TripInfoBanner tripId={selectedTripId} trips={approvedTrips} />
               )}
           </div>
 
@@ -595,7 +573,7 @@ function RouteComponent() {
               </div>
 
               {/* Amount */}
-              <div className="min-w-0 w-full pt-4"> 
+              <div className="min-w-0 w-full pt-4">
                 <form.AppField
                   name="amount"
                   validators={{
@@ -659,9 +637,7 @@ function RouteComponent() {
                                 '',
                               )
 
-                              const numericAmount = digits
-                                ? Number(digits)
-                                : 0
+                              const numericAmount = digits ? Number(digits) : 0
 
                               // Tolak nominal yang melewati plafon.
                               // Tetap izinkan pengurangan nominal lama
@@ -756,9 +732,7 @@ function RouteComponent() {
               <Send className="w-4 h-4" />
 
               <span>
-                {form.state.isSubmitting
-                  ? 'Mengirimkan...'
-                  : 'Submit Claim'}
+                {form.state.isSubmitting ? 'Mengirimkan...' : 'Submit Claim'}
               </span>
             </Button>
           </div>
@@ -770,16 +744,14 @@ function RouteComponent() {
                 <DialogTitle>Konfirmasi Pengajuan Klaim</DialogTitle>
 
                 <DialogDescription className="text-sm pt-1">
-                  Pastikan rincian data pengajuan klaim Anda sudah benar
-                  sebelum diteruskan ke reviewer.
+                  Pastikan rincian data pengajuan klaim Anda sudah benar sebelum
+                  diteruskan ke reviewer.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-4 bg-muted/30 border border-border rounded-xl text-xs space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">
-                    Tipe Klaim:
-                  </span>
+                  <span className="text-muted-foreground">Tipe Klaim:</span>
 
                   <span className="font-semibold text-foreground">
                     {claimTypeSelect.find(
@@ -789,9 +761,7 @@ function RouteComponent() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">
-                    Invoice Date:
-                  </span>
+                  <span className="text-muted-foreground">Invoice Date:</span>
 
                   <span className="font-semibold text-foreground">
                     {form.state.values.transactionDate}
@@ -845,19 +815,13 @@ function getTripRemainingBudget(trip: {
   myRemainingBudget?: number | null
   myParticipantAmount?: number | null
 }) {
-  const amount = Number(
-    trip.myRemainingBudget ??
-      trip.myParticipantAmount ??
-      0,
-  )
+  const amount = Number(trip.myRemainingBudget ?? trip.myParticipantAmount ?? 0)
 
   return Number.isFinite(amount) ? Math.max(0, amount) : 0
 }
 
 // Memastikan nominal tidak negatif dan berupa angka valid.
-function getNonNegativeAmount(
-  value: number | string | null | undefined,
-) {
+function getNonNegativeAmount(value: number | string | null | undefined) {
   const amount = Number(value ?? 0)
 
   return Number.isFinite(amount) ? Math.max(0, amount) : 0
@@ -920,13 +884,7 @@ function BenefitInfoBanner({
   )
 }
 
-function TripInfoBanner({
-  tripId,
-  trips,
-}: {
-  tripId: string
-  trips: any[]
-}) {
+function TripInfoBanner({ tripId, trips }: { tripId: string; trips: any[] }) {
   const selectedTrip = trips.find((trip) => trip.id === tripId)
 
   if (!selectedTrip) return null

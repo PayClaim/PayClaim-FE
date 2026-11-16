@@ -75,72 +75,84 @@ function getProposalStatusConfig(status: string) {
     case 'submitted':
       return {
         label: 'Submitted',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
     case 'underreview':
       return {
         label: 'Under Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
     case 'financemanagerreview':
       return {
         label: 'Finance Review',
-        className: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
+        className:
+          'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60',
         dotColor: 'bg-amber-500',
       }
     case 'approved':
       return {
         label: 'Approved',
-        className: 'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60',
+        className:
+          'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60',
         dotColor: 'bg-blue-600',
       }
     case 'completed':
       return {
         label: 'Completed',
-        className: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60',
+        className:
+          'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/60',
         dotColor: 'bg-emerald-600',
       }
     case 'needsrevision':
       return {
         label: 'Needs Revision',
-        className: 'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800/60',
+        className:
+          'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-950/60 dark:text-orange-300 dark:border-orange-800/60',
         dotColor: 'bg-orange-500',
       }
     case 'rejected':
       return {
         label: 'Rejected',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
+        className:
+          'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
         dotColor: 'bg-rose-500',
       }
     case 'cancelled':
       return {
         label: 'Cancelled',
-        className: 'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
+        className:
+          'bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60',
         dotColor: 'bg-rose-500',
       }
     default:
       return {
         label: status,
-        className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+        className:
+          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
         dotColor: 'bg-slate-500',
       }
   }
 }
 
-type ProposalTab = 'ALL' | 'WAITING' | 'APPROVED' | 'COMPLETED' | 'REVISION_OR_REJECTED'
+type ProposalTab =
+  'ALL' | 'WAITING' | 'APPROVED' | 'COMPLETED' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
   const navigate = useNavigate()
   const { data: user } = useQuery(getCurrentUser())
 
   const {
-    data: proposals = [],
+    data: proposalResponse,
     isError,
     isFetching,
     error,
-  } = useGetAllProposalsQuery(user?.employeeId)
+  } = useGetAllProposalsQuery(undefined, user?.employeeId)
+
+  const proposals = proposalResponse?.data || []
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('')
@@ -149,14 +161,25 @@ function RouteComponent() {
   // KPI Calculations
   const metrics = useMemo(() => {
     const totalCount = proposals.length
-    const totalAmount = proposals.reduce((sum, p) => sum + (p.totalAmount || 0), 0)
+    const totalAmount = proposals.reduce(
+      (sum, p) => sum + (p.totalAmount || 0),
+      0,
+    )
 
     const waiting = proposals.filter((p) => {
       const s = normalizeStatus(p.status)
-      return ['submitted', 'underreview', 'financemanagerreview', 'pending'].includes(s)
+      return [
+        'submitted',
+        'underreview',
+        'financemanagerreview',
+        'pending',
+      ].includes(s)
     })
     const waitingCount = waiting.length
-    const waitingAmount = waiting.reduce((sum, p) => sum + (p.totalAmount || 0), 0)
+    const waitingAmount = waiting.reduce(
+      (sum, p) => sum + (p.totalAmount || 0),
+      0,
+    )
 
     const approvedCompleted = proposals.filter((p) => {
       const s = normalizeStatus(p.status)
@@ -179,102 +202,104 @@ function RouteComponent() {
   }, [proposals])
 
   // Filtered proposals based on active tab and search query
- const filteredProposals = useMemo(() => {
-  const q = searchQuery.trim().toLowerCase()
+  const filteredProposals = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
 
-  return proposals.filter((proposal) => {
-    const norm = normalizeStatus(proposal.status)
+    return proposals.filter((proposal) => {
+      const norm = normalizeStatus(proposal.status)
 
-    // Tab filter
-    if (activeTab === 'WAITING') {
+      // Tab filter
+      if (activeTab === 'WAITING') {
+        if (
+          ![
+            'submitted',
+            'underreview',
+            'financemanagerreview',
+            'pending',
+          ].includes(norm)
+        ) {
+          return false
+        }
+      } else if (activeTab === 'APPROVED') {
+        if (norm !== 'approved') return false
+      } else if (activeTab === 'COMPLETED') {
+        if (norm !== 'completed') return false
+      } else if (activeTab === 'REVISION_OR_REJECTED') {
+        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm)) {
+          return false
+        }
+      }
+
+      // Search query
+      if (q) {
+        const dest = (proposal.destination || '').toLowerCase()
+        const pic = (proposal.picName || '').toLowerCase()
+        const id = (proposal.id || '').toLowerCase()
+
+        return dest.includes(q) || pic.includes(q) || id.includes(q)
+      }
+
+      return true
+    })
+  }, [proposals, activeTab, searchQuery])
+
+  const sortedProposals = useMemo(() => {
+    const getProposalPriority = (status: string): number => {
+      const normalized = normalizeStatus(status)
+
+      if (normalized === 'needsrevision') {
+        return 0
+      }
+
       if (
-        ![
+        [
           'submitted',
           'underreview',
           'financemanagerreview',
           'pending',
-        ].includes(norm)
+        ].includes(normalized)
       ) {
-        return false
+        return 1
       }
-    } else if (activeTab === 'APPROVED') {
-      if (norm !== 'approved') return false
-    } else if (activeTab === 'COMPLETED') {
-      if (norm !== 'completed') return false
-    } else if (activeTab === 'REVISION_OR_REJECTED') {
-      if (!['needsrevision', 'rejected', 'cancelled'].includes(norm)) {
-        return false
+
+      if (normalized === 'approved') {
+        return 2
       }
+
+      if (normalized === 'completed') {
+        return 3
+      }
+
+      if (['rejected', 'cancelled'].includes(normalized)) {
+        return 4
+      }
+
+      return 5
     }
 
-    // Search query
-    if (q) {
-      const dest = (proposal.destination || '').toLowerCase()
-      const pic = (proposal.picName || '').toLowerCase()
-      const id = (proposal.id || '').toLowerCase()
+    return [...filteredProposals].sort((a, b) => {
+      const priorityDifference =
+        getProposalPriority(a.status) - getProposalPriority(b.status)
 
-      return dest.includes(q) || pic.includes(q) || id.includes(q)
-    }
+      if (priorityDifference !== 0) {
+        return priorityDifference
+      }
 
-    return true
-  })
-}, [proposals, activeTab, searchQuery])
-
-const sortedProposals = useMemo(() => {
-  const getProposalPriority = (status: string): number => {
-    const normalized = normalizeStatus(status)
-
-    if (normalized === 'needsrevision') {
-      return 0
-    }
-
-    if (
-      [
-        'submitted',
-        'underreview',
-        'financemanagerreview',
-        'pending',
-      ].includes(normalized)
-    ) {
-      return 1
-    }
-
-    if (normalized === 'approved') {
-      return 2
-    }
-
-    if (normalized === 'completed') {
-      return 3
-    }
-
-    if (['rejected', 'cancelled'].includes(normalized)) {
-      return 4
-    }
-
-    return 5
-  }
-
-  return [...filteredProposals].sort((a, b) => {
-    const priorityDifference =
-      getProposalPriority(a.status) -
-      getProposalPriority(b.status)
-
-    if (priorityDifference !== 0) {
-      return priorityDifference
-    }
-
-    return (
-      getSubmittedAtTime(b.submittedAt) -
-      getSubmittedAtTime(a.submittedAt)
-    )
-  })
-}, [filteredProposals])
+      return (
+        getSubmittedAtTime(b.submittedAt) - getSubmittedAtTime(a.submittedAt)
+      )
+    })
+  }, [filteredProposals])
 
   if (isError) {
     return (
       <div className="p-8 text-center space-y-3 bg-card rounded-2xl border border-border">
-        <p className="font-semibold text-rose-600">Failed to load business trip proposals.</p>
-        <p className="text-xs text-muted-foreground">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        <p className="font-semibold text-rose-600">
+          Failed to load business trip proposals.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {error instanceof Error ? error.message : 'Unknown error'}
+        </p>
       </div>
     )
   }
@@ -296,7 +321,8 @@ const sortedProposals = useMemo(() => {
             My Trip Proposals
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage and track your business trip proposals (as PIC or participant).
+            Manage and track your business trip proposals (as PIC or
+            participant).
           </p>
         </div>
 
@@ -327,7 +353,10 @@ const sortedProposals = useMemo(() => {
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.totalAmount)}</span> total estimated budget
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.totalAmount)}
+            </span>{' '}
+            total estimated budget
           </p>
         </div>
 
@@ -345,7 +374,10 @@ const sortedProposals = useMemo(() => {
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingAmount)}</span> pending review
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.waitingAmount)}
+            </span>{' '}
+            pending review
           </p>
         </div>
 
@@ -363,7 +395,10 @@ const sortedProposals = useMemo(() => {
             {metrics.approvedCompletedCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedCompletedAmount)}</span> approved / completed
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.approvedCompletedAmount)}
+            </span>{' '}
+            approved / completed
           </p>
         </div>
       </div>
@@ -371,21 +406,26 @@ const sortedProposals = useMemo(() => {
       {/* Proposals Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-<div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
+        <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
+          {' '}
+          <div>
             <h2 className="font-semibold text-foreground text-base">
               Riwayat Proposal
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Pilih proposal untuk melihat timeline persetujuan, daftar peserta, dan dokumen pendukung.
+              Pilih proposal untuk melihat timeline persetujuan, daftar peserta,
+              dan dokumen pendukung.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
+            <div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+              {' '}
+              <button
                 type="button"
                 onClick={() => setActiveTab('ALL')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'ALL'
                     ? 'bg-card text-foreground shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -395,7 +435,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('WAITING')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'WAITING'
                     ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -405,7 +446,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('APPROVED')}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'APPROVED'
                     ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -426,7 +468,8 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               <button
                 type="button"
                 onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  activeTab === 'REVISION_OR_REJECTED'
                     ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -460,7 +503,9 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
         {/* Table Content */}
         <div className="overflow-x-auto">
-<table className="w-full min-w-[1100px] text-left border-collapse text-xs">            <thead>
+          <table className="w-full min-w-[1100px] text-left border-collapse text-xs">
+            {' '}
+            <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-5">Destinasi</th>
                 <th className="py-3 px-5">Trip Period</th>
@@ -499,10 +544,10 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                   >
                     {/* Destinasi */}
                     <td className="py-3.5 px-5 min-w-[180px]">
-                        <div className="max-w-[240px] truncate whitespace-nowrap font-semibold text-foreground text-sm">
-                          {proposal.destination}
-                        </div>
-                      </td>
+                      <div className="max-w-[240px] truncate whitespace-nowrap font-semibold text-foreground text-sm">
+                        {proposal.destination}
+                      </div>
+                    </td>
 
                     {/* Periode Perjalanan */}
                     <td className="py-3.5 px-5 whitespace-nowrap">
@@ -585,10 +630,15 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
               {filteredProposals.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                  <td
+                    colSpan={7}
+                    className="py-12 text-center text-muted-foreground"
+                  >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
-                      <p className="font-medium">Tidak ada proposal perjalanan yang ditemukan</p>
+                      <p className="font-medium">
+                        Tidak ada proposal perjalanan yang ditemukan
+                      </p>
                       <p className="text-xs text-muted-foreground/80">
                         {searchQuery || activeTab !== 'ALL'
                           ? 'Coba ubah kata kunci pencarian atau tab status.'
@@ -604,7 +654,10 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
 
         {/* Footer info bar */}
         <div className="px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground flex items-center justify-between">
-          <span>Showing {filteredProposals.length} of {proposals.length} total proposals</span>
+          <span>
+            Showing {filteredProposals.length} of {proposals.length} total
+            proposals
+          </span>
           {activeTab !== 'ALL' && (
             <span className="font-medium text-foreground">
               Filter aktif: {activeTab}
