@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -10,6 +11,16 @@ import type {
   TripProposal,
   TripProposalDetailResponse,
 } from '#/types/tripProposals.type'
+import type { PaginationGeneric } from '#/types/pagination.type'
+
+export interface TripProposalFilterParams {
+  destination?: string
+  status?: string
+  startDateFrom?: string
+  startDateTo?: string
+  pageNumber?: number
+  pageSize?: number
+}
 
 type PagedResponse<T> = {
   success: boolean
@@ -26,23 +37,28 @@ type PagedResponse<T> = {
 
 const getAllProposals = async (
   employeeId?: string,
-): Promise<TripProposal[]> => {
-  const result = await api.get<PagedResponse<TripProposal>>('/trip-proposals', {
+): Promise<PagedResponse<TripProposal>> => {
+  return await api.get<PagedResponse<TripProposal>>('/trip-proposals', {
     params: employeeId ? { employeeId } : undefined,
   })
-  return result.data ?? []
+  // return result.data ?? []
 }
 
 export const useGetAllProposalsQuery = (
-  employeeId?: string,
-  enabled = true,
+  params?: TripProposalFilterParams,
+  // employeeId?: string,
+  // enabled = true,
 ) =>
   useQuery({
-    queryKey: employeeId
-      ? ['trip-proposals', { employeeId }]
-      : ['trip-proposals'],
-    queryFn: () => getAllProposals(employeeId),
-    enabled,
+    queryKey: ['trip-proposals', params],
+    queryFn: () => {
+      const normalized = { ...params, pageSize: params?.pageSize ?? 10 }
+      return api.get<PaginationGeneric<TripProposal>>('/trip-proposals', {
+        params: normalized,
+      })
+    },
+    placeholderData: keepPreviousData,
+    // enabled,
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery
@@ -66,8 +82,7 @@ export const useCreateTripProposalMutation = () => {
 export const useGetProposalByIdQuery = (id: string) =>
   useQuery({
     queryKey: ['trip-proposals', id],
-    queryFn: () =>
-      api.get<TripProposalDetailResponse>(`/trip-proposals/${id}`),
+    queryFn: () => api.get<TripProposalDetailResponse>(`/trip-proposals/${id}`),
     enabled: Boolean(id),
   })
 
