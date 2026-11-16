@@ -1,21 +1,23 @@
+
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { ArrowLeft, CircleAlert } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from 'cn'
 
-import { Button } from '#/components/ui/button'
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
+import { TripProposalParticipants } from '#/features/trip-proposals/components/TripProposalParticipants'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
-import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
 import { useAuth } from '#/hooks/auth.hook'
+
 import { toDateOnly } from '#/lib/utils'
+
+import {
+  MAX_TRIP_AMOUNT,
+} from '#/features/trip-proposals/utils/tripProposalDetailUtils'
 
 import type { EmployeeResponse } from '#/types/employee.type'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
-
-const MAX_TRIP_AMOUNT = 100000000
 
 export const Route = createFileRoute('/_app/trip-proposals/create')({
   beforeLoad: ({ context }) => {
@@ -32,16 +34,13 @@ function RouteComponent() {
   const { user } = useAuth()
   const { data: employees = [], isLoading } = useGetAllEmployeesQuery()
 
-  // if (!user) {
-  //   return <p>Loading user information...</p>
-  // }
-
-  if (isLoading) {
+  if (!user || isLoading) {
     return <p>Loading employees...</p>
   }
 
   const currentEmployee = employees.find(
-    (employee) => employee.email.toLowerCase() === user.email.toLowerCase(),
+    (employee) =>
+      employee.email.toLowerCase() === user.email.toLowerCase(),
   )
 
   if (!currentEmployee) {
@@ -92,43 +91,9 @@ function CreateTripProposalPage({
     form.setFieldValue('participants', newParticipants)
   }
 
-  // Menambahkan peserta baru.
-  const handleAddParticipant = () => {
-    updateParticipants([
-      ...participants,
-      {
-        employeeId: '',
-        isPic: false,
-        amount: 0,
-      },
-    ])
-  }
-
-  // Mengubah EmployeeId peserta.
-  const handleEmployeeChange = (index: number, employeeId: string) => {
-    const updatedParticipants = participants.map((participant, i) =>
-      i === index ? { ...participant, employeeId } : participant,
-    )
-
-    updateParticipants(updatedParticipants)
-  }
-
-  // Menghapus peserta tambahan.
-  const handleRemoveParticipant = (index: number) => {
-    const updatedParticipants = participants.filter((_, i) => i !== index)
-
-    updateParticipants(updatedParticipants)
-  }
-
-  const isParticipantCountInvalid =
-    hasAttemptedSubmit && participants.length < 1
-
   const hasEmptyParticipant = participants.some(
     (participant) => !participant.employeeId,
   )
-
-  const isParticipantsInvalid =
-    hasAttemptedSubmit && (isParticipantCountInvalid || hasEmptyParticipant)
 
   // Validasi sebelum form benar-benar dikirim.
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -161,13 +126,16 @@ function CreateTripProposalPage({
       return
     }
 
+    // Validasi Accommodation Amount.
     if (values.accommodationAmount > MAX_TRIP_AMOUNT) {
       toast.error('Maximum Accommodation Amount is Rp 100.000.000.')
       return
     }
 
-    // Validasi Accommodation Amount.
-    if (!values.accommodationAmount || values.accommodationAmount <= 0) {
+    if (
+      !values.accommodationAmount ||
+      values.accommodationAmount <= 0
+    ) {
       toast.error('Accommodation amount must be greater than 0.')
       return
     }
@@ -194,7 +162,7 @@ function CreateTripProposalPage({
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">
-      {/* Page Header - Outside Form Card */}
+      {/* Page Header */}
       <div className="flex flex-col justify-between gap-3 pb-1 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3.5">
           <Link
@@ -233,7 +201,6 @@ function CreateTripProposalPage({
               Trip Information
             </h2>
 
-            {/* Destination Full Width */}
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
                 <form.AppField name="destination">
@@ -266,7 +233,10 @@ function CreateTripProposalPage({
                 }}
               >
                 {(field) => (
-                  <field.DatePicker label="Start Date" minDate={today} />
+                  <field.DatePicker
+                    label="Start Date"
+                    minDate={today}
+                  />
                 )}
               </form.AppField>
 
@@ -308,6 +278,7 @@ function CreateTripProposalPage({
                   if (value > MAX_TRIP_AMOUNT) {
                     return 'Maximum Accommodation Amount is Rp 100.000.000.'
                   }
+
                   return undefined
                 },
               }}
@@ -330,7 +301,12 @@ function CreateTripProposalPage({
           {/* SECTION 3: DESCRIPTION & DOCUMENT */}
           <div className="space-y-5">
             <form.AppField name="description">
-              {(field) => <field.TextArea label="Description" rows={5} />}
+              {(field) => (
+                <field.TextArea
+                  label="Description"
+                  rows={5}
+                />
+              )}
             </form.AppField>
 
             <form.AppField name="file">
@@ -343,146 +319,13 @@ function CreateTripProposalPage({
           <div className="h-px bg-border/70" />
 
           {/* SECTION 4: PARTICIPANTS */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2
-                  className={cn(
-                    'text-lg font-semibold',
-                    isParticipantsInvalid && 'text-rose-600 dark:text-rose-400',
-                  )}
-                >
-                  Participants
-                </h2>
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  At least one employee is required. The PIC can be the only
-                  participant.
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddParticipant}
-              >
-                Add Participant
-              </Button>
-            </div>
-
-            <div
-              className={cn(
-                'space-y-4 rounded-lg',
-                isParticipantsInvalid &&
-                  'border border-rose-500 bg-rose-50/20 p-3 dark:bg-rose-950/20',
-              )}
-            >
-              {participants.map((participant, index) => {
-                const availableEmployees = employees.filter(
-                  (employee) =>
-                    !participants.some(
-                      (other, otherIndex) =>
-                        otherIndex !== index &&
-                        other.employeeId === employee.id,
-                    ),
-                )
-
-                const isEmployeeInvalid =
-                  hasAttemptedSubmit &&
-                  !participant.isPic &&
-                  !participant.employeeId
-
-                const employeeGroups =
-                  buildEmployeeGroups(availableEmployees)
-
-                return (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border p-4 md:grid-cols-[1fr_auto]"
-                  >
-                    <div>
-                      <label
-                        className={cn(
-                          'mb-2 block text-sm font-semibold transition-colors',
-                          isEmployeeInvalid
-                            ? 'text-rose-600 dark:text-rose-400'
-                            : 'text-(--sea-ink)',
-                        )}
-                      >
-                        Employee
-                      </label>
-
-                      {participant.isPic ? (
-                        <div className="rounded-md border border-border bg-muted p-2 text-sm">
-                          {currentEmployee.fullName} (PIC)
-                        </div>
-                      ) : (
-                        <>
-                          <select
-                            aria-invalid={isEmployeeInvalid}
-                            className={cn(
-                              'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
-                              isEmployeeInvalid &&
-                                'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
-                            )}
-                            value={participant.employeeId}
-                            onChange={(event) =>
-                              handleEmployeeChange(index, event.target.value)
-                            }
-                          >
-                            <option value="">Select employee</option>
-
-                            {employeeGroups.map((group) => (
-                              <optgroup
-                                key={group.groupLabel}
-                                label={group.groupLabel}
-                              >
-                                {group.items.map((item) => (
-                                  <option key={item.value} value={item.value}>
-                                    {item.label}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            ))}
-                          </select>
-
-                          {isEmployeeInvalid && (
-                            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                              <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-                              <span>Please select an employee.</span>
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {participant.isPic ? (
-                        <span className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
-                          PIC
-                        </span>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleRemoveParticipant(index)}
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {isParticipantCountInvalid && (
-              <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-                <span>At least one participant is required.</span>
-              </p>
-            )}
-          </div>
+          <TripProposalParticipants
+            currentEmployee={currentEmployee}
+            employees={employees}
+            participants={participants}
+            hasAttemptedSubmit={hasAttemptedSubmit}
+            onChange={updateParticipants}
+          />
 
           {/* SECTION 5: SUBMIT */}
           <div className="border-t border-border pt-6">
