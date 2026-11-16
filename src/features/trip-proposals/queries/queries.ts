@@ -14,6 +14,7 @@ import type {
 import type { PaginationGeneric } from '#/types/pagination.type'
 
 export interface TripProposalFilterParams {
+  employeeId?: string
   destination?: string
   status?: string
   startDateFrom?: string
@@ -46,19 +47,23 @@ const getAllProposals = async (
 
 export const useGetAllProposalsQuery = (
   params?: TripProposalFilterParams,
-  // employeeId?: string,
-  // enabled = true,
+  employeeId?: string,
+  enabled = true,
 ) =>
   useQuery({
-    queryKey: ['trip-proposals', params],
+    queryKey: ['trip-proposals', params, employeeId],
     queryFn: () => {
-      const normalized = { ...params, pageSize: params?.pageSize ?? 10 }
+      const normalized = {
+        ...params,
+        pageSize: params?.pageSize ?? 10,
+        employeeId: employeeId,
+      } as Record<string, string | number>
       return api.get<PaginationGeneric<TripProposal>>('/trip-proposals', {
         params: normalized,
       })
     },
     placeholderData: keepPreviousData,
-    // enabled,
+    enabled,
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery

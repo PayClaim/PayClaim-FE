@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
@@ -350,9 +349,7 @@ function isUpdatedToday(
 }
 
 function getPaidClaims(claims: DashboardClaim[]) {
-  return claims.filter(
-    (claim) => normalizeStatus(claim.status) === 'paid',
-  )
+  return claims.filter((claim) => normalizeStatus(claim.status) === 'paid')
 }
 
 function getPaidClaimsByPeriod(
@@ -387,19 +384,14 @@ function getExpenseBuckets(
   const month = Number(current.month) - 1
 
   if (period === 'month') {
-    const buckets: ExpenseBucket[] = Array.from(
-      { length: 5 },
-      (_, index) => ({
-        key: `week-${index + 1}`,
-        label: `Week ${index + 1}`,
-        amount: 0,
-      }),
-    )
+    const buckets: ExpenseBucket[] = Array.from({ length: 5 }, (_, index) => ({
+      key: `week-${index + 1}`,
+      label: `Week ${index + 1}`,
+      amount: 0,
+    }))
 
     paidClaims.forEach((claim) => {
-      const day = Number(
-        getDateKey(claim.transactionDate).slice(8, 10),
-      )
+      const day = Number(getDateKey(claim.transactionDate).slice(8, 10))
 
       if (!day) return
 
@@ -440,22 +432,15 @@ function getExpenseBuckets(
   const numberOfMonths = period === 'year' ? month + 1 : 6
 
   return Array.from({ length: numberOfMonths }, (_, index) => {
-    const date = new Date(
-      Date.UTC(year, firstMonth + index, 1),
-    )
+    const date = new Date(Date.UTC(year, firstMonth + index, 1))
 
     const bucketYear = date.getUTCFullYear()
     const bucketMonth = date.getUTCMonth()
     const key = getMonthKey(bucketYear, bucketMonth)
 
     const amount = paidClaims
-      .filter((claim) =>
-        getDateKey(claim.transactionDate).startsWith(key),
-      )
-      .reduce(
-        (total, claim) => total + getAmount(claim.amount),
-        0,
-      )
+      .filter((claim) => getDateKey(claim.transactionDate).startsWith(key))
+      .reduce((total, claim) => total + getAmount(claim.amount), 0)
 
     return {
       key,
@@ -493,15 +478,11 @@ function getBenefitFrequency(
 
   // Fallback apabila API belum mengirimkan PeriodType.
   const start = getDateKey(
-    benefit.periodStartDate ||
-      benefit.startDate ||
-      benefit.validFrom,
+    benefit.periodStartDate || benefit.startDate || benefit.validFrom,
   )
 
   const end = getDateKey(
-    benefit.periodEndDate ||
-      benefit.endDate ||
-      benefit.validTo,
+    benefit.periodEndDate || benefit.endDate || benefit.validTo,
   )
 
   if (!start || !end) return null
@@ -509,9 +490,7 @@ function getBenefitFrequency(
   const startTime = new Date(`${start}T00:00:00Z`).getTime()
   const endTime = new Date(`${end}T00:00:00Z`).getTime()
 
-  const durationDays = Math.round(
-    (endTime - startTime) / (1000 * 60 * 60 * 24),
-  )
+  const durationDays = Math.round((endTime - startTime) / (1000 * 60 * 60 * 24))
 
   if (!Number.isFinite(durationDays) || durationDays < 0) {
     return null
@@ -544,9 +523,7 @@ function PeriodFilter({
     <select
       aria-label="Filter period"
       value={value}
-      onChange={(event) =>
-        onChange(event.target.value as PeriodFilter)
-      }
+      onChange={(event) => onChange(event.target.value as PeriodFilter)}
       className="h-8 max-w-36 cursor-pointer rounded-lg border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition-colors hover:border-primary/50 focus:ring-2 focus:ring-primary/20"
     >
       <option value="month">This Month</option>
@@ -585,11 +562,7 @@ function DashboardPanel({
 // TODAY SUMMARY
 // =====================================================
 
-function TodayActionButton({
-  action,
-}: {
-  action: TodaySummaryAction
-}) {
+function TodayActionButton({ action }: { action: TodaySummaryAction }) {
   return (
     <Link
       to={action.to}
@@ -629,7 +602,6 @@ function TodaySummaryBanner({
         {/* LEFT CONTENT */}
         <div className="flex min-w-0 flex-col items-start justify-start self-start text-left">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-
             <span className="text-sm font-bold leading-none text-[#294B76] dark:text-[#C9D8EA]">
               {date}
             </span>
@@ -649,18 +621,13 @@ function TodaySummaryBanner({
         {/* RIGHT CONTENT */}
         <div className="w-full min-w-0 self-start">
           <h2 className="mb-3 text-sm font-bold tracking-wide text-[#294B76] dark:text-[#C9D8EA]">
-            {isEmployee
-              ? 'NEEDS YOUR ATTENTION'
-              : 'NEEDS YOUR APPROVAL'}
+            {isEmployee ? 'NEEDS YOUR ATTENTION' : 'NEEDS YOUR APPROVAL'}
           </h2>
 
           {actions.length > 0 ? (
             <div className="grid min-w-0 grid-cols-1 gap-2">
               {actions.map((action) => (
-                <TodayActionButton
-                  key={action.id}
-                  action={action}
-                />
+                <TodayActionButton key={action.id} action={action} />
               ))}
             </div>
           ) : (
@@ -707,11 +674,7 @@ function StatusBadge({ status }: { status: string }) {
     style =
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
   } else if (
-    [
-      'submitted',
-      'underreview',
-      'financemanagerreview',
-    ].includes(normalized)
+    ['submitted', 'underreview', 'financemanagerreview'].includes(normalized)
   ) {
     style =
       'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
@@ -788,14 +751,10 @@ function StatusDistribution<T extends { status: string }>({
     <div className="space-y-4">
       {statuses.map((status) => {
         const count = items.filter(
-          (item) =>
-            normalizeStatus(item.status) === status.key,
+          (item) => normalizeStatus(item.status) === status.key,
         ).length
 
-        const percentage =
-          items.length > 0
-            ? (count / items.length) * 100
-            : 0
+        const percentage = items.length > 0 ? (count / items.length) * 100 : 0
 
         return (
           <div key={status.key}>
@@ -839,10 +798,7 @@ function OverviewPanel({
   const isClaimsView = view === 'claims'
 
   const filteredClaims = claims.filter((claim) =>
-    matchesPeriod(
-      claim.submittedAt || claim.transactionDate,
-      period,
-    ),
+    matchesPeriod(claim.submittedAt || claim.transactionDate, period),
   )
 
   const filteredProposals = proposals.filter((proposal) =>
@@ -865,19 +821,14 @@ function OverviewPanel({
           <select
             aria-label="Select overview"
             value={view}
-            onChange={(event) =>
-              setView(event.target.value as OverviewView)
-            }
+            onChange={(event) => setView(event.target.value as OverviewView)}
             className="h-8 max-w-40 cursor-pointer rounded-lg border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition-colors hover:border-primary/50 focus:ring-2 focus:ring-primary/20"
           >
             <option value="claims">Reimbursement Claims</option>
             <option value="trips">Business Trips</option>
           </select>
 
-          <PeriodFilter
-            value={period}
-            onChange={setPeriod}
-          />
+          <PeriodFilter value={period} onChange={setPeriod} />
         </div>
       }
     >
@@ -926,10 +877,7 @@ function ExpenseTrendPanel({
   const paidClaims = getPaidClaimsByPeriod(claims, period)
   const buckets = getExpenseBuckets(claims, period)
 
-  const maxAmount = Math.max(
-    ...buckets.map((bucket) => bucket.amount),
-    0,
-  )
+  const maxAmount = Math.max(...buckets.map((bucket) => bucket.amount), 0)
 
   const totalPaid = paidClaims.reduce(
     (total, claim) => total + getAmount(claim.amount),
@@ -940,21 +888,14 @@ function ExpenseTrendPanel({
     .map((claim) => getAmount(claim.amount))
     .filter((amount) => amount > 0)
 
-  const highestAmount =
-    amounts.length > 0 ? Math.max(...amounts) : null
+  const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null
 
-  const lowestAmount =
-    amounts.length > 0 ? Math.min(...amounts) : null
+  const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : null
 
   return (
     <DashboardPanel
       title={title}
-      action={
-        <PeriodFilter
-          value={period}
-          onChange={setPeriod}
-        />
-      }
+      action={<PeriodFilter value={period} onChange={setPeriod} />}
     >
       <div className="flex h-[320px] min-h-0 flex-col">
         <div className="mb-4 shrink-0">
@@ -976,12 +917,9 @@ function ExpenseTrendPanel({
             <div className="flex h-[148px] shrink-0 items-end justify-between gap-2 pb-2">
               {buckets.map((bucket) => {
                 const height =
-                  maxAmount > 0
-                    ? (bucket.amount / maxAmount) * 100
-                    : 0
+                  maxAmount > 0 ? (bucket.amount / maxAmount) * 100 : 0
 
-                const isActive =
-                  bucket.key === buckets[buckets.length - 1]?.key
+                const isActive = bucket.key === buckets[buckets.length - 1]?.key
 
                 return (
                   <div
@@ -1024,9 +962,7 @@ function ExpenseTrendPanel({
                 </div>
 
                 <p className="mt-2 break-words text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                  {highestAmount !== null
-                    ? formatCurrency(highestAmount)
-                    : '—'}
+                  {highestAmount !== null ? formatCurrency(highestAmount) : '—'}
                 </p>
               </div>
 
@@ -1040,9 +976,7 @@ function ExpenseTrendPanel({
                 </div>
 
                 <p className="mt-2 break-words text-sm font-bold text-foreground">
-                  {lowestAmount !== null
-                    ? formatCurrency(lowestAmount)
-                    : '—'}
+                  {lowestAmount !== null ? formatCurrency(lowestAmount) : '—'}
                 </p>
               </div>
             </div>
@@ -1069,11 +1003,7 @@ function ExpenseTrendPanel({
 // BENEFIT OVERVIEW
 // =====================================================
 
-function BenefitOverview({
-  benefits,
-}: {
-  benefits: DashboardBenefit[]
-}) {
+function BenefitOverview({ benefits }: { benefits: DashboardBenefit[] }) {
   const [frequency, setFrequency] = useState<BenefitFrequency>('all')
 
   const filteredBenefits = benefits.filter((benefit) =>
@@ -1192,8 +1122,7 @@ function RecentActions({
       {actions.length > 0 ? (
         <div className="space-y-2">
           {actions.map((action) => {
-            const Icon =
-              action.type === 'Claim' ? Receipt : Plane
+            const Icon = action.type === 'Claim' ? Receipt : Plane
 
             return (
               <a
@@ -1258,10 +1187,7 @@ function RecentActions({
 // =====================================================
 
 function Dashboard() {
-  const {
-    data: user,
-    isLoading: isLoadingUser,
-  } = useQuery(getCurrentUser())
+  const { data: user, isLoading: isLoadingUser } = useQuery(getCurrentUser())
 
   const roles = (user?.roles ?? []).map((role: string) =>
     role.trim().toLowerCase(),
@@ -1271,17 +1197,13 @@ function Dashboard() {
 
   const isFinanceManager = roles.includes('finance manager')
 
-  const isFinance =
-    roles.includes('finance') && !isFinanceManager
+  const isFinance = roles.includes('finance') && !isFinanceManager
 
   const isManager =
-    (
-      roles.includes('manager') ||
-      roles.includes('project manager')
-    ) && !isFinanceManager
+    (roles.includes('manager') || roles.includes('project manager')) &&
+    !isFinanceManager
 
-  const isApprover =
-    isAdmin || isManager || isFinance || isFinanceManager
+  const isApprover = isAdmin || isManager || isFinance || isFinanceManager
 
   const isEmployee = Boolean(user) && !isApprover
 
@@ -1291,56 +1213,38 @@ function Dashboard() {
   // API QUERIES
   // =====================================================
 
-  const {
-    data: employeeBenefits = [],
-    isLoading: isLoadingBenefits,
-  } = useGetAllEmployeeBenefitsQuery(
-    hasUser && !isAdmin,
-  )
+  const { data: employeeBenefits = [], isLoading: isLoadingBenefits } =
+    useGetAllEmployeeBenefitsQuery(hasUser && !isAdmin)
 
   const dashboardClaimParams = {
     pageNumber: 1,
     pageSize: DASHBOARD_PAGE_SIZE,
   }
 
-  const {
-    data: myClaimsResponse,
-    isLoading: isLoadingMyClaims,
-  } = useGetAllClaimsQuery(
-    dashboardClaimParams,
-    hasUser,
-  )
+  const { data: myClaimsResponse, isLoading: isLoadingMyClaims } =
+    useGetAllClaimsQuery(dashboardClaimParams, hasUser)
 
-  const {
-    data: adminClaimsResponse,
-    isLoading: isLoadingAdminClaims,
-  } = useGetAdminAllClaimsQuery(
-    dashboardClaimParams,
-    isApprover,
-  )
+  const { data: adminClaimsResponse, isLoading: isLoadingAdminClaims } =
+    useGetAdminAllClaimsQuery(dashboardClaimParams, isApprover)
 
-  const {
-    data: proposalResponse = [],
-    isLoading: isLoadingProposals,
-  } = useGetAllProposalsQuery(
-    isEmployee ? user?.employeeId : undefined,
-    hasUser,
-  )
+  const { data: proposalResponse, isLoading: isLoadingProposals } =
+    useGetAllProposalsQuery(
+      undefined, // params
+      isEmployee ? user?.employeeId : undefined,
+      hasUser,
+    )
 
-  const myClaims = (
-    myClaimsResponse?.data ?? []
-  ) as DashboardClaim[]
+  const myClaims = (myClaimsResponse?.data ?? []) as DashboardClaim[]
 
   const allClaims = (
     isApprover
-      ? adminClaimsResponse?.data ?? []
-      : myClaimsResponse?.data ?? []
+      ? (adminClaimsResponse?.data ?? [])
+      : (myClaimsResponse?.data ?? [])
   ) as DashboardClaim[]
 
-  const proposals = proposalResponse as DashboardProposal[]
+  const proposals = (proposalResponse?.data ?? []) as DashboardProposal[]
 
-  const benefitList =
-    employeeBenefits as unknown as DashboardBenefit[]
+  const benefitList = employeeBenefits as unknown as DashboardBenefit[]
 
   // =====================================================
   // DATE
@@ -1348,12 +1252,9 @@ function Dashboard() {
 
   const currentDate = getJakartaDateParts()
 
-  const todayKey =
-    `${currentDate.year}-${currentDate.month}-${currentDate.day}`
+  const todayKey = `${currentDate.year}-${currentDate.month}-${currentDate.day}`
 
-  const currentDateObject = new Date(
-    `${todayKey}T12:00:00+07:00`,
-  )
+  const currentDateObject = new Date(`${todayKey}T12:00:00+07:00`)
 
   const formattedDate = new Intl.DateTimeFormat('id-ID', {
     weekday: 'long',
@@ -1368,17 +1269,11 @@ function Dashboard() {
   // =====================================================
 
   const myAttentionClaims = myClaims.filter((claim) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(claim.status),
-    ),
+    ['needsrevision', 'rejected'].includes(normalizeStatus(claim.status)),
   )
 
   const myUpdatedClaims = myClaims.filter((claim) =>
-    isUpdatedToday(
-      claim.submittedAt,
-      getUpdatedAt(claim),
-      todayKey,
-    ),
+    isUpdatedToday(claim.submittedAt, getUpdatedAt(claim), todayKey),
   )
 
   // =====================================================
@@ -1396,17 +1291,11 @@ function Dashboard() {
       )
 
   const myAttentionProposals = myProposals.filter((proposal) =>
-    ['needsrevision', 'rejected'].includes(
-      normalizeStatus(proposal.status),
-    ),
+    ['needsrevision', 'rejected'].includes(normalizeStatus(proposal.status)),
   )
 
   const myUpdatedProposals = myProposals.filter((proposal) =>
-    isUpdatedToday(
-      proposal.submittedAt,
-      getUpdatedAt(proposal),
-      todayKey,
-    ),
+    isUpdatedToday(proposal.submittedAt, getUpdatedAt(proposal), todayKey),
   )
 
   // =====================================================
@@ -1419,8 +1308,7 @@ function Dashboard() {
     if (
       claim.employeeId &&
       user?.employeeId &&
-      claim.employeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
+      claim.employeeId.toLowerCase() === user.employeeId.toLowerCase()
     ) {
       return false
     }
@@ -1446,18 +1334,15 @@ function Dashboard() {
     if (
       proposal.picEmployeeId &&
       user?.employeeId &&
-      proposal.picEmployeeId.toLowerCase() ===
-        user.employeeId.toLowerCase()
+      proposal.picEmployeeId.toLowerCase() === user.employeeId.toLowerCase()
     ) {
       return false
     }
 
     if (isAdmin) {
-      return [
-        'submitted',
-        'underreview',
-        'financemanagerreview',
-      ].includes(status)
+      return ['submitted', 'underreview', 'financemanagerreview'].includes(
+        status,
+      )
     }
 
     if (isManager) {
@@ -1481,9 +1366,7 @@ function Dashboard() {
 
   const todayActions: TodaySummaryAction[] = []
 
-  const addTodayAction = (
-    action: TodaySummaryAction,
-  ) => {
+  const addTodayAction = (action: TodaySummaryAction) => {
     if (action.count > 0) {
       todayActions.push(action)
     }
@@ -1578,20 +1461,13 @@ function Dashboard() {
 
   const uniqueClaims = Array.from(
     new Map(
-      [...allClaims, ...myClaims].map((claim) => [
-        claim.id,
-        claim,
-      ]),
+      [...allClaims, ...myClaims].map((claim) => [claim.id, claim]),
     ).values(),
   )
 
-  const myClaimIds = new Set(
-    myClaims.map((claim) => claim.id),
-  )
+  const myClaimIds = new Set(myClaims.map((claim) => claim.id))
 
-  const myProposalIds = new Set(
-    myProposals.map((proposal) => proposal.id),
-  )
+  const myProposalIds = new Set(myProposals.map((proposal) => proposal.id))
 
   const recentActions: RecentAction[] = [
     ...uniqueClaims.map((claim): RecentAction => {
@@ -1647,15 +1523,11 @@ function Dashboard() {
 
   const isDashboardLoading =
     isLoadingUser ||
-    (
-      hasUser &&
-      (
-        (!isAdmin && isLoadingBenefits) ||
+    (hasUser &&
+      ((!isAdmin && isLoadingBenefits) ||
         isLoadingMyClaims ||
         isLoadingProposals ||
-        (isApprover && isLoadingAdminClaims)
-      )
-    )
+        (isApprover && isLoadingAdminClaims)))
 
   if (isDashboardLoading) {
     return (
@@ -1785,7 +1657,7 @@ function Dashboard() {
     <main className="min-w-0 space-y-5">
       {/* TODAY SUMMARY */}
       <TodaySummaryBanner
-        userName={user.fullName?.split(' ')[0] || 'there'}
+        userName={user.fullName.split(' ')[0] || 'there'}
         date={formattedDate}
         actions={todayActions}
         isEmployee={isEmployee}
@@ -1811,10 +1683,7 @@ function Dashboard() {
       {/* MANAGEMENT / COMPANY ANALYTICS */}
       {isApprover && (
         <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
-          <OverviewPanel
-            claims={allClaims}
-            proposals={proposals}
-          />
+          <OverviewPanel claims={allClaims} proposals={proposals} />
 
           <ExpenseTrendPanel
             claims={allClaims}
@@ -1832,18 +1701,12 @@ function Dashboard() {
         <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <BenefitOverview benefits={benefitList} />
 
-          <ExpenseTrendPanel
-            claims={myClaims}
-            title="My Expense Trend"
-          />
+          <ExpenseTrendPanel claims={myClaims} title="My Expense Trend" />
         </div>
       )}
 
       {/* RECENT ACTIONS */}
-      <RecentActions
-        actions={recentActions}
-        isAdmin={isAdmin}
-      />
+      <RecentActions actions={recentActions} isAdmin={isAdmin} />
     </main>
   )
 }
