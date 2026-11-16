@@ -13,7 +13,6 @@ import { ErrorComponent } from '#/components/ErrorAndLoading'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
 import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 import { AnimatedNumber } from '#/components/ui/animated-number'
-import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 import { Button } from '#/components/ui/button'
 import {
   markRecordCardSource,
@@ -92,8 +91,6 @@ function RouteComponent() {
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('')
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  useSearchShortcut(searchInputRef)
   const [activeTab, setActiveTab] = useState<StatusTab>('ALL')
 
   // KPI Calculations
@@ -354,7 +351,6 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <input
-                ref={searchInputRef}
                 type="text"
                 placeholder="Search description, benefit..."
                 value={searchQuery}

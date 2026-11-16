@@ -4,7 +4,6 @@ import { useMemo, useRef, useState } from 'react'
 import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { useSearchShortcut } from '#/hooks/use-search-shortcut'
 
 import {
   ArrowRight,
@@ -75,8 +74,6 @@ function RouteComponent() {
 
   // Filter & Search states
   const [searchFilter, setSearchFilter] = useState('')
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  useSearchShortcut(searchInputRef)
 
   const [claimType, setClaimType] = useState<string | undefined>(
     searchRoute.claimType,
@@ -276,7 +273,6 @@ function RouteComponent() {
                 <div className="relative grow max-w-70 sm:w-64">
                   <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
-                    ref={searchInputRef}
                     type="text"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
