@@ -1,12 +1,20 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import type { TripProposalFilterParams } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
+
+import { toDateOnly } from '#/lib/utils'
 
 import {
   ArrowRight,
@@ -28,6 +36,7 @@ import {
   PopoverTrigger,
 } from '#/components/ui/popover'
 import { FilterSelect } from '#/components/FilterSelect'
+import { DatePickerWithRange } from '#/components/DateRangePicker'
 
 // =====================================================
 // ROUTE
@@ -403,12 +412,7 @@ function RouteComponent() {
 
   const roles = user?.roles ?? []
 
-  const {
-    isAdmin,
-    isManager,
-    isFinance,
-    isFinanceManager,
-  } = getRoleFlags(roles)
+  const { isAdmin } = getRoleFlags(roles)
 
   const {
     data: proposalResponse,
@@ -421,12 +425,25 @@ function RouteComponent() {
   // FILTER STATES
   // =====================================================
 
+  const initialDateRange = {
+    from: routeQuery.startDateFrom
+      ? new Date(routeQuery.startDateFrom)
+      : undefined,
+    to: routeQuery.startDateTo
+      ? new Date(routeQuery.startDateTo)
+      : undefined,
+  }
+
   const [searchQuery, setSearchQuery] = useState(
     routeQuery.destination ?? '',
   )
 
   const [statusQuery, setStatusQuery] = useState(
     routeQuery.status,
+  )
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialDateRange,
   )
 
   const proposals = proposalResponse?.data ?? []
@@ -466,12 +483,12 @@ function RouteComponent() {
           bOwnProposal,
         ).label === 'Waiting for Your Approval'
 
-      // 1. Waiting for Your Approval first.
+      // Waiting for Your Approval comes first.
       if (aWaiting !== bWaiting) {
         return aWaiting ? -1 : 1
       }
 
-      // 2. Sort by SubmittedAt, newest first.
+      // Sort by SubmittedAt, newest first.
       return (
         getSubmittedAtTime(b.submittedAt) -
         getSubmittedAtTime(a.submittedAt)
@@ -573,8 +590,8 @@ function RouteComponent() {
   const hasActiveFilters = Boolean(
     searchQuery ||
     statusQuery ||
-    routeQuery.startDateFrom ||
-    routeQuery.startDateTo,
+    dateRange?.from ||
+    dateRange?.to,
   )
 
   // =====================================================
@@ -587,8 +604,8 @@ function RouteComponent() {
       search: {
         destination: searchQuery.trim() || undefined,
         status: statusQuery,
-        startDateFrom: routeQuery.startDateFrom,
-        startDateTo: routeQuery.startDateTo,
+        startDateFrom: toDateOnly(dateRange?.from),
+        startDateTo: toDateOnly(dateRange?.to),
       },
     })
   }
@@ -600,6 +617,7 @@ function RouteComponent() {
   const resetFilters = () => {
     setSearchQuery('')
     setStatusQuery(undefined)
+    setDateRange(undefined)
 
     navigate({
       to: '.',
@@ -821,6 +839,12 @@ function RouteComponent() {
                   nullable
                 />
 
+                <DatePickerWithRange
+                  placeholder="Trip start date"
+                  date={dateRange}
+                  setDate={setDateRange}
+                />
+
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -853,7 +877,7 @@ function RouteComponent() {
             </h3>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchQuery || statusQuery
+              {searchQuery || statusQuery || dateRange?.from || dateRange?.to
                 ? 'No trip proposals match your filter criteria.'
                 : 'There are currently no trip proposals available for review.'}
             </p>

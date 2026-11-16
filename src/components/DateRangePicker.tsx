@@ -13,9 +13,11 @@ import {
 export function DatePickerWithRange({
   date,
   setDate,
+  placeholder,
 }: {
   date: DateRange | undefined
   setDate: (d: DateRange | undefined) => void
+  placeholder?: string
 }) {
   return (
     <div className="mx-auto w-full">
@@ -37,7 +39,7 @@ export function DatePickerWithRange({
                 format(date.from, 'LLL dd, y')
               )
             ) : (
-              <span>Pick a date</span>
+              <span>{placeholder ?? 'Pick a date'}</span>
             )}
           </Button>
         </PopoverTrigger>

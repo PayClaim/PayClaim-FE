@@ -9,7 +9,6 @@ import { useMemo, useState } from 'react'
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
-import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 import { Button } from '#/components/ui/button'
 
 import {
@@ -17,74 +16,61 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Filter,
   Plus,
   Receipt,
   Search,
-  X,
 } from 'lucide-react'
-import NotFoundPage from '#/components/pages/NotFoundPage'
 import { PaginationSection } from '#/components/PaginationSection'
 import {
   formatDate,
   getClaimTypeBadge,
   getStatusBadgeConfig,
 } from '#/features/claims/utils/claim-badges'
+import { ButtonGroup } from '#/components/ui/button-group'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { FilterSelect } from '#/components/FilterSelect'
+import { DatePickerWithRange } from '#/components/DateRangePicker'
+import type { DateRange } from 'react-day-picker'
+import { toDateOnly } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/claims/')({
+  validateSearch: (s) => s as ClaimFilterParams,
   beforeLoad: ({ context }) => {
     if (context.isAdmin || context.isDirector) {
       throw redirect({ to: '/dashboard' })
     }
   },
   component: RouteComponent,
-  validateSearch: (s) => s as ClaimFilterParams,
 })
 
-type StatusTab =
-  'ALL' | 'WAITING' | 'APPROVED' | 'PAID' | 'REVISION_OR_REJECTED'
-
-  function getSubmittedAtTime(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
-function getClaimPriority(status: string): number {
-  const normalized = (status || '').replace(/[\s_-]/g, '').toLowerCase()
-
-  if (
-    ['needsrevision', 'submitted', 'underreview'].includes(normalized)
-  ) {
-    return 0
-  }
-
-  if (['approved', 'paid'].includes(normalized)) {
-    return 1
-  }
-
-  if (['rejected'].includes(normalized)) {
-    return 2
-  }
-
-  return 3
-}
-  
 function RouteComponent() {
   const search = Route.useSearch()
   const navigate = useNavigate()
   const {
     data: claimResponse,
     isError,
+    error,
     isFetching,
   } = useGetAllClaimsQuery(search)
 
   const claims = claimResponse?.data ?? []
+  const initialDateRange = {
+    from: search.startDate ? new Date(search.startDate) : undefined,
+    to: search.endDate ? new Date(search.endDate) : undefined,
+  }
 
   // Filter & Search states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<StatusTab>('ALL')
+  const [searchQuery, setSearchQuery] = useState(search.search)
+  const [statusQuery, setStatusQuery] = useState(search.status)
+  const [typeQuery, setTypeQuery] = useState(search.claimType)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialDateRange,
+  )
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -119,65 +105,68 @@ function RouteComponent() {
     }
   }, [claims, claimResponse?.totalCount])
 
-  // Filtered claims based on search query & active status tab
-  const filteredClaims = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+  const statusOptions = [
+    { label: 'Submitted', optionValue: 'Submitted' },
+    { label: 'Under Review', optionValue: 'UnderReview' },
+    { label: 'Needs Revision', optionValue: 'NeedsRevision' },
+    { label: 'Approved', optionValue: 'Approved' },
+    { label: 'Rejected', optionValue: 'Rejected' },
+    { label: 'Paid', optionValue: 'Paid' },
+  ]
 
-    return claims.filter((claim) => {
-      // Status filter
-      if (activeTab === 'WAITING') {
-        if (!['Submitted', 'UnderReview'].includes(claim.status)) return false
-      } else if (activeTab === 'APPROVED') {
-        if (claim.status !== 'Approved') return false
-      } else if (activeTab === 'PAID') {
-        if (claim.status !== 'Paid') return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['NeedsRevision', 'Rejected'].includes(claim.status)) return false
-      }
+  const claimTypeOptions = [
+    { label: 'Benefit', optionValue: 'Benefit' },
+    {
+      label: 'OperationalReimbursement',
+      optionValue: 'OperationalReimbursement',
+    },
+    {
+      label: 'BusinessTripReimbursement',
+      optionValue: 'BusinessTripReimbursement',
+    },
+  ]
 
-      // Search query
-      if (q) {
-        const desc = (claim.description || '').toLowerCase()
-        const benefit = (claim.benefitName || '').toLowerCase()
-        const tripDest = (claim.tripProposalDestination || '').toLowerCase()
-        const trip = (claim.tripProposalDescription || '').toLowerCase()
-        const id = (claim.id || '').toLowerCase()
-        const claimType = (claim.claimType || '').toLowerCase()
+  const hasActiveFilters = Boolean(
+    searchQuery || statusQuery || dateRange || typeQuery,
+  )
 
-        return (
-          desc.includes(q) ||
-          benefit.includes(q) ||
-          tripDest.includes(q) ||
-          trip.includes(q) ||
-          id.includes(q) ||
-          claimType.includes(q)
-        )
-      }
-
-      return true
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        claimType: typeQuery,
+        status: statusQuery,
+        startDate: toDateOnly(dateRange?.from),
+        endDate: toDateOnly(dateRange?.to),
+        search: searchQuery,
+      },
     })
-  }, [claims, activeTab, searchQuery])
+  }
 
-  const sortedClaims = useMemo(() => {
-  return [...filteredClaims].sort((a, b) => {
-    const priorityDifference =
-      getClaimPriority(a.status) - getClaimPriority(b.status)
-
-    if (priorityDifference !== 0) {
-      return priorityDifference
-    }
-
+  if (isError) {
     return (
-      getSubmittedAtTime(b.submittedAt) -
-      getSubmittedAtTime(a.submittedAt)
+      <main className="p-6">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
+          An error occurs when loading employees data.
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load employees data.'}
+        </div>
+      </main>
     )
-  })
-}, [filteredClaims])
+  }
 
-  if (isError) return <ErrorComponent pageTitle="My Claims" />
-  if (isFetching) return <LoadingComponent pageTitle="My Claims" />
+  if (!claimResponse || isFetching) {
+    return (
+      <main className="py-20 text-center space-y-3">
+        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">
+          Loading trip proposals...
+        </p>
+      </main>
+    )
+  }
 
-  if (!claimResponse) return <NotFoundPage />
   const { data, errors, message, statusCode, success, ...paginationProp } =
     claimResponse
 
@@ -221,7 +210,10 @@ function RouteComponent() {
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.totalAmount)}</span> total value
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.totalAmount)}
+            </span>{' '}
+            total value
           </p>
         </div>
 
@@ -239,7 +231,10 @@ function RouteComponent() {
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.waitingAmount)}</span> pending review
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.waitingAmount)}
+            </span>{' '}
+            pending review
           </p>
         </div>
 
@@ -257,7 +252,10 @@ function RouteComponent() {
             {metrics.approvedPaidCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{idNumberFormatter.format(metrics.approvedPaidAmount)}</span> settled value
+            <span className="tabular-nums font-medium">
+              {idNumberFormatter.format(metrics.approvedPaidAmount)}
+            </span>{' '}
+            settled value
           </p>
         </div>
       </div>
@@ -265,7 +263,9 @@ function RouteComponent() {
       {/* Claims Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-<div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
+        <div className="flex justify-between min-w-0 gap-4 p-5 border-b border-border">
+          {' '}
+          <div>
             <h2 className="font-semibold text-foreground text-base">
               Riwayat Klaim
             </h2>
@@ -274,87 +274,82 @@ function RouteComponent() {
               approval.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
-                type="button"
-                onClick={() => setActiveTab('ALL')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
-                    ? 'bg-card text-foreground shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('WAITING')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
-                    ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Waiting Review
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('APPROVED')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
-                    ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('PAID')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'PAID'
-                    ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Paid
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
-                    ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Revision / Rejected
-              </button>
+
+            <div className="flex grow items-center gap-3">
+              <ButtonGroup>
+                <div className="relative grow max-w-70 sm:w-64">
+                  <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search plan or benefit..."
+                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                  />
+                </div>
+                <Button onClick={applyFilterClick}>Search</Button>
+              </ButtonGroup>
             </div>
 
-            {/* Quick Search */}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search description, benefit..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8.5 pr-8 py-1.5 text-xs bg-muted/40 border border-border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/50 transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button>
+                  <Filter /> Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="grid grid-cols-1 gap-4 w-fit"
+              >
+                <FilterSelect
+                  val={statusQuery}
+                  setValue={setStatusQuery}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullable
+                  nullLabel="All Statuses"
+                />
+
+                <FilterSelect
+                  val={typeQuery}
+                  setValue={setTypeQuery}
+                  options={claimTypeOptions}
+                  filterLabel="Claim Type"
+                  nullable
+                  nullLabel="All Claims"
+                />
+
+                <DatePickerWithRange
+                  placeholder="Claim submitted date"
+                  date={dateRange}
+                  setDate={setDateRange}
+                />
+
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery(undefined)
+                      setStatusQuery(undefined)
+                      setDateRange(undefined)
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
+                <Button onClick={applyFilterClick}>Apply</Button>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
         {/* Table Content */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[950px] text-left border-collapse text-xs">
+          <table className="w-full min-w-237.5 text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-5">Description / Benefit</th>
@@ -366,7 +361,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sortedClaims.map((claim) => {
+              {claims.map((claim) => {
                 const typeBadge = getClaimTypeBadge(claim.claimType)
                 const TypeIcon = typeBadge.icon
                 const statusConfig = getStatusBadgeConfig(claim.status)
@@ -386,7 +381,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                     className="hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
                     {/* Keterangan / Manfaat */}
-                    <td className="py-3.5 px-5 min-w-[240px] max-w-[300px]">
+                    <td className="py-3.5 px-5 min-w-60 max-w-75">
                       <span className="block truncate whitespace-nowrap font-medium text-foreground">
                         {claim.benefitName ||
                           tripTitle ||
@@ -394,11 +389,12 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                           '-'}
                       </span>
 
-                      {claim.description && (claim.benefitName || tripTitle) && (
-                        <span className="mt-0.5 block truncate whitespace-nowrap text-[11px] text-muted-foreground">
-                          {claim.description}
-                        </span>
-                      )}
+                      {claim.description &&
+                        (claim.benefitName || tripTitle) && (
+                          <span className="mt-0.5 block truncate whitespace-nowrap text-[11px] text-muted-foreground">
+                            {claim.description}
+                          </span>
+                        )}
                     </td>
 
                     {/* Tanggal Transaksi */}
@@ -449,7 +445,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 )
               })}
 
-              {filteredClaims.length === 0 && (
+              {claims.length === 0 && (
                 <tr>
                   <td
                     colSpan={6}
@@ -457,12 +453,10 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
-                      <p className="font-medium">
-                        Tidak ada klaim yang ditemukan
-                      </p>
+                      <p className="font-medium">No claim found</p>
                       <p className="text-xs text-muted-foreground/80">
-                        {searchQuery || activeTab !== 'ALL'
-                          ? 'Try changing your search keywords or status tab.'
+                        {searchQuery
+                          ? 'Try changing your search keywords or status.'
                           : 'You have no claim submission history yet.'}
                       </p>
                     </div>
@@ -477,14 +471,13 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
         <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
           <div className="flex items-center justify-between">
             <span>
-              Showing {filteredClaims.length} of {claims.length} total
-              klaim
+              Showing {claims.length} of {claimResponse.totalCount} total claims
             </span>
-            {activeTab !== 'ALL' && (
+            {/* {activeTab !== 'ALL' && (
               <span className="font-medium text-foreground">
                 Filter aktif: {activeTab}
               </span>
-            )}
+            )} */}
           </div>
           <div className="w-fit grow-0">
             <PaginationSection pagination={paginationProp} />
