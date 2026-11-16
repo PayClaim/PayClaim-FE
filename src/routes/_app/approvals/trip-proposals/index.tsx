@@ -1,13 +1,10 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
+import type { TripProposalFilterParams } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
 
 import {
@@ -15,17 +12,25 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Filter,
   Plane,
   Search,
   Users,
-  X,
 } from 'lucide-react'
+import { PaginationSection } from '#/components/PaginationSection'
+import { ButtonGroup } from '#/components/ui/button-group'
+import { Button } from '#/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { FilterSelect } from '#/components/FilterSelect'
 
-export const Route = createFileRoute(
-  '/_app/approvals/trip-proposals/',
-)({
+export const Route = createFileRoute('/_app/approvals/trip-proposals/')({
+  validateSearch: (s) => s as TripProposalFilterParams,
   beforeLoad: ({ context }) => {
-    const roles = context.user?.roles || []
+    const roles = context.user.roles
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
@@ -49,23 +54,6 @@ function formatDate(date: string) {
   })
 }
 
-function getDateDistanceFromToday(date: string) {
-  if (!date) return -1
-
-  const [year, month, day] = date.slice(0, 10).split('-').map(Number)
-
-  if (![year, month, day].every(Number.isFinite)) {
-    return -1
-  }
-
-  const tripDate = new Date(year, month - 1, day)
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  return Math.abs(tripDate.getTime() - today.getTime())
-}
-
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -76,14 +64,6 @@ function formatCurrency(amount: number) {
 
 function normalizeStatus(status: string) {
   return (status || '').replace(/[\s_-]/g, '').toLowerCase()
-}
-
-function getSubmittedAtTime(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
 }
 
 function getInitials(name?: string | null): string {
@@ -103,24 +83,18 @@ function getApprovalStatusConfig(
   const isAdmin = roleLower.includes('admin')
   const isFinanceManager = roleLower.includes('finance manager')
 
-  const isFinance =
-    roleLower.includes('finance') && !isFinanceManager
+  const isFinance = roleLower.includes('finance') && !isFinanceManager
 
   const isManager =
-    (roleLower.includes('manager') ||
-      roleLower.includes('project manager')) &&
+    (roleLower.includes('manager') || roleLower.includes('project manager')) &&
     !isFinanceManager
 
   // Determine whether this proposal is waiting for the current user's action.
   const needsMyApproval =
     (!isOwnProposal || isAdmin) &&
-    (
-      (norm === 'submitted' && (isAdmin || isManager)) ||
-      (norm === 'underreview' &&
-        (isAdmin || isFinance || isFinanceManager)) ||
-      (norm === 'financemanagerreview' &&
-        (isAdmin || isFinanceManager))
-    )
+    ((norm === 'submitted' && (isAdmin || isManager)) ||
+      (norm === 'underreview' && (isAdmin || isFinance || isFinanceManager)) ||
+      (norm === 'financemanagerreview' && (isAdmin || isFinanceManager)))
 
   if (needsMyApproval) {
     return {
@@ -192,8 +166,6 @@ function getApprovalStatusConfig(
   }
 }
 
-type TripStatusTab = 'ALL' | 'WAITING' | 'APPROVED' | 'REVISION_OR_REJECTED'
-
 function ProposalRow({
   proposal,
   roles,
@@ -205,24 +177,23 @@ function ProposalRow({
   currentEmployeeId?: string
   currentFullName?: string
 }) {
-
   const navigate = useNavigate()
-const isOwnProposal = Boolean(
-  (proposal.picEmployeeId &&
-    currentEmployeeId &&
-    proposal.picEmployeeId.toLowerCase() ===
-      currentEmployeeId.toLowerCase()) ||
+  const isOwnProposal = Boolean(
+    (proposal.picEmployeeId &&
+      currentEmployeeId &&
+      proposal.picEmployeeId.toLowerCase() ===
+        currentEmployeeId.toLowerCase()) ||
     (currentFullName &&
       proposal.picName &&
       currentFullName.trim().toLowerCase() ===
         proposal.picName.trim().toLowerCase()),
-)
+  )
 
-const statusConfig = getApprovalStatusConfig(
-  proposal.status,
-  roles,
-  isOwnProposal,
-)
+  const statusConfig = getApprovalStatusConfig(
+    proposal.status,
+    roles,
+    isOwnProposal,
+  )
 
   return (
     <tr
@@ -259,7 +230,9 @@ const statusConfig = getApprovalStatusConfig(
       <td className="whitespace-nowrap px-5 py-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5 text-foreground font-medium">
           <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          <span>{formatDate(proposal.startDate)} – {formatDate(proposal.endDate)}</span>
+          <span>
+            {formatDate(proposal.startDate)} – {formatDate(proposal.endDate)}
+          </span>
         </div>
       </td>
 
@@ -305,18 +278,24 @@ const statusConfig = getApprovalStatusConfig(
 }
 
 function RouteComponent() {
+  const routeQuery = Route.useSearch()
+  const navigate = useNavigate()
   const { data: user } = useQuery(getCurrentUser())
-const roles = user?.roles || []
+  const roles = user?.roles || []
   const {
-    data: proposals = [],
-    isLoading,
+    data: proposalResponse,
+    isFetching,
     isError,
     error,
-  } = useGetAllProposalsQuery()
+  } = useGetAllProposalsQuery(routeQuery)
 
   // Filter & Search states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<TripStatusTab>('ALL')
+  const [searchQuery, setSearchQuery] = useState(routeQuery.destination)
+  const [statusQuery, setStatusQuery] = useState(routeQuery.status)
+  const [startFrom, setStartFrom] = useState(routeQuery.startDateFrom)
+  const [startTo, setStartTo] = useState(routeQuery.startDateTo)
+
+  const proposals = proposalResponse?.data || []
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -356,105 +335,59 @@ const roles = user?.roles || []
     }
   }, [proposals])
 
-  // Filtered proposals based on search & active tab
-  const filteredProposals = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+  const statusOptions = [
+    { label: 'Submitted', optionValue: 'Submitted' },
+    { label: 'Under Review', optionValue: 'UnderReview' },
+    { label: 'Needs Revision', optionValue: 'NeedsRevision' },
+    { label: 'Approved', optionValue: 'Approved' },
+    { label: 'Rejected', optionValue: 'Rejected' },
+    { label: 'Completed', optionValue: 'Completed' },
+    { label: 'Cancelled', optionValue: 'Cancelled' },
+    { label: 'Finance Manager Review', optionValue: 'FinanceManagerReview' },
+  ]
 
-    return proposals.filter((proposal) => {
-      const norm = normalizeStatus(proposal.status)
+  const hasActiveFilters = Boolean(
+    searchQuery || statusQuery || startFrom || startTo,
+  )
 
-      // Tab filter
-      if (activeTab === 'WAITING') {
-        if (!['submitted', 'underreview', 'financemanagerreview'].includes(norm))
-          return false
-      } else if (activeTab === 'APPROVED') {
-        if (!['approved', 'completed'].includes(norm)) return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm))
-          return false
-      }
-
-      // Search query
-      if (q) {
-        const destMatch = (proposal.destination || '').toLowerCase().includes(q)
-        const picMatch = (proposal.picName || '').toLowerCase().includes(q)
-        const idMatch = proposal.id.toLowerCase().includes(q)
-        return destMatch || picMatch || idMatch
-      }
-
-      return true
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        destination: searchQuery,
+        status: statusQuery,
+        startDateFrom: startFrom,
+        startDateTo: startTo,
+      },
     })
-  }, [proposals, searchQuery, activeTab])
-
-  const sortedProposals = useMemo(() => {
-  const isOwnProposal = (proposal: TripProposal) =>
-    Boolean(
-      (proposal.picEmployeeId &&
-        user?.employeeId &&
-        proposal.picEmployeeId.toLowerCase() ===
-          user.employeeId.toLowerCase()) ||
-        (user?.fullName &&
-          proposal.picName &&
-          user.fullName.trim().toLowerCase() ===
-            proposal.picName.trim().toLowerCase()),
-    )
-
-  const getProposalPriority = (proposal: TripProposal): number => {
-    const normalized = normalizeStatus(proposal.status)
-
-    // Urgent: perlu revisi.
-    if (normalized === 'needsrevision') {
-      return 0
-    }
-
-    // Urgent: memerlukan tindakan pengguna yang login.
-    const statusConfig = getApprovalStatusConfig(
-      proposal.status,
-      roles,
-      isOwnProposal(proposal),
-    )
-
-    if (statusConfig.label === 'Need Your Approval') {
-      return 0
-    }
-
-    // Masih menunggu proses approval lainnya.
-    if (
-      [
-        'submitted',
-        'underreview',
-        'financemanagerreview',
-        'pending',
-      ].includes(normalized)
-    ) {
-      return 1
-    }
-
-    if (['approved', 'completed'].includes(normalized)) {
-      return 2
-    }
-
-    if (['rejected', 'cancelled'].includes(normalized)) {
-      return 3
-    }
-
-    return 4
   }
 
-  return [...filteredProposals].sort((a, b) => {
-    const priorityDifference =
-      getProposalPriority(a) - getProposalPriority(b)
-
-    if (priorityDifference !== 0) {
-      return priorityDifference
-    }
-
+  if (isError) {
     return (
-      getSubmittedAtTime(b.submittedAt) -
-      getSubmittedAtTime(a.submittedAt)
+      <main className="p-6">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
+          An error occurs when loading employees data.
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load employees data.'}
+        </div>
+      </main>
     )
-  })
-}, [filteredProposals, roles, user?.employeeId, user?.fullName])
+  }
+
+  if (!proposalResponse || isFetching) {
+    return (
+      <main className="py-20 text-center space-y-3">
+        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">
+          Loading trip proposals...
+        </p>
+      </main>
+    )
+  }
+
+  const { data, errors, message, statusCode, success, ...paginationProp } =
+    proposalResponse
 
   return (
     <main className="min-w-0 space-y-6">
@@ -490,7 +423,10 @@ const roles = user?.roles || []
             {metrics.totalCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.totalBudget)}</span> total budget
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.totalBudget)}
+            </span>{' '}
+            total budget
           </p>
         </div>
 
@@ -508,7 +444,10 @@ const roles = user?.roles || []
             {metrics.waitingCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.waitingBudget)}</span> pending review
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.waitingBudget)}
+            </span>{' '}
+            pending review
           </p>
         </div>
 
@@ -526,7 +465,10 @@ const roles = user?.roles || []
             {metrics.approvedCount}
           </div>
           <p className="text-xs text-muted-foreground">
-            <span className="tabular-nums font-medium">{formatCurrency(metrics.approvedBudget)}</span> approved budget
+            <span className="tabular-nums font-medium">
+              {formatCurrency(metrics.approvedBudget)}
+            </span>{' '}
+            approved budget
           </p>
         </div>
       </div>
@@ -534,7 +476,9 @@ const roles = user?.roles || []
       {/* Proposal Table Container */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-<div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">          <div>
+        <div className="flex justify-between min-w-0 gap-4 p-5 border-b border-border">
+          {' '}
+          <div>
             <h2 className="font-semibold text-foreground text-base">
               Trip Proposal Requests
             </h2>
@@ -542,101 +486,81 @@ const roles = user?.roles || []
               Select a proposal to view its details and approval history.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-<div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">              <button
-                type="button"
-                onClick={() => setActiveTab('ALL')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'ALL'
-                    ? 'bg-card text-foreground shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('WAITING')}
-className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'WAITING'
-                    ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Waiting Review
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('APPROVED')}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'APPROVED'
-                    ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${                  activeTab === 'REVISION_OR_REJECTED'
-                    ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Needs Revision / Rejected
-              </button>
+
+            <div className="flex grow items-center gap-3">
+              <ButtonGroup>
+                <div className="relative grow max-w-70 sm:w-64">
+                  <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search plan or benefit..."
+                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                  />
+                </div>
+                <Button onClick={applyFilterClick}>Search</Button>
+              </ButtonGroup>
             </div>
 
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64 shrink-0">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search destination, PIC..."
-                className="w-full h-9 pl-9 pr-8 text-xs rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button>
+                  <Filter /> Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="grid grid-cols-1 gap-4 w-fit"
+              >
+                <FilterSelect
+                  val={statusQuery}
+                  setValue={setStatusQuery}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullLabel="All Status"
+                  nullable
+                />
+
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery(undefined)
+                      setStatusQuery(undefined)
+                      setStartFrom(undefined)
+                      setStartTo(undefined)
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
+                <Button onClick={applyFilterClick}>Apply</Button>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
         {/* Table Content */}
-        {isLoading ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Loading trip proposals...
-          </div>
-        ) : isError ? (
-          <div className="p-10 text-center text-sm text-destructive">
-            {error instanceof Error
-              ? error.message
-              : 'Failed to load trip proposals.'}
-          </div>
-        ) : filteredProposals.length === 0 ? (
+        {proposals.length === 0 ? (
           <div className="p-12 text-center">
             <Plane className="mx-auto text-muted-foreground/40" size={36} />
             <h3 className="mt-3 font-medium text-foreground">
               No trip proposals found
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchQuery || activeTab !== 'ALL'
+              {searchQuery
                 ? 'No trip proposals match your filter criteria.'
                 : 'There are currently no trip proposals available for review.'}
             </p>
           </div>
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
-            <table className="w-full min-w-[1050px] whitespace-nowrap text-left text-sm">
+            <table className="w-full min-w-262.5 whitespace-nowrap text-left text-sm">
               <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-5 py-3.5 font-medium">Destination</th>
@@ -650,7 +574,7 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
               </thead>
 
               <tbody className="divide-y divide-border">
-               {sortedProposals.map((proposal) => (
+                {proposals.map((proposal) => (
                   <ProposalRow
                     key={proposal.id}
                     proposal={proposal}
@@ -661,6 +585,18 @@ className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transi
                 ))}
               </tbody>
             </table>
+
+            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>
+                  Showing {proposals.length} of {proposalResponse.totalCount}{' '}
+                  total proposals
+                </span>
+              </div>
+              <div className="w-fit grow-0">
+                <PaginationSection pagination={paginationProp} />
+              </div>
+            </div>
           </div>
         )}
       </section>
