@@ -1,3 +1,23 @@
+export type ApprovalAction =
+  | 'Approved'
+  | 'Rejected'
+  | 'NeedsRevision'
+
+export type ProposalTimelineItem = {
+  id: string
+  title: string
+  approverName: string
+  approverRole?: string
+  decision: string
+  approvalLevel: number | null
+  decidedAt: string
+  notes: string | null
+  accommodationAmountBefore?: number
+  accommodationAmountAfter?: number
+  isPending?: boolean
+  isSubmission?: boolean
+}
+
 export type TripProposal = {
   id: string
   destination: string

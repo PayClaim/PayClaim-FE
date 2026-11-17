@@ -176,7 +176,6 @@ function RouteComponent() {
   // non-nullable.
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!claimResponse) return <NotFoundPage />
-
   const { data, errors, message, statusCode, success, ...paginationProp } =
     claimResponse
 
@@ -273,6 +272,92 @@ function RouteComponent() {
             </p>
           </div>
         </div>
+
+        {/* Claims Table Container */}
+        <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
+          {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
+          <div className="flex justify-between min-w-0 gap-4 p-5 border-b border-border">
+            <div>
+              <h2 className="font-semibold text-heading text-base">
+                Claim Submission History
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Select a claim row to inspect submission details and approval
+                progress.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              {/* Segmented Status Tabs */}
+              <div className="flex grow items-center gap-3">
+                <ButtonGroup>
+                  <div className="relative grow max-w-70 sm:w-64">
+                    <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search plan or benefit..."
+                      className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                    />
+                  </div>
+                  <Button onClick={applyFilterClick}>Search</Button>
+                </ButtonGroup>
+              </div>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button>
+                    <Filter /> Filter
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="grid grid-cols-1 gap-4 w-fit"
+                >
+                  <FilterSelect
+                    val={statusQuery}
+                    setValue={setStatusQuery}
+                    options={statusOptions}
+                    filterLabel="Status"
+                    nullable
+                    nullLabel="All Statuses"
+                  />
+
+                  <FilterSelect
+                    val={typeQuery}
+                    setValue={setTypeQuery}
+                    options={claimTypeOptions}
+                    filterLabel="Claim Type"
+                    nullable
+                    nullLabel="All Claims"
+                  />
+
+                  <DatePickerWithRange
+                    placeholder="Claim submitted date"
+                    date={dateRange}
+                    setDate={setDateRange}
+                  />
+
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery(undefined)
+                        setStatusQuery(undefined)
+                        setDateRange(undefined)
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                    >
+                      Reset Filter
+                    </Button>
+                  )}
+                  <Button onClick={applyFilterClick}>Apply</Button>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </section>
 
         {/* Claims Table Container */}
         <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">

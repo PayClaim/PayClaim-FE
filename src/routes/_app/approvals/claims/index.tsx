@@ -26,7 +26,6 @@ import {
 import { FilterSelect } from '#/components/FilterSelect'
 import { DatePickerWithRange } from '#/components/DateRangePicker'
 import { PaginationSection } from '#/components/PaginationSection'
-
 import {
   ArrowRight,
   CheckCircle2,
@@ -399,7 +398,7 @@ function RouteComponent() {
     )
   }
 
-  if (isPending) {
+  if (isPending || isLoadingUser || !response) {
     return (
       <main className="space-y-3 py-20 text-center">
         <div className="p-10 text-center text-sm text-muted-foreground">
@@ -542,13 +541,8 @@ function RouteComponent() {
                     value={searchFilter}
                     onChange={(event) => setSearchFilter(event.target.value)}
                     placeholder="Search employee name, or benefits..."
-                    className="w-full pl-9 pr-9 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                    className="w-full rounded-lg rounded-br-none rounded-tr-none border border-border bg-background py-2.25 pr-4 pl-9 text-sm text-heading placeholder:text-muted-foreground focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 focus:outline-hidden"
                   />
-                  {!searchFilter && (
-                    <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      /
-                    </kbd>
-                  )}
                 </div>
 
                 <Button onClick={applyFilterClick}>Search</Button>
