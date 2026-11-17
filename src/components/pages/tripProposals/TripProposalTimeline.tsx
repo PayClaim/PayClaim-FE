@@ -81,7 +81,7 @@ export function TripProposalTimeline({
         </div>
 
         {/* Approval Timeline */}
-        <div className="relative space-y-6 pl-10">
+        <div className="relative space-y-6 pl-10 timeline-stagger">
           {/* Claim Card */}
           {claimCard && (
             <div className="relative">

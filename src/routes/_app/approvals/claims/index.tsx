@@ -15,6 +15,10 @@ import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 
 import { idNumberFormatter } from '#/lib/formatter'
 import { toDateOnly } from '#/lib/utils'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   formatDate,

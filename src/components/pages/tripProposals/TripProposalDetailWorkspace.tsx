@@ -35,7 +35,7 @@ import {
 
 import { Button } from '#/components/ui/button'
 import { DetailPageSkeleton } from '#/components/ui/page-skeleton'
-import { SkeletonSwap } from '#/components/ui/skeleton-swap'
+import { RECORD_CARD_TRANSITION } from '#/lib/view-transition'
 
 type Props = {
   id: string
@@ -208,11 +208,7 @@ export function TripProposalDetailWorkspace({
 
   // Loading state.
   if (isLoading) {
-    return (
-      <SkeletonSwap loading skeleton={<DetailPageSkeleton />}>
-        {null}
-      </SkeletonSwap>
-    )
+    return <DetailPageSkeleton />
   }
 
   // Error state.
@@ -557,7 +553,10 @@ export function TripProposalDetailWorkspace({
         backLabel={backLabel}
       />
 
-      <div className="grid min-h-[720px] min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12">
+      <div
+        className="grid min-h-[720px] min-w-0 grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-xs lg:grid-cols-12"
+        style={{ viewTransitionName: RECORD_CARD_TRANSITION }}
+      >
         <TripProposalSidebar
           proposal={proposal}
           attachmentUrl={attachmentUrl}
