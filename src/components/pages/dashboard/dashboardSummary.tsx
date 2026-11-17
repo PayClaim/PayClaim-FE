@@ -1,9 +1,6 @@
 import { Link } from '@tanstack/react-router'
 
-import {
-  ArrowUpRight,
-  CheckCircle2,
-} from 'lucide-react'
+import { ArrowUpRight, CheckCircle2 } from 'lucide-react'
 
 import type {
   DashboardClaim,
@@ -14,16 +11,13 @@ import type {
 
 import { DashboardPanel } from '#/components/pages/dashboard/dashboardPanel'
 import { AnimatedNumber } from '#/components/ui/animated-number'
+import { formatNumber } from '#/features/dashboard/utils/dashboard.utils'
 
 // =====================================================
 // TODAY ACTION BUTTON
 // =====================================================
 
-function TodayActionButton({
-  action,
-}: {
-  action: TodaySummaryAction
-}) {
+function TodayActionButton({ action }: { action: TodaySummaryAction }) {
   return (
     <Link
       to={action.to}
@@ -90,10 +84,7 @@ function TodaySummaryBanner({
           {actions.length > 0 ? (
             <div className="grid min-w-0 grid-cols-1 gap-2">
               {actions.map((action) => (
-                <TodayActionButton
-                  key={action.id}
-                  action={action}
-                />
+                <TodayActionButton key={action.id} action={action} />
               ))}
             </div>
           ) : (
@@ -140,14 +131,8 @@ function RejectedNotifications({
     <div className="flex min-h-11 w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rose-200 bg-rose-100/90 px-4 py-2.5 dark:border-rose-900/60 dark:bg-rose-950/40">
       {claims.length > 0 && (
         <a
-          href={
-            claims.length === 1
-              ? `/claims/${claims[0].id}`
-              : '/claims'
-          }
-          onClick={() =>
-            onDismiss(claims.map((claim) => `claim:${claim.id}`))
-          }
+          href={claims.length === 1 ? `/claims/${claims[0].id}` : '/claims'}
+          onClick={() => onDismiss(claims.map((claim) => `claim:${claim.id}`))}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
         >
           <span>
@@ -169,17 +154,13 @@ function RejectedNotifications({
               : '/trip-proposals'
           }
           onClick={() =>
-            onDismiss(
-              proposals.map((proposal) => `trip:${proposal.id}`),
-            )
+            onDismiss(proposals.map((proposal) => `trip:${proposal.id}`))
           }
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
         >
           <span>
             {formatNumber(proposals.length)} rejected{' '}
-            {proposals.length === 1
-              ? 'trip proposal'
-              : 'trip proposals'}
+            {proposals.length === 1 ? 'trip proposal' : 'trip proposals'}
           </span>
 
           <span className="font-normal underline underline-offset-2">
@@ -275,10 +256,7 @@ export function DashboardSummary({
         <DashboardPanel title="Quick Access">
           <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
             {quickAccessItems.map((item) => (
-              <QuickAccessCard
-                key={item.title}
-                {...item}
-              />
+              <QuickAccessCard key={item.title} {...item} />
             ))}
           </div>
         </DashboardPanel>
