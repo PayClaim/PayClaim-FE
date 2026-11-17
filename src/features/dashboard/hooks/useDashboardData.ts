@@ -369,17 +369,19 @@ export function useDashboardData() {
     addTodayAction({
       id: 'employee-claims-revision',
       title: 'Claims Need Your Attention',
-      description: 'Claims returned or rejected by reviewers.',
+      description: 'Claims returned by reviewers.',
       count: myAttentionClaims.length,
       to: '/claims',
+      search: { status: 'NeedsRevision' },
     })
 
     addTodayAction({
       id: 'employee-trip-revision',
       title: 'Trip Proposals Need Your Attention',
-      description: 'Trip proposals returned or rejected.',
+      description: 'Trip proposals returned.',
       count: myAttentionProposals.length,
       to: '/trip-proposals',
+      search: { status: 'NeedsRevision' },
     })
 
     addTodayAction({
@@ -398,12 +400,42 @@ export function useDashboardData() {
       to: '/trip-proposals',
     })
   } else {
+    const claimApprovalStatus = isAdmin
+      ? undefined
+      : isManager
+        ? 'Submitted'
+        : isFinance || isFinanceManager
+          ? 'UnderReview'
+          : undefined
+
+    const hasUnderReviewTrips = pendingTripApprovals.some(
+      (proposal) => normalizeStatus(proposal.status) === 'underreview',
+    )
+    const hasFmReviewTrips = pendingTripApprovals.some(
+      (proposal) => normalizeStatus(proposal.status) === 'financemanagerreview',
+    )
+
+    const tripApprovalStatus = isAdmin
+      ? undefined
+      : isManager
+        ? 'Submitted'
+        : isFinance
+          ? 'UnderReview'
+          : isFinanceManager
+            ? hasUnderReviewTrips && !hasFmReviewTrips
+              ? 'UnderReview'
+              : !hasUnderReviewTrips && hasFmReviewTrips
+                ? 'FinanceManagerReview'
+                : undefined
+            : undefined
+
     addTodayAction({
       id: 'approval-claims',
       title: 'Claims Need Your Approval',
       description: 'Employee reimbursement claims awaiting review.',
       count: pendingClaimApprovals.length,
       to: '/approvals/claims',
+      search: claimApprovalStatus ? { status: claimApprovalStatus } : undefined,
     })
 
     addTodayAction({
@@ -412,6 +444,7 @@ export function useDashboardData() {
       description: 'Business trip proposals awaiting your decision.',
       count: pendingTripApprovals.length,
       to: '/approvals/trip-proposals',
+      search: tripApprovalStatus ? { status: tripApprovalStatus } : undefined,
     })
 
     // Personal requests that need attention.
@@ -421,6 +454,7 @@ export function useDashboardData() {
       description: 'Your own claims returned or rejected.',
       count: myAttentionClaims.length,
       to: '/claims',
+      search: { status: 'NeedsRevision' },
     })
 
     addTodayAction({
@@ -429,6 +463,7 @@ export function useDashboardData() {
       description: 'Your own trip proposals returned or rejected.',
       count: myAttentionProposals.length,
       to: '/trip-proposals',
+      search: { status: 'NeedsRevision' },
     })
 
     addTodayAction({
