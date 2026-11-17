@@ -170,7 +170,7 @@ function RouteComponent() {
   const {
     data: proposalResponse,
     isError,
-    isFetching,
+    isPending,
     error,
   } = useGetAllProposalsQuery(routeQuery, user?.employeeId)
 
@@ -306,7 +306,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching || !proposalResponse) {
+  if (isPending || !proposalResponse) {
     return (
       <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
         {null}
@@ -325,7 +325,7 @@ function RouteComponent() {
 
   return (
     <SkeletonSwap
-      loading={proposals.length === 0}
+      loading={false}
       skeleton={<ListPageSkeleton />}
     >
       <main className="space-y-6">
