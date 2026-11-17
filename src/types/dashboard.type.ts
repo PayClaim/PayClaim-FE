@@ -64,6 +64,7 @@ export type TodaySummaryAction = {
   description: string
   count: number
   to: DashboardRoute
+  search?: Record<string, string | undefined>
 }
 
 export type RecentAction = {

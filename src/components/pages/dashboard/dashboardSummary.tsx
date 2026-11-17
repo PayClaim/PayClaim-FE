@@ -27,6 +27,7 @@ function TodayActionButton({
   return (
     <Link
       to={action.to}
+      search={action.search}
       className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100/80 dark:border-amber-500/35 dark:bg-amber-950/30 dark:hover:border-amber-400/60 dark:hover:bg-amber-950/45"
     >
       <div className="min-w-0 flex-1">
