@@ -13,11 +13,11 @@ import { useMyTripProposals } from '#/features/trip-proposals/hooks/useTripPropo
 
 import {
   TripProposalMetrics,
-} from '#/features/trip-proposals/components/TripProposalMetrics'
+} from '#/components/pages/tripProposals/TripProposalMetrics'
 
 import {
   TripProposalTable,
-} from '#/features/trip-proposals/components/TripProposalTable'
+} from '#/components/pages/tripProposals/TripProposalTable'
 
 import { Button } from '#/components/ui/button'
 

@@ -22,7 +22,7 @@ import {
 } from '#/components/ui/dialog'
 
 import { editTripProposalForm } from '#/features/trip-proposals/forms/forms'
-import { TripProposalParticipants } from '#/features/trip-proposals/components/TripProposalParticipants'
+import { TripProposalParticipants } from '#/components/pages/tripProposals/TripProposalParticipants'
 
 import {
   getFileName,

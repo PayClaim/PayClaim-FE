@@ -12,14 +12,14 @@ import { getCurrentUser } from '#/features/auth/queries/queries'
 
 import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queries'
 
-import { TripProposalHeader } from '#/features/trip-proposals/components/TripProposalHeader'
-import { TripProposalSidebar } from '#/features/trip-proposals/components/TripProposalSidebar'
+import { TripProposalHeader } from '#/components/pages/tripProposals/TripProposalHeader'
+import { TripProposalSidebar } from '#/components/pages/tripProposals/TripProposalSidebar'
 import {
   TripProposalTimeline,
   type ProposalTimelineItem,
-} from '#/features/trip-proposals/components/TripProposalTimeline'
-import { TripProposalApprovalDialog } from '#/features/trip-proposals/components/TripProposalApprovalDialog'
-import { TripProposalClaimCard } from '#/features/trip-proposals/components/TripProposalClaimCard'
+} from '#/components/pages/tripProposals/TripProposalTimeline'
+import { TripProposalApprovalDialog } from '#/components/pages/tripProposals/TripProposalApprovalDialog'
+import { TripProposalClaimCard } from '#/components/pages/tripProposals/TripProposalClaimCard'
 
 import { useTripProposalApproval } from '#/features/trip-proposals/hooks/useTripProposalApproval'
 

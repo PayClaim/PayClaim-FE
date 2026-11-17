@@ -9,7 +9,7 @@ import {
   getTripProposalInitials,
 } from '#/features/trip-proposals/utils/tripProposalUtils'
 
-import { TripProposalStatusBadge } from '#/features/trip-proposals/components/TripProposalStatusBadge'
+import { TripProposalStatusBadge } from '#/components/pages/tripProposals/TripProposalStatusBadge'
 
 import {
   ArrowRight,

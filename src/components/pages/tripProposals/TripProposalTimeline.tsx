@@ -5,8 +5,8 @@ import { getProposalStatusConfig } from '#/types/tripProposals.type'
 
 import { downloadFile } from '#/lib/download'
 
-import { TripProposalTimelineStage } from '#/features/trip-proposals/components/TripProposalTimelineStage'
-import { TripProposalDocumentPreview } from '#/features/trip-proposals/components/TripProposalDocumentPreview'
+import { TripProposalTimelineStage } from '#/components/pages/tripProposals/TripProposalTimelineStage'
+import { TripProposalDocumentPreview } from '#/components/pages/tripProposals/TripProposalDocumentPreview'
 
 import { isImageAttachment } from '#/features/trip-proposals/utils/tripProposalTimelineUtils'
 

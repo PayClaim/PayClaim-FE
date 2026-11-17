@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { createTripProposalForm } from '#/features/trip-proposals/forms/forms'
-import { TripProposalParticipants } from '#/features/trip-proposals/components/TripProposalParticipants'
+import { TripProposalParticipants } from '#/components/pages/tripProposals/TripProposalParticipants'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { useAuth } from '#/hooks/auth.hook'
 

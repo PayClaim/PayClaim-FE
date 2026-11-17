@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TripProposalDetailWorkspace } from '#/features/trip-proposals/components/TripProposalDetailWorkspace'
+import { TripProposalDetailWorkspace } from '#/components/pages/tripProposals/TripProposalDetailWorkspace'
 
 export const Route = createFileRoute('/_app/approvals/trip-proposals/$id')({
   component: RouteComponent,

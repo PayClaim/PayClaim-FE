@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { ErrorComponent, LoadingComponent } from '#/components/ErrorAndLoading'
 
-import { TripProposalEditForm } from '#/features/trip-proposals/components/TripProposalEditForm'
+import { TripProposalEditForm } from '#/components/pages/tripProposals/TripProposalEditForm'
 import { useGetProposalByIdQuery } from '#/features/trip-proposals/queries/queries'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 
