@@ -4,7 +4,7 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -196,6 +196,7 @@ function getClaimApprovalStatusConfig(
 function RouteComponent() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // =====================================================
   // LOGGED-IN USER
@@ -746,13 +747,16 @@ function RouteComponent() {
                     <tr
                       key={claim.id}
                       onClick={(event) => {
-                        markRecordCardSource(event.currentTarget)
+                        const hasCachedDetail = Boolean(
+                          queryClient.getQueryData(['claims', claim.id]),
+                        )
+                        markRecordCardSource(event.currentTarget, hasCachedDetail)
                         navigate({
                           to: '/approvals/claims/$claimId',
                           params: {
                             claimId: claim.id,
                           },
-                          ...viewTransitionNavOptions(),
+                          ...viewTransitionNavOptions(hasCachedDetail),
                         })
                       }}
                       className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"

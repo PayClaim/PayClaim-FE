@@ -5,6 +5,7 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
@@ -59,6 +60,7 @@ export const Route = createFileRoute('/_app/claims/')({
 function RouteComponent() {
   const search = Route.useSearch()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const {
     data: claimResponse,
     isError,
@@ -381,11 +383,14 @@ function RouteComponent() {
                   <tr
                     key={claim.id}
                     onClick={(event) => {
-                      markRecordCardSource(event.currentTarget)
+                      const hasCachedDetail = Boolean(
+                        queryClient.getQueryData(['claims', claim.id]),
+                      )
+                      markRecordCardSource(event.currentTarget, hasCachedDetail)
                       navigate({
                         to: '/claims/$claimId',
                         params: { claimId: claim.id },
-                        ...viewTransitionNavOptions(),
+                        ...viewTransitionNavOptions(hasCachedDetail),
                       })
                     }}
                     className="row-enter hover:bg-muted/40 transition-colors cursor-pointer group"

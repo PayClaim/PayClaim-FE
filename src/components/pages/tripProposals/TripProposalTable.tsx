@@ -1,5 +1,6 @@
 
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 
 import type { TripProposal } from '#/types/tripProposals.type'
 
@@ -38,6 +39,7 @@ export function TripProposalTable({
   activeTab,
 }: Props) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const hasActiveFilters = Boolean(
     searchQuery.trim() || activeTab !== 'ALL',
@@ -64,11 +66,14 @@ export function TripProposalTable({
               <tr
                 key={proposal.id}
                 onClick={(event) => {
-                  markRecordCardSource(event.currentTarget)
+                  const hasCachedDetail = Boolean(
+                    queryClient.getQueryData(['trip-proposals', proposal.id]),
+                  )
+                  markRecordCardSource(event.currentTarget, hasCachedDetail)
                   navigate({
                     to: '/trip-proposals/$id',
                     params: { id: proposal.id },
-                    ...viewTransitionNavOptions(),
+                    ...viewTransitionNavOptions(hasCachedDetail),
                   })
                 }}
                 className="row-enter group cursor-pointer transition-colors hover:bg-muted/40"

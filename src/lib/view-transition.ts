@@ -22,8 +22,8 @@ export function canUseViewTransition(): boolean {
  * Opsi tambahan untuk `navigate()` TanStack Router. Aman dipakai di browser
  * lama karena router akan mengabaikannya bila API tidak tersedia.
  */
-export function viewTransitionNavOptions(): { viewTransition?: true } {
-  return canUseViewTransition() && !prefersReducedMotion()
+export function viewTransitionNavOptions(ready = true): { viewTransition?: true } {
+  return ready && canUseViewTransition() && !prefersReducedMotion()
     ? { viewTransition: true }
     : {}
 }
@@ -33,8 +33,8 @@ export function viewTransitionNavOptions(): { viewTransition?: true } {
  * Dipanggil tepat sebelum navigasi. Elemen lama akan hilang setelah route
  * berganti, jadi tidak perlu cleanup manual.
  */
-export function markRecordCardSource(element: Element | null) {
-  if (!element || !canUseViewTransition() || prefersReducedMotion()) return
+export function markRecordCardSource(element: Element | null, ready = true) {
+  if (!ready || !element || !canUseViewTransition() || prefersReducedMotion()) return
 
   ;(element as HTMLElement).style.viewTransitionName =
     RECORD_CARD_TRANSITION
