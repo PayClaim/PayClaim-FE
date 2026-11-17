@@ -1,4 +1,5 @@
 
+import { useRef } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -206,8 +207,11 @@ export function TripProposalDetailWorkspace({
       )
     )
 
+  const wasLoadingRef = useRef(false)
+
   // Loading state.
   if (isLoading) {
+    wasLoadingRef.current = true
     return <DetailPageSkeleton />
   }
 
@@ -526,7 +530,9 @@ export function TripProposalDetailWorkspace({
   )
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1600px] space-y-4">
+    <main
+      className={`mx-auto w-full min-w-0 max-w-[1600px] space-y-4${wasLoadingRef.current ? ' page-flow-in' : ''}`}
+    >
       {/* Revision Warning */}
       {isNeedsRevision && isPic && !isAdmin && (
         <div className="flex min-w-0 items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
