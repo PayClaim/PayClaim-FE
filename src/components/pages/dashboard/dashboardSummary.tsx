@@ -13,7 +13,7 @@ import type {
 } from '#/types/dashboard.type'
 
 import { DashboardPanel } from '#/components/pages/dashboard/dashboardPanel'
-import { formatNumber } from '#/features/dashboard/utils/dashboard.utils'
+import { AnimatedNumber } from '#/components/ui/animated-number'
 
 // =====================================================
 // TODAY ACTION BUTTON
@@ -40,7 +40,7 @@ function TodayActionButton({
       </div>
 
       <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-amber-200/85 px-3 text-xl font-bold tabular-nums text-amber-900 transition-colors group-hover:bg-amber-300/90 dark:bg-amber-400/20 dark:text-amber-200 dark:group-hover:bg-amber-400/30">
-        {formatNumber(action.count)}
+        <AnimatedNumber value={action.count} />
       </div>
     </Link>
   )

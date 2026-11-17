@@ -19,6 +19,10 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 type Props = {
   proposals: TripProposal[]
@@ -45,11 +49,11 @@ export function TripProposalTable({
         <table className="w-full min-w-[1100px] border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/20 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-              <th className="px-5 py-3">Destinasi</th>
+              <th className="px-5 py-3">Destination</th>
               <th className="px-5 py-3">Trip Period</th>
               <th className="px-5 py-3">PIC</th>
-              <th className="px-5 py-3">Peserta</th>
-              <th className="px-5 py-3 text-right">Total Biaya</th>
+              <th className="px-5 py-3">Participants</th>
+              <th className="px-5 py-3 text-right">Total Cost</th>
               <th className="px-5 py-3 text-center">Status</th>
               <th className="px-5 py-3 text-right">Action</th>
             </tr>
@@ -59,13 +63,15 @@ export function TripProposalTable({
             {proposals.map((proposal) => (
               <tr
                 key={proposal.id}
-                onClick={() =>
+                onClick={(event) => {
+                  markRecordCardSource(event.currentTarget)
                   navigate({
                     to: '/trip-proposals/$id',
                     params: { id: proposal.id },
+                    ...viewTransitionNavOptions(),
                   })
-                }
-                className="group cursor-pointer transition-colors hover:bg-muted/40"
+                }}
+                className="row-enter group cursor-pointer transition-colors hover:bg-muted/40"
               >
                 {/* DESTINATION */}
                 <td className="min-w-[180px] px-5 py-3.5">
@@ -83,7 +89,7 @@ export function TripProposalTable({
                       {formatTripProposalDate(proposal.startDate)}
                     </span>
 
-                    <span className="text-muted-foreground">s/d</span>
+                    <span className="text-muted-foreground">–</span>
 
                     <span>
                       {formatTripProposalDate(proposal.endDate)}
@@ -112,7 +118,7 @@ export function TripProposalTable({
                   >
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
 
-                    {proposal.participantCount} Orang
+                    {proposal.participantCount} {proposal.participantCount === 1 ? 'Person' : 'People'}
                   </Badge>
                 </td>
 
@@ -148,13 +154,13 @@ export function TripProposalTable({
                     <FileText className="h-8 w-8 text-muted-foreground/40" />
 
                     <p className="font-medium">
-                      Tidak ada proposal perjalanan yang ditemukan
+                      No trip proposals found
                     </p>
 
                     <p className="text-xs text-muted-foreground/80">
                       {hasActiveFilters
-                        ? 'Coba ubah kata kunci pencarian atau tab status.'
-                        : 'Anda belum terdaftar dalam proposal perjalanan dinas mana pun.'}
+                        ? 'Try changing your search keywords or status tab.'
+                        : 'You are not registered in any business trip proposals yet.'}
                     </p>
                   </div>
                 </td>
@@ -172,7 +178,7 @@ export function TripProposalTable({
 
         {activeTab !== 'ALL' && (
           <span className="font-medium text-foreground">
-            Filter aktif: {activeTab}
+            Active filter: {activeTab}
           </span>
         )}
       </div>

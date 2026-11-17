@@ -35,30 +35,30 @@ export function TripProposalClaimCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
-                Pengajuan Klaim Reimbursement
+                Reimbursement Claim Submission
               </span>
 
               <span className="inline-flex items-center rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                Tersedia
+                Available
               </span>
             </div>
 
             <p className="mt-0.5 text-xs text-emerald-700/90 dark:text-emerald-300/90">
               {claimedAmount > 0 ? (
                 <>
-                  Sisa plafon Anda:{' '}
+                  Your remaining budget:{' '}
                   <span className="font-bold text-emerald-950 dark:text-emerald-100">
                     {formatCurrency(remainingBudget)}
                   </span>
 
                   <span className="ml-1 text-[11px] text-emerald-700/70 dark:text-emerald-300/70">
-                    (Total: {formatCurrency(totalBudget)}, Terklaim:{' '}
+                    (Total: {formatCurrency(totalBudget)}, Claimed:{' '}
                     {formatCurrency(claimedAmount)})
                   </span>
                 </>
               ) : (
                 <>
-                  Plafon anggaran Anda:{' '}
+                  Your budget limit:{' '}
                   <span className="font-bold text-emerald-950 dark:text-emerald-100">
                     {formatCurrency(totalBudget)}
                   </span>
@@ -69,7 +69,7 @@ export function TripProposalClaimCard({
 
           <div className="flex items-center self-end sm:shrink-0 sm:self-center">
             <span className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all group-hover:bg-emerald-700 group-hover:shadow-xs group-active:scale-95">
-              Ajukan Klaim ({formatCurrency(remainingBudget)})
+              Submit Claim ({formatCurrency(remainingBudget)})
             </span>
           </div>
         </div>
@@ -82,22 +82,22 @@ export function TripProposalClaimCard({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-foreground">
-            Pengajuan Klaim Reimbursement
+            Reimbursement Claim Submission
           </span>
 
           <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-            Plafon Habis
+            Budget Exhausted
           </span>
         </div>
 
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Seluruh plafon anggaran perjalanan Anda (
-          {formatCurrency(totalBudget)}) telah diajukan klaim.
+          Your entire trip budget limit (
+          {formatCurrency(totalBudget)}) has been claimed.
         </p>
       </div>
 
       <div className="self-end text-xs font-medium text-muted-foreground sm:shrink-0 sm:self-center">
-        Plafon Terpakai Penuh
+        Budget Fully Used
       </div>
     </div>
   )

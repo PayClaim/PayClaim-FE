@@ -71,7 +71,7 @@ function StatusDistribution<T extends { status: string }>({
 
             <div className="h-2 overflow-hidden rounded-full bg-muted">
               <div
-                className={`h-full rounded-full transition-all ${status.color}`}
+                className={`h-full rounded-full transition-all progress-bar-fill ${status.color}`}
                 style={{ width: `${percentage}%` }}
               />
             </div>

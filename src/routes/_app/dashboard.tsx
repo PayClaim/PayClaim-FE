@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { useDashboardData } from '#/features/dashboard/hooks/useDashboardData'
 import { DashboardSections } from '#/components/pages/dashboard/dashboardSections'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 
 export const Route = createFileRoute('/_app/dashboard')({
   component: Dashboard,
@@ -12,27 +13,34 @@ function Dashboard() {
 
   if (dashboard.isDashboardLoading) {
     return (
-      <main className="space-y-5">
-        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
+      <SkeletonSwap
+        loading
+        skeleton={
+          <main className="space-y-5">
+            <div className="h-64 rounded-2xl skeleton-shimmer" />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          {[1, 2, 3, 4].map((item) => (
-            <div
-              key={item}
-              className="h-24 animate-pulse rounded-xl border border-border bg-card"
-            />
-          ))}
-        </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+              {[1, 2, 3, 4].map((item) => (
+                <div
+                  key={item}
+                  className="h-24 rounded-xl border border-border bg-card skeleton-shimmer"
+                />
+              ))}
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {[1, 2].map((item) => (
-            <div
-              key={item}
-              className="h-72 animate-pulse rounded-xl border border-border bg-card"
-            />
-          ))}
-        </div>
-      </main>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              {[1, 2].map((item) => (
+                <div
+                  key={item}
+                  className="h-72 rounded-xl border border-border bg-card skeleton-shimmer"
+                />
+              ))}
+            </div>
+          </main>
+        }
+      >
+        {null}
+      </SkeletonSwap>
     )
   }
 

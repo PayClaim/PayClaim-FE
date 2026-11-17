@@ -11,6 +11,8 @@ import {
   formatTripProposalCurrency,
 } from '#/features/trip-proposals/utils/tripProposalUtils'
 
+import { AnimatedNumber } from '#/components/ui/animated-number'
+
 type Props = {
   metrics: Metrics
 }
@@ -25,13 +27,13 @@ export function TripProposalMetrics({ metrics }: Props) {
             Total Proposals
           </span>
 
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
             <Plane className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
 
-        <div className="font-mono text-2xl font-bold tracking-tight text-heading">
-          {metrics.totalCount}
+        <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
+          <AnimatedNumber value={metrics.totalCount} />
         </div>
 
         <p className="text-xs text-muted-foreground">
@@ -54,8 +56,8 @@ export function TripProposalMetrics({ metrics }: Props) {
           </div>
         </div>
 
-        <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
-          {metrics.waitingCount}
+        <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
+          <AnimatedNumber value={metrics.waitingCount} />
         </div>
 
         <p className="text-xs text-muted-foreground">
@@ -78,8 +80,8 @@ export function TripProposalMetrics({ metrics }: Props) {
           </div>
         </div>
 
-        <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-          {metrics.approvedCompletedCount}
+        <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
+          <AnimatedNumber value={metrics.approvedCompletedCount} />
         </div>
 
         <p className="text-xs text-muted-foreground">

@@ -34,6 +34,8 @@ import {
 } from '#/types/tripProposals.type'
 
 import { Button } from '#/components/ui/button'
+import { DetailPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 
 type Props = {
   id: string
@@ -207,11 +209,9 @@ export function TripProposalDetailWorkspace({
   // Loading state.
   if (isLoading) {
     return (
-      <main className="mx-auto w-full min-w-0 max-w-[1600px]">
-        <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-          Loading trip proposal details...
-        </div>
-      </main>
+      <SkeletonSwap loading skeleton={<DetailPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
     )
   }
 
@@ -540,13 +540,12 @@ export function TripProposalDetailWorkspace({
           />
 
           <div className="min-w-0 text-sm">
-            <p className="font-semibold">Revisi Diperlukan</p>
+            <p className="font-semibold">Revision Required</p>
 
             <p className="mt-0.5 text-xs">
-              Proposal ini dikembalikan oleh reviewer untuk diperbaiki.
-              Silakan periksa catatan pada kartu proses, lalu klik tombol{' '}
-              <strong>Edit &amp; Resubmit Proposal</strong> untuk mengajukan
-              ulang.
+              This proposal was returned by the reviewer for revision.
+              Please check the notes on the process card, then click{' '}
+              <strong>Edit &amp; Resubmit Proposal</strong> to resubmit.
             </p>
           </div>
         </div>

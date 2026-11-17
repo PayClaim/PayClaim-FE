@@ -20,6 +20,8 @@ import {
 } from '#/components/pages/tripProposals/TripProposalTable'
 
 import { Button } from '#/components/ui/button'
+import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
 
 import {
   Plus,
@@ -92,11 +94,9 @@ function RouteComponent() {
 
   if (isFetching && proposals.length === 0) {
     return (
-      <div className="p-12 text-center text-muted-foreground">
-        <p className="text-sm">
-          Loading your business trip proposals...
-        </p>
-      </div>
+      <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
     )
   }
 
