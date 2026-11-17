@@ -57,8 +57,7 @@ function Dashboard() {
   return (
     <DashboardSections
       summary={{
-        userName:
-          dashboard.user.fullName?.split(' ')[0] || 'there',
+        userName: dashboard.user.fullName?.split(' ')[0] || 'there',
         formattedDate: dashboard.formattedDate,
         todayActions: dashboard.todayActions,
         isEmployee: dashboard.isEmployee,

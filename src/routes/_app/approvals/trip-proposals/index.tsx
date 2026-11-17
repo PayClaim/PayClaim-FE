@@ -1,9 +1,4 @@
-
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
@@ -55,8 +50,7 @@ export const Route = createFileRoute('/_app/approvals/trip-proposals/')({
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
-        (allowedRole) =>
-          allowedRole.toLowerCase() === role.toLowerCase(),
+        (allowedRole) => allowedRole.toLowerCase() === role.toLowerCase(),
       ),
     )
 
@@ -91,9 +85,7 @@ function formatCurrency(amount: number) {
 }
 
 function normalizeStatus(status: string) {
-  return (status || '')
-    .replace(/[\s_-]/g, '')
-    .toLowerCase()
+  return (status || '').replace(/[\s_-]/g, '').toLowerCase()
 }
 
 function getInitials(name?: string | null): string {
@@ -105,9 +97,7 @@ function getInitials(name?: string | null): string {
     return parts[0].slice(0, 2).toUpperCase()
   }
 
-  return (
-    parts[0][0] + parts[parts.length - 1][0]
-  ).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 function getSubmittedAtTime(date?: string | null): number {
@@ -124,18 +114,14 @@ function isOwnProposal(
   currentFullName?: string,
 ): boolean {
   return Boolean(
-    (
-      proposal.picEmployeeId &&
+    (proposal.picEmployeeId &&
       currentEmployeeId &&
       proposal.picEmployeeId.toLowerCase() ===
-        currentEmployeeId.toLowerCase()
-    ) ||
-    (
-      currentFullName &&
+        currentEmployeeId.toLowerCase()) ||
+    (currentFullName &&
       proposal.picName &&
       currentFullName.trim().toLowerCase() ===
-        proposal.picName.trim().toLowerCase()
-    ),
+        proposal.picName.trim().toLowerCase()),
   )
 }
 
@@ -144,22 +130,17 @@ function isOwnProposal(
 // =====================================================
 
 function getRoleFlags(roles: string[]) {
-  const roleLower = roles.map((role) =>
-    role.trim().toLowerCase(),
-  )
+  const roleLower = roles.map((role) => role.trim().toLowerCase())
 
   const isAdmin = roleLower.includes('admin')
 
   const isFinanceManager = roleLower.includes('finance manager')
 
-  const isFinance =
-    roleLower.includes('finance') && !isFinanceManager
+  const isFinance = roleLower.includes('finance') && !isFinanceManager
 
   const isManager =
-    (
-      roleLower.includes('manager') ||
-      roleLower.includes('project manager')
-    ) && !isFinanceManager
+    (roleLower.includes('manager') || roleLower.includes('project manager')) &&
+    !isFinanceManager
 
   return {
     isAdmin,
@@ -180,29 +161,15 @@ function getApprovalStatusConfig(
 ) {
   const normalized = normalizeStatus(status)
 
-  const {
-    isAdmin,
-    isManager,
-    isFinance,
-    isFinanceManager,
-  } = getRoleFlags(roles)
+  const { isAdmin, isManager, isFinance, isFinanceManager } =
+    getRoleFlags(roles)
 
   const needsMyApproval =
     !isOwn &&
-    (
-      (
-        normalized === 'submitted' &&
-        (isAdmin || isManager)
-      ) ||
-      (
-        normalized === 'underreview' &&
-        (isAdmin || isFinance || isFinanceManager)
-      ) ||
-      (
-        normalized === 'financemanagerreview' &&
-        (isAdmin || isFinanceManager)
-      )
-    )
+    ((normalized === 'submitted' && (isAdmin || isManager)) ||
+      (normalized === 'underreview' &&
+        (isAdmin || isFinance || isFinanceManager)) ||
+      (normalized === 'financemanagerreview' && (isAdmin || isFinanceManager)))
 
   if (needsMyApproval) {
     return {
@@ -443,18 +410,12 @@ function RouteComponent() {
     from: routeQuery.startDateFrom
       ? new Date(routeQuery.startDateFrom)
       : undefined,
-    to: routeQuery.startDateTo
-      ? new Date(routeQuery.startDateTo)
-      : undefined,
+    to: routeQuery.startDateTo ? new Date(routeQuery.startDateTo) : undefined,
   }
 
-  const [searchQuery, setSearchQuery] = useState(
-    routeQuery.destination ?? '',
-  )
+  const [searchQuery, setSearchQuery] = useState(routeQuery.destination ?? '')
 
-  const [statusQuery, setStatusQuery] = useState(
-    routeQuery.status,
-  )
+  const [statusQuery, setStatusQuery] = useState(routeQuery.status)
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(
     initialDateRange,
@@ -471,31 +432,17 @@ function RouteComponent() {
 
   const sortedProposals = useMemo(() => {
     return [...proposals].sort((a, b) => {
-      const aOwnProposal = isOwnProposal(
-        a,
-        currentEmployeeId,
-        currentFullName,
-      )
+      const aOwnProposal = isOwnProposal(a, currentEmployeeId, currentFullName)
 
-      const bOwnProposal = isOwnProposal(
-        b,
-        currentEmployeeId,
-        currentFullName,
-      )
+      const bOwnProposal = isOwnProposal(b, currentEmployeeId, currentFullName)
 
       const aWaiting =
-        getApprovalStatusConfig(
-          a.status,
-          roles,
-          aOwnProposal,
-        ).label === 'Waiting for Your Approval'
+        getApprovalStatusConfig(a.status, roles, aOwnProposal).label ===
+        'Waiting for Your Approval'
 
       const bWaiting =
-        getApprovalStatusConfig(
-          b.status,
-          roles,
-          bOwnProposal,
-        ).label === 'Waiting for Your Approval'
+        getApprovalStatusConfig(b.status, roles, bOwnProposal).label ===
+        'Waiting for Your Approval'
 
       // Waiting for Your Approval comes first.
       if (aWaiting !== bWaiting) {
@@ -504,28 +451,20 @@ function RouteComponent() {
 
       // Sort by SubmittedAt, newest first.
       return (
-        getSubmittedAtTime(b.submittedAt) -
-        getSubmittedAtTime(a.submittedAt)
+        getSubmittedAtTime(b.submittedAt) - getSubmittedAtTime(a.submittedAt)
       )
     })
-  }, [
-    proposals,
-    roles,
-    currentEmployeeId,
-    currentFullName,
-  ])
+  }, [proposals, roles, currentEmployeeId, currentFullName])
 
   // =====================================================
   // KPI CALCULATIONS
   // =====================================================
 
   const metrics = useMemo(() => {
-    const totalCount =
-      proposalResponse?.totalCount ?? proposals.length
+    const totalCount = proposalResponse?.totalCount ?? proposals.length
 
     const totalBudget = proposals.reduce(
-      (total, proposal) =>
-        total + (proposal.totalAmount || 0),
+      (total, proposal) => total + (proposal.totalAmount || 0),
       0,
     )
 
@@ -537,33 +476,26 @@ function RouteComponent() {
       )
 
       return (
-        getApprovalStatusConfig(
-          proposal.status,
-          roles,
-          ownProposal,
-        ).label === 'Waiting for Your Approval'
+        getApprovalStatusConfig(proposal.status, roles, ownProposal).label ===
+        'Waiting for Your Approval'
       )
     })
 
     const waitingCount = waitingProposals.length
 
     const waitingBudget = waitingProposals.reduce(
-      (total, proposal) =>
-        total + (proposal.totalAmount || 0),
+      (total, proposal) => total + (proposal.totalAmount || 0),
       0,
     )
 
     const approvedProposals = proposals.filter((proposal) =>
-      ['approved', 'completed'].includes(
-        normalizeStatus(proposal.status),
-      ),
+      ['approved', 'completed'].includes(normalizeStatus(proposal.status)),
     )
 
     const approvedCount = approvedProposals.length
 
     const approvedBudget = approvedProposals.reduce(
-      (total, proposal) =>
-        total + (proposal.totalAmount || 0),
+      (total, proposal) => total + (proposal.totalAmount || 0),
       0,
     )
 
@@ -602,10 +534,7 @@ function RouteComponent() {
   ]
 
   const hasActiveFilters = Boolean(
-    searchQuery ||
-    statusQuery ||
-    dateRange?.from ||
-    dateRange?.to,
+    searchQuery || statusQuery || dateRange?.from || dateRange?.to,
   )
 
   // =====================================================
@@ -740,9 +669,7 @@ function RouteComponent() {
         <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              {isAdmin
-                ? 'Waiting for Approval'
-                : 'Waiting for Your Approval'}
+              {isAdmin ? 'Waiting for Approval' : 'Waiting for Your Approval'}
             </span>
 
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
@@ -809,9 +736,7 @@ function RouteComponent() {
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(event) =>
-                      setSearchQuery(event.target.value)
-                    }
+                    onChange={(event) => setSearchQuery(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
                         applyFilterClick()
@@ -822,9 +747,7 @@ function RouteComponent() {
                   />
                 </div>
 
-                <Button onClick={applyFilterClick}>
-                  Search
-                </Button>
+                <Button onClick={applyFilterClick}>Search</Button>
               </ButtonGroup>
             </div>
 
@@ -866,9 +789,7 @@ function RouteComponent() {
                   </Button>
                 )}
 
-                <Button onClick={applyFilterClick}>
-                  Apply
-                </Button>
+                <Button onClick={applyFilterClick}>Apply</Button>
               </PopoverContent>
             </Popover>
           </div>
@@ -877,10 +798,7 @@ function RouteComponent() {
         {/* TABLE CONTENT */}
         {proposals.length === 0 ? (
           <div className="p-12 text-center">
-            <Plane
-              className="mx-auto text-muted-foreground/40"
-              size={36}
-            />
+            <Plane className="mx-auto text-muted-foreground/40" size={36} />
 
             <h3 className="mt-3 font-medium text-foreground">
               No trip proposals found
@@ -894,32 +812,20 @@ function RouteComponent() {
           </div>
         ) : (
           <div className="w-full min-w-0 max-w-full overflow-x-auto">
-            <table className="w-full min-w-[1050px] whitespace-nowrap text-left text-sm">
+            <table className="w-full min-w-262.5 whitespace-nowrap text-left text-sm">
               <thead className="border-b border-border bg-muted/50 text-xs tracking-wide text-muted-foreground uppercase">
                 <tr>
-                  <th className="px-5 py-3.5 font-medium">
-                    Destination
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Destination</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    PIC
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">PIC</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Trip Period
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Trip Period</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Total Amount
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Total Amount</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Participants
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Participants</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Status
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Status</th>
 
                   <th className="px-5 py-3.5" />
                 </tr>
@@ -943,8 +849,8 @@ function RouteComponent() {
               <div className="flex items-center justify-between">
                 <span>
                   Showing {proposals.length} of{' '}
-                  {proposalResponse.totalCount ?? proposals.length}{' '}
-                  total proposals
+                  {proposalResponse.totalCount ?? proposals.length} total
+                  proposals
                 </span>
               </div>
 

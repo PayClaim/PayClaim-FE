@@ -374,8 +374,8 @@ function RouteComponent() {
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Complete the expense details and attach a valid receipt
-              for reviewer processing.
+              Complete the expense details and attach a valid receipt for
+              reviewer processing.
             </p>
           </div>
         </div>
@@ -485,8 +485,8 @@ function RouteComponent() {
                   </label>
 
                   <div className="h-10 px-3.5 bg-muted/20 border border-dashed border-border rounded-md flex items-center text-xs text-muted-foreground">
-                    Operational reimbursement is submitted directly without linking
-                    a benefit or trip.
+                    Operational reimbursement is submitted directly without
+                    linking a benefit or trip.
                   </div>
                 </div>
               )}
@@ -732,9 +732,7 @@ function RouteComponent() {
               <Send className="w-4 h-4" />
 
               <span>
-                {form.state.isSubmitting
-                  ? 'Submitting...'
-                  : 'Submit Claim'}
+                {form.state.isSubmitting ? 'Submitting...' : 'Submit Claim'}
               </span>
             </Button>
           </div>
@@ -753,9 +751,7 @@ function RouteComponent() {
 
               <div className="p-4 bg-muted/30 border border-border rounded-xl text-xs space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">
-                    Claim Type:
-                  </span>
+                  <span className="text-muted-foreground">Claim Type:</span>
 
                   <span className="font-semibold text-foreground">
                     {claimTypeSelect.find(
