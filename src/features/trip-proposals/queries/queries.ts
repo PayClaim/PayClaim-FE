@@ -21,6 +21,7 @@ export interface TripProposalFilterParams {
   startDateTo?: string
   pageNumber?: number
   pageSize?: number
+  search?: string
 }
 
 type PagedResponse<T> = {
@@ -64,7 +65,6 @@ export const useGetAllProposalsQuery = (
     },
     placeholderData: keepPreviousData,
     enabled,
-    placeholderData: keepPreviousData,
   })
 
 export const useGetAllTripProposalsQuery = useGetAllProposalsQuery

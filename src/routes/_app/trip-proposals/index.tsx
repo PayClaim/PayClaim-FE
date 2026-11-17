@@ -30,7 +30,6 @@ import {
   Plus,
   Search,
   Users,
-  X,
 } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
 import { ButtonGroup } from '#/components/ui/button-group'
@@ -73,14 +72,6 @@ function formatCurrency(amount: number) {
 
 function normalizeStatus(status: string) {
   return (status || '').replace(/[\s_-]/g, '').toLowerCase()
-}
-
-function getSubmittedAtTime(value?: string | null): number {
-  if (!value) return 0
-
-  const timestamp = new Date(value).getTime()
-
-  return Number.isFinite(timestamp) ? timestamp : 0
 }
 
 function getInitials(name?: string | null): string {
@@ -158,9 +149,6 @@ function getProposalStatusConfig(status: string) {
       }
   }
 }
-
-type ProposalTab =
-  'ALL' | 'WAITING' | 'APPROVED' | 'COMPLETED' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
   const routeQuery = Route.useSearch()
@@ -265,7 +253,7 @@ function RouteComponent() {
     navigate({
       to: '.',
       search: {
-        destination: searchQuery.trim() || undefined,
+        search: searchQuery.trim() || undefined,
         status: statusQuery,
         startDateFrom: toDateOnly(dateRange?.from),
         startDateTo: toDateOnly(dateRange?.to),
@@ -285,7 +273,7 @@ function RouteComponent() {
     navigate({
       to: '.',
       search: {
-        destination: undefined,
+        search: undefined,
         status: undefined,
         startDateFrom: undefined,
         startDateTo: undefined,
@@ -324,10 +312,7 @@ function RouteComponent() {
   } = proposalResponse
 
   return (
-    <SkeletonSwap
-      loading={false}
-      skeleton={<ListPageSkeleton />}
-    >
+    <SkeletonSwap loading={false} skeleton={<ListPageSkeleton />}>
       <main className="space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">

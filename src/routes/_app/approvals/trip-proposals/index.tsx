@@ -387,7 +387,6 @@ function ProposalRow({
 function RouteComponent() {
   const routeQuery = Route.useSearch()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
 
   const { data: user } = useQuery(getCurrentUser())
 
@@ -413,7 +412,7 @@ function RouteComponent() {
     to: routeQuery.startDateTo ? new Date(routeQuery.startDateTo) : undefined,
   }
 
-  const [searchQuery, setSearchQuery] = useState(routeQuery.destination ?? '')
+  const [searchQuery, setSearchQuery] = useState(routeQuery.search ?? '')
 
   const [statusQuery, setStatusQuery] = useState(routeQuery.status)
 
@@ -545,7 +544,7 @@ function RouteComponent() {
     navigate({
       to: '.',
       search: {
-        destination: searchQuery.trim() || undefined,
+        search: searchQuery.trim() || undefined,
         status: statusQuery,
         startDateFrom: toDateOnly(dateRange?.from),
         startDateTo: toDateOnly(dateRange?.to),
@@ -565,7 +564,7 @@ function RouteComponent() {
     navigate({
       to: '.',
       search: {
-        destination: undefined,
+        search: undefined,
         status: undefined,
         startDateFrom: undefined,
         startDateTo: undefined,
