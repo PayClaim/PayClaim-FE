@@ -70,7 +70,7 @@ function RouteComponent() {
     return (
       <main className="mx-auto max-w-4xl py-10">
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
-          Data karyawan untuk akun yang sedang login tidak ditemukan.
+          Employee data for the currently signed-in account was not found.
         </div>
       </main>
     )
@@ -96,13 +96,13 @@ function RouteComponent() {
         <Link to="/trip-proposals/$id" params={{ id }}>
           <Button variant="outline" size="sm" className="gap-2 text-xs">
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Kembali ke Detail Proposal</span>
+            <span>Back to Proposal Details</span>
           </Button>
         </Link>
         <div className="rounded-xl border border-amber-300 bg-amber-50/70 p-4 text-sm font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           {!isPic
-            ? 'Hanya PIC proposal yang dapat melakukan revisi pada pengajuan ini.'
-            : 'Proposal ini tidak berstatus Needs Revision sehingga tidak dapat diubah.'}
+            ? 'Only the proposal PIC can revise this submission.'
+            : 'This proposal is not in Needs Revision status and cannot be modified.'}
         </div>
       </main>
     )
@@ -269,7 +269,7 @@ function EditTripProposalFormContent({
     setHasAttemptedSubmit(true)
 
     if (!isFormChanged(form.state.values)) {
-      toast.info('Belum ada perubahan data pada formulir trip proposal ini.')
+      toast.info('No changes have been made to this trip proposal form yet.')
       return
     }
 
@@ -328,7 +328,7 @@ function EditTripProposalFormContent({
             to="/trip-proposals/$id"
             params={{ id: proposalId }}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-2xs transition-all hover:bg-muted hover:text-foreground"
-            title="Kembali ke Detail Proposal"
+            title="Back to Proposal Details"
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={2} />
           </Link>
@@ -336,7 +336,7 @@ function EditTripProposalFormContent({
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-2xl font-extrabold tracking-tight text-heading sm:text-3xl">
-                Revisi Trip Proposal
+                Revise Trip Proposal
               </h1>
 
               <span className="rounded-full border border-amber-200/70 bg-amber-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-300">
@@ -345,7 +345,7 @@ function EditTripProposalFormContent({
             </div>
 
             <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-              Perbaiki rincian perjalanan dinas, peserta, atau surat tugas sesuai catatan dari reviewer.
+              Update the business trip details, participants, or assignment letter according to the reviewer notes.
             </p>
           </div>
         </div>
@@ -356,9 +356,9 @@ function EditTripProposalFormContent({
         <section className="space-y-2 rounded-xl border border-amber-300 bg-amber-50/70 p-4.5 shadow-2xs dark:border-amber-700 dark:bg-amber-950/40">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
             <AlertTriangle className="h-5 w-5 shrink-0" />
-            <h2 className="text-sm font-bold">Catatan Permintaan Revisi</h2>
+            <h2 className="text-sm font-bold">Revision Request Notes</h2>
             <span className="ml-auto text-xs font-normal text-amber-700/80 dark:text-amber-400">
-              Oleh: {lastRevisionEntry?.approverName || 'Reviewer'}
+              By: {lastRevisionEntry?.approverName || 'Reviewer'}
             </span>
           </div>
 
@@ -452,8 +452,8 @@ function EditTripProposalFormContent({
             </form.AppField>
 
             <p className="mt-2 text-xs text-muted-foreground">
-              Total biaya akomodasi dan perjalanan untuk seluruh proposal,
-              seperti hotel dan tiket. Bukan limit reimbursement per peserta.
+              Total accommodation and travel cost for the entire proposal,
+              such as hotel and tickets. Not the reimbursement limit per participant.
             </p>
           </div>
 
@@ -462,8 +462,8 @@ function EditTripProposalFormContent({
             <form.AppField name="description">
               {(field) => (
                 <field.TextArea
-                  label="Keterangan / Penjelasan Revisi"
-                  placeholder="Tuliskan tujuan perjalanan dan perbaikan yang telah dilakukan..."
+                  label="Revision Notes / Description"
+                  placeholder="Describe the trip purpose and the fixes you have made..."
                   rows={5}
                 />
               )}
@@ -475,7 +475,7 @@ function EditTripProposalFormContent({
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-semibold text-foreground">
                     <FileText className="h-4 w-4 text-primary" />
-                    Surat Tugas / Proposal Terlampir Saat Ini
+                    Currently Attached Assignment / Proposal Letter
                   </span>
                   <button
                     type="button"
@@ -485,22 +485,22 @@ function EditTripProposalFormContent({
                     className="inline-flex cursor-pointer items-center gap-1 font-semibold text-primary hover:underline"
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Unduh Berkas Lama
+                    Download Existing File
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Nama file:{' '}
+                  File name:{' '}
                   <span className="font-mono font-medium text-foreground">
                     {existingFileName}
                   </span>
-                  . Jika Anda tidak mengunggah file baru di bawah, berkas lama ini akan tetap digunakan.
+                  . If you do not upload a new file below, this existing file will continue to be used.
                 </p>
               </div>
             )}
 
             <form.AppField name="file">
               {(field) => (
-                <field.FileInput label="Proposal Letter (Opsional jika tidak diganti)" />
+                <field.FileInput label="Proposal Letter (Optional if unchanged)" />
               )}
             </form.AppField>
           </div>
@@ -654,7 +654,7 @@ function EditTripProposalFormContent({
           <div className="flex items-center justify-end gap-3 border-t border-border pt-6">
             <Link to="/trip-proposals/$id" params={{ id: proposalId }}>
               <Button type="button" variant="outline" className="cursor-pointer">
-                Batal
+                Cancel
               </Button>
             </Link>
             <form.Subscribe
@@ -672,11 +672,11 @@ function EditTripProposalFormContent({
                     className="cursor-pointer bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     title={
                       hasChanges
-                        ? 'Ajukan ulang revisi proposal'
-                        : 'Lakukan perubahan data atau unggah berkas baru untuk mengajukan revisi'
+                        ? 'Resubmit proposal revision'
+                        : 'Modify form details or upload a new file to submit revision'
                     }
                   >
-                    Ajukan Ulang Revisi
+                    Resubmit Revision
                   </Button>
                 )
               }}
@@ -687,9 +687,9 @@ function EditTripProposalFormContent({
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Kirim Ulang Revisi Trip Proposal?</DialogTitle>
+                <DialogTitle>Resubmit Trip Proposal Revision?</DialogTitle>
                 <DialogDescription className="mt-1 text-xs">
-                  Proposal perjalanan Anda akan diperbarui dan dikirim kembali ke Manager untuk dilakukan peninjauan ulang.
+                  Your trip proposal will be updated and sent back to the Manager for re-review.
                 </DialogDescription>
               </DialogHeader>
 
@@ -700,7 +700,7 @@ function EditTripProposalFormContent({
                     variant="outline"
                     className="cursor-pointer"
                   >
-                    Batal
+                    Cancel
                   </Button>
                 </DialogClose>
                 <Button
@@ -709,7 +709,7 @@ function EditTripProposalFormContent({
                   onClick={handleConfirm}
                   className="cursor-pointer bg-blue-600 font-semibold text-white hover:bg-blue-700"
                 >
-                  {form.state.isSubmitting ? 'Mengirim...' : 'Ya, Kirim Ulang'}
+                  {form.state.isSubmitting ? 'Submitting...' : 'Yes, Resubmit'}
                 </Button>
               </DialogFooter>
             </DialogContent>

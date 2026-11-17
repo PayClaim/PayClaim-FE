@@ -11,6 +11,7 @@ import type { TripProposalDetailResponse } from '#/types/tripProposals.type'
 
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
+import { CollapsiblePanel } from '#/components/ui/collapsible-panel'
 import { downloadFile } from '#/lib/download'
 import {
   Dialog,
@@ -66,13 +67,13 @@ export function TripProposalSidebar({
             </p>
           </section>
 
-          <section className="space-y-3 border-t border-border pt-5">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-base font-bold">
-                Proposal Letter
-              </h2>
-
-              {attachmentUrl && (
+          <CollapsiblePanel
+            className="border-t border-border pt-5"
+            headerClassName="gap-2"
+            contentClassName="space-y-2 pt-3"
+            title="Proposal Letter"
+            actions={
+              attachmentUrl ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -83,9 +84,9 @@ export function TripProposalSidebar({
                   <Download className="h-3.5 w-3.5" />
                   Download
                 </Button>
-              )}
-            </div>
-
+              ) : undefined
+            }
+          >
             {attachmentUrl ? (
               <div className="space-y-2">
                 {/* Thumbnail dokumen. */}
@@ -154,25 +155,25 @@ export function TripProposalSidebar({
                 </p>
               </div>
             )}
-          </section>
+          </CollapsiblePanel>
         </div>
 
         {/* Daftar peserta perjalanan. */}
-        <section className="border-t border-border p-5 sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <CollapsiblePanel
+          className="border-t border-border p-5 sm:p-6"
+          contentClassName="pt-4"
+          title={
+            <span className="inline-flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
-
-              <h2 className="text-base font-bold">
-                Participants
-              </h2>
-            </div>
-
+              Participants
+            </span>
+          }
+          actions={
             <Badge variant="outline">
               {proposal.participants.length}
             </Badge>
-          </div>
-
+          }
+        >
           <div className="max-h-[480px] divide-y divide-border overflow-y-auto">
             {proposal.participants.map((participant) => (
               <div
@@ -209,7 +210,7 @@ export function TripProposalSidebar({
               </p>
             )}
           </div>
-        </section>
+        </CollapsiblePanel>
       </aside>
 
       {/* Modal preview dokumen. */}

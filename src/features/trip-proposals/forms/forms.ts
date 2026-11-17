@@ -83,7 +83,7 @@ export const createTripProposalForm = (currentEmployeeId: string) => {
         toast.error(
           getFriendlyErrorMessage(
             err,
-            'Gagal mengajukan proposal perjalanan',
+            'Failed to submit trip proposal',
           ),
         )
       }
@@ -161,7 +161,7 @@ export const editTripProposalForm = (
         toast.error(
           getFriendlyErrorMessage(
             err,
-            'Gagal mengajukan ulang revisi proposal perjalanan',
+            'Failed to resubmit trip proposal revision',
           ),
         )
       }

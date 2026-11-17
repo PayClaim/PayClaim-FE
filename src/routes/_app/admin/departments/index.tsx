@@ -120,11 +120,11 @@ function RouteComponent() {
           <div className="py-16 text-center space-y-3">
             <SearchX className="w-10 h-10 text-muted-foreground/50 mx-auto" strokeWidth={1.5} />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">Tidak ada departemen ditemukan</p>
+              <p className="text-sm font-semibold text-heading">No departments found</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 {searchFilter
-                  ? `Tidak ada departemen yang cocok dengan "${searchFilter}". Coba ubah kata kunci pencarian.`
-                  : 'Belum ada data departemen yang terdaftar di sistem.'}
+                  ? `No departments match "${searchFilter}". Try changing your search keyword.`
+                  : 'No departments are registered in the system yet.'}
               </p>
             </div>
             {searchFilter && (
@@ -168,7 +168,7 @@ function DepartmentTable({
           {departments.map((d) => (
             <TableRow
               key={d.id}
-              className="hover:bg-muted/30 transition-colors border-b border-border/60"
+              className="row-enter hover:bg-muted/30 transition-colors border-b border-border/60"
             >
               <TableCell className="px-5 py-4 font-mono font-semibold text-xs text-heading">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 border border-border/60">
@@ -251,7 +251,7 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Delete Department</DialogTitle>
           <DialogDescription className="text-sm pt-1">
-            Apakah Anda yakin ingin menghapus departemen <strong>"{name || id}"</strong>? Pastikan tidak ada data karyawan atau sub-departemen yang masih terkait.
+            Are you sure you want to delete the department <strong>"{name || id}"</strong>? Make sure no employees or sub-departments remain linked.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">

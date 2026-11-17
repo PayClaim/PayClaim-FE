@@ -15,7 +15,7 @@ function CreateBenefitPlanPage() {
 
   const { data: departments = [] } = useGetAllDepartmentsQuery()
   const departmentOptions = [
-    { label: 'Semua Departemen (ALL)', value: 'ALL' },
+    { label: 'All Departments (ALL)', value: 'ALL' },
     ...departments.map((d) => ({
       label: d.name,
       value: d.id,
@@ -53,7 +53,7 @@ function CreateBenefitPlanPage() {
               Add Benefit Limit Rule
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Tetapkan batas nominal klaim untuk kombinasi departemen, jabatan, dan jenis benefit.
+              Set the claim limit amount for a department, position, and benefit type combination.
             </p>
           </div>
         </div>
@@ -71,8 +71,8 @@ function CreateBenefitPlanPage() {
               {(field) => (
                 <field.FormSelect
                   values={departmentOptions}
-                  label="Departemen"
-                  placeholder="Pilih Departemen"
+                  label="Department"
+                  placeholder="Select Department"
                 />
               )}
             </form.AppField>
@@ -81,8 +81,8 @@ function CreateBenefitPlanPage() {
               {(field) => (
                 <field.FormSelect
                   values={positionOptions}
-                  label="Jabatan / Posisi"
-                  placeholder="Pilih Posisi"
+                  label="Position"
+                  placeholder="Select Position"
                 />
               )}
             </form.AppField>
@@ -92,8 +92,8 @@ function CreateBenefitPlanPage() {
                 {(field) => (
                   <field.FormSelect
                     values={benefitOptions}
-                    label="Jenis Benefit"
-                    placeholder="Pilih Jenis Benefit"
+                    label="Benefit Type"
+                    placeholder="Select Benefit Type"
                   />
                 )}
               </form.AppField>
@@ -103,7 +103,7 @@ function CreateBenefitPlanPage() {
               <form.AppField name="limitAmount">
                 {(field) => (
                   <field.CurrencyField
-                    label="Nominal Plafon (IDR)"
+                    label="Limit Amount (IDR)"
                     placeholder="0"
                   />
                 )}

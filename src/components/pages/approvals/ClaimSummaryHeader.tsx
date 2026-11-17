@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, Flag } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import type { Claim } from '#/types/approval-action.type'
 
@@ -42,26 +42,20 @@ export function ClaimSummaryHeader({
           to={backTo}
           aria-label={backLabel}
           title={backLabel}
-          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-heading transition-colors hover:bg-muted hover:text-primary"
+          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 text-heading transition-all hover:bg-muted hover:text-primary active:scale-[0.97]"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <ArrowLeft className="-ml-0.5 h-4 w-4" aria-hidden="true" />
         </Link>
 
         {/* Claim Information */}
         <div className="min-w-0 space-y-2">
           <div className="flex items-start gap-2">
-            <h2 className="break-words text-2xl font-extrabold leading-tight tracking-tight text-heading">
+            <h2 className="break-words text-balance text-2xl font-extrabold leading-tight tracking-tight text-heading">
               {claimTitle}
             </h2>
-
-            <Flag
-              className="mt-1 h-4 w-4 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
           </div>
 
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+          <p className="text-xs text-muted-foreground">
             Submitted on {submittedLongDate}
           </p>
 

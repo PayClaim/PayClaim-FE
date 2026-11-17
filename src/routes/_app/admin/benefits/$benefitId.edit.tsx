@@ -35,7 +35,7 @@ function RouteComponent() {
           </Button>
         </Link>
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Data benefit tidak ditemukan atau telah dihapus.
+          Benefit data not found or has been deleted.
         </div>
       </main>
     )
@@ -67,9 +67,9 @@ function EditBenefitFormContent({
   })
 
   const periodTypeOption = [
-    { label: 'Monthly (Bulanan)', value: 'Monthly' },
-    { label: 'Yearly (Tahunan)', value: 'Yearly' },
-    { label: 'One Time (Sekali Pakai)', value: 'OneTime' },
+    { label: 'Monthly', value: 'Monthly' },
+    { label: 'Yearly', value: 'Yearly' },
+    { label: 'One Time', value: 'OneTime' },
   ]
 
   const categoryOptions = categories.map((c) => ({
@@ -96,7 +96,7 @@ function EditBenefitFormContent({
               Edit Master Benefit
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              ID Benefit: <span className="font-mono text-heading">{benefitId}</span>
+              ID: <span className="font-mono text-heading">{benefitId}</span>
             </p>
           </div>
         </div>
@@ -114,8 +114,8 @@ function EditBenefitFormContent({
               <form.AppField name="name">
                 {(field) => (
                   <field.TextField
-                    label="Nama Benefit"
-                    placeholder="Contoh: Kacamata & Lensa, Tunjangan Kesehatan Gigi"
+                    label="Benefit Name"
+                    placeholder="e.g. Eyeglasses & Lenses, Dental Allowance"
                   />
                 )}
               </form.AppField>
@@ -125,8 +125,8 @@ function EditBenefitFormContent({
               {(field) => (
                 <field.FormSelect
                   values={periodTypeOption}
-                  label="Periode Klaim"
-                  placeholder="Pilih Periode"
+                  label="Claim Period"
+                  placeholder="Select Period"
                 />
               )}
             </form.AppField>
@@ -135,8 +135,8 @@ function EditBenefitFormContent({
               {(field) => (
                 <field.FormSelectNumber
                   values={categoryOptions}
-                  label="Kategori Benefit"
-                  placeholder="Pilih Kategori"
+                  label="Benefit Category"
+                  placeholder="Select Category"
                 />
               )}
             </form.AppField>
@@ -145,8 +145,8 @@ function EditBenefitFormContent({
           <form.AppField name="description">
             {(field) => (
               <field.TextArea
-                label="Deskripsi / Ketentuan Benefit"
-                placeholder="Jelaskan ruang lingkup, ketentuan syarat nota, atau rincian reimbursement..."
+                label="Description / Terms"
+                placeholder="Describe scope, receipt requirements, or reimbursement details..."
               />
             )}
           </form.AppField>
@@ -160,7 +160,7 @@ function EditBenefitFormContent({
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Perbarui Benefit"
+                label="Update Benefit"
               />
             </form.AppForm>
           </div>

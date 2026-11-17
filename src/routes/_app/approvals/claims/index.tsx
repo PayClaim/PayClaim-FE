@@ -1,20 +1,14 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+
+import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
+import { idNumberFormatter } from '#/lib/formatter'
+
 import { useQuery } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import {
-  useGetAdminAllClaimsQuery,
-} from '#/features/claims/queries/queries'
-import type { ClaimFilterParams } from '#/features/claims/queries/queries'
-
-import { idNumberFormatter } from '#/lib/formatter'
-import { toDateOnly } from '#/lib/utils'
 
 import {
   formatDate,
@@ -45,6 +39,11 @@ import {
 // =====================================================
 // ROUTE
 // =====================================================
+import { toDateOnly } from '#/lib/utils'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
   validateSearch: (s) => s as ClaimFilterParams,
@@ -54,8 +53,7 @@ export const Route = createFileRoute('/_app/approvals/claims/')({
 
     const canView = roles.some((role) =>
       ['Admin', 'Manager', 'Finance', 'Finance Manager'].some(
-        (allowedRole) =>
-          allowedRole.toLowerCase() === role.toLowerCase(),
+        (allowedRole) => allowedRole.toLowerCase() === role.toLowerCase(),
       ),
     )
 
@@ -92,31 +90,22 @@ function getClaimApprovalStatusConfig(
 ) {
   const normalized = normalizeStatus(status)
 
-  const roleLower = roles.map((role) =>
-    role.trim().toLowerCase(),
-  )
+  const roleLower = roles.map((role) => role.trim().toLowerCase())
 
   const isAdmin = roleLower.includes('admin')
 
   const isFinanceManager = roleLower.includes('finance manager')
 
   const isManager =
-    (
-      roleLower.includes('manager') ||
-      roleLower.includes('project manager')
-    ) && !isFinanceManager
+    (roleLower.includes('manager') || roleLower.includes('project manager')) &&
+    !isFinanceManager
 
   const isFinance = roleLower.includes('finance')
 
   const needsMyApproval =
     !isOwnClaim &&
-    (
-      (normalized === 'submitted' && (isAdmin || isManager)) ||
-      (
-        normalized === 'underreview' &&
-        (isAdmin || isFinance)
-      )
-    )
+    ((normalized === 'submitted' && (isAdmin || isManager)) ||
+      (normalized === 'underreview' && (isAdmin || isFinance)))
 
   if (needsMyApproval) {
     return {
@@ -198,14 +187,9 @@ function RouteComponent() {
   // LOGGED-IN USER
   // =====================================================
 
-  const {
-    data: user,
-    isLoading: isLoadingUser,
-  } = useQuery(getCurrentUser())
+  const { data: user, isLoading: isLoadingUser } = useQuery(getCurrentUser())
 
-  const roles = (user?.roles ?? []).map((role) =>
-    role.trim().toLowerCase(),
-  )
+  const roles = (user?.roles ?? []).map((role) => role.trim().toLowerCase())
 
   const isAdmin = roles.includes('admin')
 
@@ -215,7 +199,7 @@ function RouteComponent() {
 
   const {
     data: response,
-    isFetching,
+    isPending,
     isError,
     error,
   } = useGetAdminAllClaimsQuery(searchRoute)
@@ -231,30 +215,22 @@ function RouteComponent() {
       const aIsOwnClaim = Boolean(
         a.employeeId &&
         user?.employeeId &&
-        a.employeeId.toLowerCase() ===
-          user.employeeId.toLowerCase(),
+        a.employeeId.toLowerCase() === user.employeeId.toLowerCase(),
       )
 
       const bIsOwnClaim = Boolean(
         b.employeeId &&
         user?.employeeId &&
-        b.employeeId.toLowerCase() ===
-          user.employeeId.toLowerCase(),
+        b.employeeId.toLowerCase() === user.employeeId.toLowerCase(),
       )
 
       const aWaiting =
-        getClaimApprovalStatusConfig(
-          a.status,
-          roles,
-          aIsOwnClaim,
-        ).label === 'Waiting for Your Approval'
+        getClaimApprovalStatusConfig(a.status, roles, aIsOwnClaim).label ===
+        'Waiting for Your Approval'
 
       const bWaiting =
-        getClaimApprovalStatusConfig(
-          b.status,
-          roles,
-          bIsOwnClaim,
-        ).label === 'Waiting for Your Approval'
+        getClaimApprovalStatusConfig(b.status, roles, bIsOwnClaim).label ===
+        'Waiting for Your Approval'
 
       // 1. Waiting for Your Approval first.
       if (aWaiting !== bWaiting) {
@@ -263,27 +239,18 @@ function RouteComponent() {
 
       // 2. Sort by SubmittedAt, newest first.
       return (
-        getSubmittedAtTime(b.submittedAt) -
-        getSubmittedAtTime(a.submittedAt)
+        getSubmittedAtTime(b.submittedAt) - getSubmittedAtTime(a.submittedAt)
       )
     })
-  }, [
-    claims,
-    roles,
-    user?.employeeId,
-  ])
+  }, [claims, roles, user?.employeeId])
 
   // =====================================================
   // FILTER STATES
   // =====================================================
 
   const initialDateRange = {
-    from: searchRoute.startDate
-      ? new Date(searchRoute.startDate)
-      : undefined,
-    to: searchRoute.endDate
-      ? new Date(searchRoute.endDate)
-      : undefined,
+    from: searchRoute.startDate ? new Date(searchRoute.startDate) : undefined,
+    to: searchRoute.endDate ? new Date(searchRoute.endDate) : undefined,
   }
 
   const [searchFilter, setSearchFilter] = useState('')
@@ -342,16 +309,12 @@ function RouteComponent() {
       const isOwnClaim = Boolean(
         claim.employeeId &&
         user?.employeeId &&
-        claim.employeeId.toLowerCase() ===
-          user.employeeId.toLowerCase(),
+        claim.employeeId.toLowerCase() === user.employeeId.toLowerCase(),
       )
 
       return (
-        getClaimApprovalStatusConfig(
-          claim.status,
-          roles,
-          isOwnClaim,
-        ).label === 'Waiting for Your Approval'
+        getClaimApprovalStatusConfig(claim.status, roles, isOwnClaim).label ===
+        'Waiting for Your Approval'
       )
     })
 
@@ -363,9 +326,7 @@ function RouteComponent() {
     )
 
     const approvedPaidClaims = claims.filter((claim) =>
-      ['approved', 'paid'].includes(
-        normalizeStatus(claim.status),
-      ),
+      ['approved', 'paid'].includes(normalizeStatus(claim.status)),
     )
 
     const approvedPaidCount = approvedPaidClaims.length
@@ -383,12 +344,7 @@ function RouteComponent() {
       approvedPaidCount,
       approvedPaidAmount,
     }
-  }, [
-    claims,
-    response?.totalCount,
-    user?.employeeId,
-    roles,
-  ])
+  }, [claims, response?.totalCount, user?.employeeId, roles])
 
   // =====================================================
   // FILTER ACTIONS
@@ -437,19 +393,13 @@ function RouteComponent() {
     return (
       <main className="p-6">
         <div className="p-10 text-center text-sm text-destructive">
-          {error instanceof Error
-            ? error.message
-            : 'Failed to load claims.'}
+          {error instanceof Error ? error.message : 'Failed to load claims.'}
         </div>
       </main>
     )
   }
 
-  // =====================================================
-  // LOADING
-  // =====================================================
-
-  if (isFetching || isLoadingUser || !response) {
+  if (isPending) {
     return (
       <main className="space-y-3 py-20 text-center">
         <div className="p-10 text-center text-sm text-muted-foreground">
@@ -503,16 +453,11 @@ function RouteComponent() {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Claims
             </span>
-
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
-              <Receipt
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
 
@@ -528,20 +473,14 @@ function RouteComponent() {
         <div className="space-y-1.5 rounded-xl border border-border bg-card p-4.5 shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold uppercase tracking-wider">
-              {isAdmin
-                ? 'Waiting for Approval'
-                : 'Waiting for Your Approval'}
+              {isAdmin ? 'Waiting for Approval' : 'Waiting for Your Approval'}
             </span>
 
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
-              <Clock
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+              <Clock className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
 
@@ -561,14 +500,10 @@ function RouteComponent() {
             </span>
 
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-              <CheckCircle2
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
           </div>
 
@@ -586,7 +521,7 @@ function RouteComponent() {
         {/* TABLE HEADER & TOOLBAR */}
         <div className="flex flex-col justify-between gap-4 border-b border-border p-5 xl:flex-row xl:items-center">
           <div>
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="font-semibold text-heading text-base text-balance">
               Claim Requests
             </h2>
 
@@ -605,17 +540,18 @@ function RouteComponent() {
                   <input
                     type="text"
                     value={searchFilter}
-                    onChange={(event) =>
-                      setSearchFilter(event.target.value)
-                    }
+                    onChange={(event) => setSearchFilter(event.target.value)}
                     placeholder="Search employee name, or benefits..."
-                    className="w-full rounded-lg rounded-br-none rounded-tr-none border border-border bg-background py-2.25 pr-4 pl-9 text-sm text-heading placeholder:text-muted-foreground focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 focus:outline-hidden"
+                    className="w-full pl-9 pr-9 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                   />
+                  {!searchFilter && (
+                    <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      /
+                    </kbd>
+                  )}
                 </div>
 
-                <Button onClick={applyFilterClick}>
-                  Search
-                </Button>
+                <Button onClick={applyFilterClick}>Search</Button>
               </ButtonGroup>
             </div>
 
@@ -649,10 +585,7 @@ function RouteComponent() {
                   nullLabel="All Claims"
                 />
 
-                <DatePickerWithRange
-                  date={dateRange}
-                  setDate={setDateRange}
-                />
+                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
 
                 {hasActiveFilters && (
                   <Button
@@ -665,9 +598,7 @@ function RouteComponent() {
                   </Button>
                 )}
 
-                <Button onClick={applyFilterClick}>
-                  Apply
-                </Button>
+                <Button onClick={applyFilterClick}>Apply</Button>
               </PopoverContent>
             </Popover>
           </div>
@@ -676,10 +607,7 @@ function RouteComponent() {
         {/* TABLE CONTENT */}
         {claims.length === 0 ? (
           <div className="p-12 text-center">
-            <Receipt
-              size={36}
-              className="mx-auto text-muted-foreground/40"
-            />
+            <Receipt size={36} className="mx-auto text-muted-foreground/40" />
 
             <h3 className="mt-3 font-medium text-foreground">
               No claims found
@@ -696,33 +624,21 @@ function RouteComponent() {
             <table className="w-full min-w-262.5 whitespace-nowrap text-left text-sm">
               <thead className="border-b border-border bg-muted/50 text-xs tracking-wide text-muted-foreground uppercase">
                 <tr>
-                  <th className="px-5 py-3.5 font-medium">
-                    Employee
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Employee</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Claim Type
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Claim Type</th>
 
                   <th className="px-5 py-3.5 font-medium">
                     Benefit / Trip Details
                   </th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Invoice Date
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Invoice Date</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Amount
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Amount</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Submitted
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Submitted</th>
 
-                  <th className="px-5 py-3.5 font-medium">
-                    Status
-                  </th>
+                  <th className="px-5 py-3.5 font-medium">Status</th>
 
                   <th className="px-5 py-3.5" />
                 </tr>
@@ -730,9 +646,7 @@ function RouteComponent() {
 
               <tbody className="divide-y divide-border">
                 {sortedClaims.map((claim) => {
-                  const typeBadge = getClaimTypeBadge(
-                    claim.claimType,
-                  )
+                  const typeBadge = getClaimTypeBadge(claim.claimType)
 
                   const TypeIcon = typeBadge.icon
 
@@ -743,25 +657,26 @@ function RouteComponent() {
                       user.employeeId.toLowerCase(),
                   )
 
-                  const statusConfig =
-                    getClaimApprovalStatusConfig(
-                      claim.status,
-                      roles,
-                      isOwnClaim,
-                    )
+                  const statusConfig = getClaimApprovalStatusConfig(
+                    claim.status,
+                    roles,
+                    isOwnClaim,
+                  )
 
                   return (
                     <tr
                       key={claim.id}
-                      onClick={() =>
+                      onClick={(event) => {
+                        markRecordCardSource(event.currentTarget)
                         navigate({
                           to: '/approvals/claims/$claimId',
                           params: {
                             claimId: claim.id,
                           },
+                          ...viewTransitionNavOptions(),
                         })
-                      }
-                      className="group cursor-pointer transition-colors hover:bg-muted/50"
+                      }}
+                      className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
                     >
                       {/* EMPLOYEE */}
                       <td className="px-5 py-4">
@@ -846,8 +761,7 @@ function RouteComponent() {
             <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Menampilkan {claims.length} dari {response.totalCount} total
-                  claims
+                  Showing {claims.length} of {response.totalCount} total claims
                 </span>
               </div>
 

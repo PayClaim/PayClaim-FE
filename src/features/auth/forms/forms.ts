@@ -32,7 +32,7 @@ export const loginForm = () => {
         await mutation.mutateAsync(value)
         window.location.href = search.redirect ?? '/dashboard'
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Gagal masuk. Periksa username dan password Anda.'))
+        toast.error(getFriendlyErrorMessage(err, 'Sign in failed. Please check your username and password.'))
       }
     },
   })
@@ -57,7 +57,7 @@ export const changePasswordForm = () => {
         toast.success('Password changed successfully')
         await navigate({ to: '/dashboard' })
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengubah kata sandi'))
+        toast.error(getFriendlyErrorMessage(err, 'Failed to change password'))
       }
     },
   })
@@ -81,7 +81,7 @@ export const resetPasswordForm = () => {
         toast.success('Password has been reset successfully')
         form.reset()
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Gagal mengatur ulang kata sandi'))
+        toast.error(getFriendlyErrorMessage(err, 'Failed to reset password'))
       }
     },
   })

@@ -10,6 +10,7 @@ export const useGetAllDepartmentsQuery = () =>
   useQuery({
     queryKey: ['departments'],
     queryFn: async () => api.get<DepartmentResponse[]>('/departments'),
+    staleTime: 10 * 60 * 1000,
   })
 
 export const useGetDepartmentQuery = (id: string) =>
@@ -47,7 +48,30 @@ export const useDeleteDepartmentMutation = () => {
     mutationFn: (id: string) => {
       return api.delete(`/departments/${id}`)
     },
-    onSuccess: () =>
+    // Optimistic remove: baris langsung hilang dari tabel, lalu di-rollback
+    // bila server menolak.
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['departments'] })
+
+      const previous = queryClient.getQueryData<DepartmentResponse[]>([
+        'departments',
+      ])
+
+      if (previous) {
+        queryClient.setQueryData<DepartmentResponse[]>(
+          ['departments'],
+          previous.filter((department) => department.id !== id),
+        )
+      }
+
+      return { previous }
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['departments'], context.previous)
+      }
+    },
+    onSettled: () =>
       queryClient.invalidateQueries({ queryKey: ['departments'] }),
   })
 }

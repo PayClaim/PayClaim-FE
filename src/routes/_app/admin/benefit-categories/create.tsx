@@ -29,7 +29,7 @@ function RouteComponent() {
               Add Benefit Category
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Masukkan nama kategori baru untuk mengelompokkan jenis tunjangan.
+              Enter a new category name to group benefit types.
             </p>
           </div>
         </div>
@@ -45,8 +45,8 @@ function RouteComponent() {
           <form.AppField name="name">
             {(field) => (
               <field.TextField
-                label="Nama Kategori"
-                placeholder="Contoh: Kesehatan, Transportasi, Kebugaran"
+                label="Category Name"
+                placeholder="e.g. Health, Transportation, Wellness"
               />
             )}
           </form.AppField>

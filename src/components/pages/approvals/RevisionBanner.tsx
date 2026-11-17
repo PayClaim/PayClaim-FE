@@ -8,7 +8,7 @@ export function RevisionBanner() {
         aria-hidden="true"
       />
       <div className="text-sm">
-        <p className="font-semibold">Revisi Diperlukan</p>
+        <p className="font-semibold">Revision Required</p>
         <p className="text-xs mt-0.5">
           This claim was returned by the reviewer for revision. Please check the notes on the process card, then click <strong>Edit & Resubmit Claim</strong> to resubmit.
         </p>
