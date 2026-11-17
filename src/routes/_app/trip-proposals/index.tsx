@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
+import type { TripProposalFilterParams } from '#/features/trip-proposals/queries/queries'
 import { Button } from '#/components/ui/button'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
 import { SkeletonSwap } from '#/components/ui/skeleton-swap'
@@ -24,14 +25,27 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Filter,
   Plane,
   Plus,
   Search,
   Users,
   X,
 } from 'lucide-react'
+import type { DateRange } from 'react-day-picker'
+import { ButtonGroup } from '#/components/ui/button-group'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
+import { FilterSelect } from '#/components/FilterSelect'
+import { DatePickerWithRange } from '#/components/DateRangePicker'
+import { PaginationSection } from '#/components/PaginationSection'
+import { toDateOnly } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/trip-proposals/')({
+  validateSearch: (s) => s as TripProposalFilterParams,
   beforeLoad: ({ context }) => {
     if (context.isAdmin || context.isDirector) {
       throw redirect({ to: '/dashboard' })
@@ -149,6 +163,7 @@ type ProposalTab =
   'ALL' | 'WAITING' | 'APPROVED' | 'COMPLETED' | 'REVISION_OR_REJECTED'
 
 function RouteComponent() {
+  const routeQuery = Route.useSearch()
   const navigate = useNavigate()
   const { data: user } = useQuery(getCurrentUser())
 
@@ -157,13 +172,25 @@ function RouteComponent() {
     isError,
     isFetching,
     error,
-  } = useGetAllProposalsQuery(undefined, user?.employeeId)
+  } = useGetAllProposalsQuery(routeQuery, user?.employeeId)
+
+  const initialDateRange = {
+    from: routeQuery.startDateFrom
+      ? new Date(routeQuery.startDateFrom)
+      : undefined,
+    to: routeQuery.startDateTo ? new Date(routeQuery.startDateTo) : undefined,
+  }
 
   const proposals = proposalResponse?.data || []
 
   // Filter & Search states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<ProposalTab>('ALL')
+  const [searchQuery, setSearchQuery] = useState(routeQuery.destination ?? '')
+
+  const [statusQuery, setStatusQuery] = useState(routeQuery.status)
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialDateRange,
+  )
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -208,95 +235,63 @@ function RouteComponent() {
     }
   }, [proposals])
 
-  // Filtered proposals based on active tab and search query
-  const filteredProposals = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+  // =====================================================
+  // FILTER OPTIONS
+  // =====================================================
 
-    return proposals.filter((proposal) => {
-      const norm = normalizeStatus(proposal.status)
+  const statusOptions = [
+    { label: 'Submitted', optionValue: 'Submitted' },
+    { label: 'Under Review', optionValue: 'UnderReview' },
+    { label: 'Needs Revision', optionValue: 'NeedsRevision' },
+    { label: 'Approved', optionValue: 'Approved' },
+    { label: 'Rejected', optionValue: 'Rejected' },
+    { label: 'Completed', optionValue: 'Completed' },
+    { label: 'Cancelled', optionValue: 'Cancelled' },
+    {
+      label: 'Finance Manager Review',
+      optionValue: 'FinanceManagerReview',
+    },
+  ]
 
-      // Tab filter
-      if (activeTab === 'WAITING') {
-        if (
-          ![
-            'submitted',
-            'underreview',
-            'financemanagerreview',
-            'pending',
-          ].includes(norm)
-        ) {
-          return false
-        }
-      } else if (activeTab === 'APPROVED') {
-        if (norm !== 'approved') return false
-      } else if (activeTab === 'COMPLETED') {
-        if (norm !== 'completed') return false
-      } else if (activeTab === 'REVISION_OR_REJECTED') {
-        if (!['needsrevision', 'rejected', 'cancelled'].includes(norm)) {
-          return false
-        }
-      }
+  const hasActiveFilters = Boolean(
+    searchQuery || statusQuery || dateRange?.from || dateRange?.to,
+  )
 
-      // Search query
-      if (q) {
-        const dest = (proposal.destination || '').toLowerCase()
-        const pic = (proposal.picName || '').toLowerCase()
-        const id = (proposal.id || '').toLowerCase()
+  // =====================================================
+  // APPLY FILTER
+  // =====================================================
 
-        return dest.includes(q) || pic.includes(q) || id.includes(q)
-      }
-
-      return true
+  const applyFilterClick = () => {
+    navigate({
+      to: '.',
+      search: {
+        destination: searchQuery.trim() || undefined,
+        status: statusQuery,
+        startDateFrom: toDateOnly(dateRange?.from),
+        startDateTo: toDateOnly(dateRange?.to),
+      },
     })
-  }, [proposals, activeTab, searchQuery])
+  }
 
-  const sortedProposals = useMemo(() => {
-    const getProposalPriority = (status: string): number => {
-      const normalized = normalizeStatus(status)
+  // =====================================================
+  // RESET FILTER
+  // =====================================================
 
-      if (normalized === 'needsrevision') {
-        return 0
-      }
+  const resetFilters = () => {
+    setSearchQuery('')
+    setStatusQuery(undefined)
+    setDateRange(undefined)
 
-      if (
-        [
-          'submitted',
-          'underreview',
-          'financemanagerreview',
-          'pending',
-        ].includes(normalized)
-      ) {
-        return 1
-      }
-
-      if (normalized === 'approved') {
-        return 2
-      }
-
-      if (normalized === 'completed') {
-        return 3
-      }
-
-      if (['rejected', 'cancelled'].includes(normalized)) {
-        return 4
-      }
-
-      return 5
-    }
-
-    return [...filteredProposals].sort((a, b) => {
-      const priorityDifference =
-        getProposalPriority(a.status) - getProposalPriority(b.status)
-
-      if (priorityDifference !== 0) {
-        return priorityDifference
-      }
-
-      return (
-        getSubmittedAtTime(b.submittedAt) - getSubmittedAtTime(a.submittedAt)
-      )
+    navigate({
+      to: '.',
+      search: {
+        destination: undefined,
+        status: undefined,
+        startDateFrom: undefined,
+        startDateTo: undefined,
+      },
     })
-  }, [filteredProposals])
+  }
 
   if (isError) {
     return (
@@ -311,7 +306,7 @@ function RouteComponent() {
     )
   }
 
-  if (isFetching && proposals.length === 0) {
+  if (isFetching || !proposalResponse) {
     return (
       <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
         {null}
@@ -319,9 +314,18 @@ function RouteComponent() {
     )
   }
 
+  const {
+    data: _data,
+    errors: _errors,
+    message: _message,
+    statusCode: _statusCode,
+    success: _success,
+    ...paginationProp
+  } = proposalResponse
+
   return (
     <SkeletonSwap
-      loading={isFetching && proposals.length === 0}
+      loading={proposals.length === 0}
       skeleton={<ListPageSkeleton />}
     >
       <main className="space-y-6">
@@ -420,7 +424,7 @@ function RouteComponent() {
         {/* Proposals Table Container */}
         <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
           {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
-          <div className="flex min-w-0 flex-col gap-4 p-5 border-b border-border">
+          <div className="flex min-w-0 justify-between gap-4 p-5 border-b border-border">
             {' '}
             <div>
               <h2 className="font-semibold text-heading text-base">
@@ -431,97 +435,77 @@ function RouteComponent() {
                 and supporting documents.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-              {/* Segmented Status Tabs */}
-              <div className="flex w-fit max-w-full min-w-0 shrink-0 flex-nowrap overflow-x-auto whitespace-nowrap rounded-lg border border-border bg-muted/40 p-1 text-xs">
-                {' '}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('ALL')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    activeTab === 'ALL'
-                      ? 'bg-card text-foreground shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('WAITING')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    activeTab === 'WAITING'
-                      ? 'bg-card text-amber-600 dark:text-amber-400 shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Waiting Review
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('APPROVED')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    activeTab === 'APPROVED'
-                      ? 'bg-card text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Approved
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('COMPLETED')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    activeTab === 'COMPLETED'
-                      ? 'bg-card text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Completed
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('REVISION_OR_REJECTED')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    activeTab === 'REVISION_OR_REJECTED'
-                      ? 'bg-card text-rose-600 dark:text-rose-400 shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Revision / Rejected
-                </button>
+            <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
+              <div className="flex grow items-center gap-3">
+                <ButtonGroup>
+                  <div className="relative max-w-70 grow sm:w-64">
+                    <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          applyFilterClick()
+                        }
+                      }}
+                      placeholder="Search destination..."
+                      className="w-full rounded-lg rounded-br-none rounded-tr-none border border-border bg-background py-2.25 pr-4 pl-9 text-sm text-heading placeholder:text-muted-foreground focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30 focus:outline-hidden"
+                    />
+                  </div>
+
+                  <Button onClick={applyFilterClick}>Search</Button>
+                </ButtonGroup>
               </div>
 
-              {/* Quick Search */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search destination, PIC..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8.5 pr-9 py-1.5 text-xs bg-muted/40 border border-border rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/50 transition-colors"
-                />
-                {searchQuery ? (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    /
-                  </kbd>
-                )}
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button>
+                    <Filter />
+                    Filter
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent
+                  align="end"
+                  className="grid w-fit grid-cols-1 gap-4"
+                >
+                  <FilterSelect
+                    val={statusQuery}
+                    setValue={setStatusQuery}
+                    options={statusOptions}
+                    filterLabel="Status"
+                    nullLabel="All Status"
+                    nullable
+                  />
+
+                  <DatePickerWithRange
+                    placeholder="Trip start date range"
+                    date={dateRange}
+                    setDate={setDateRange}
+                  />
+
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetFilters}
+                      className="h-9 border text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Reset Filter
+                    </Button>
+                  )}
+
+                  <Button onClick={applyFilterClick}>Apply</Button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
           {/* Table Content */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] text-left border-collapse text-xs">
+            <table className="w-full min-w-275 text-left border-collapse text-xs">
               {' '}
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
@@ -535,7 +519,7 @@ function RouteComponent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {sortedProposals.map((proposal) => {
+                {proposals.map((proposal) => {
                   const statusConfig = getProposalStatusConfig(proposal.status)
 
                   const isCurrentUserPic = Boolean(
@@ -653,7 +637,7 @@ function RouteComponent() {
                   )
                 })}
 
-                {filteredProposals.length === 0 && (
+                {proposals.length === 0 && (
                   <tr>
                     <td
                       colSpan={7}
@@ -663,7 +647,7 @@ function RouteComponent() {
                         <FileText className="w-8 h-8 text-muted-foreground/40" />
                         <p className="font-medium">No trip proposals found</p>
                         <p className="text-xs text-muted-foreground/80">
-                          {searchQuery || activeTab !== 'ALL'
+                          {searchQuery
                             ? 'Try changing your search keywords or status tab.'
                             : 'You are not registered in any business trip proposals yet.'}
                         </p>
@@ -676,16 +660,16 @@ function RouteComponent() {
           </div>
 
           {/* Footer info bar */}
-          <div className="px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground flex items-center justify-between">
-            <span>
-              Showing {filteredProposals.length} of {proposals.length} total
-              proposals
-            </span>
-            {activeTab !== 'ALL' && (
-              <span className="font-medium text-foreground">
-                Active filter: {activeTab}
+          <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <span>
+                Showing {proposals.length} of {proposals.length} total proposals
               </span>
-            )}
+            </div>
+
+            <div className="w-fit grow-0">
+              <PaginationSection pagination={paginationProp} />
+            </div>
           </div>
         </section>
       </main>
