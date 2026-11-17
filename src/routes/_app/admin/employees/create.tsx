@@ -2,7 +2,7 @@ import { useGetAllDepartmentsQuery } from '#/features/departments/queries/querie
 import { createEmployeeForm } from '#/features/employees/forms/forms'
 import { useGetAllEmployeesQuery } from '#/features/employees/queries/queries'
 import { useGetAllPositionsQuery } from '#/features/positions/queries/queries'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { ArrowLeft, Users } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { buildEmployeeGroups } from '#/features/employees/utils/employee-options'
@@ -42,7 +42,11 @@ function RouteComponent() {
   return (
     <main className="max-w-2xl mx-auto space-y-6">
       <Link to="/admin/employees">
-        <Button variant="outline" size="sm" className="gap-2 text-xs font-semibold">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 text-xs font-semibold"
+        >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Employee List</span>
         </Button>
