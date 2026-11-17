@@ -715,7 +715,7 @@ function RouteComponent() {
       {/* PROPOSAL TABLE */}
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* TABLE HEADER */}
-        <div className="flex min-w-0 flex-col gap-4 border-b border-border p-5">
+        <div className="flex justify-between min-w-0 gap-4 border-b border-border p-5">
           <div>
             <h2 className="text-base font-semibold text-foreground">
               Trip Proposal Requests
@@ -773,7 +773,7 @@ function RouteComponent() {
                 />
 
                 <DatePickerWithRange
-                  placeholder="Trip start date"
+                  placeholder="Trip start date range"
                   date={dateRange}
                   setDate={setDateRange}
                 />
@@ -848,8 +848,7 @@ function RouteComponent() {
             <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Showing {proposals.length} of{' '}
-                  {proposalResponse.totalCount ?? proposals.length} total
+                  Showing {proposals.length} of {proposals.length} total
                   proposals
                 </span>
               </div>
