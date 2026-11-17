@@ -24,6 +24,7 @@ import {
 import {
   ArrowRight,
   CheckCircle2,
+  Circle,
   Clock,
   FileText,
   Filter,
@@ -151,7 +152,11 @@ function RouteComponent() {
   ]
 
   const hasActiveFilters = Boolean(
-    searchQuery || statusQuery || dateRange || typeQuery,
+    search.search ||
+    statusQuery ||
+    dateRange?.from ||
+    dateRange?.to ||
+    typeQuery,
   )
 
   const applyFilterClick = () => {
@@ -322,8 +327,16 @@ function RouteComponent() {
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button>
-                    <Filter /> Filter
+                  <Button className="relative">
+                    <Filter />
+                    Filter
+                    {hasActiveFilters && (
+                      <Circle
+                        fill="#ff0000"
+                        color="#00000000"
+                        className="absolute -right-1 -top-1"
+                      />
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -349,6 +362,7 @@ function RouteComponent() {
                   />
 
                   <DatePickerWithRange
+                    className="w-full"
                     placeholder="Claim submitted date"
                     date={dateRange}
                     setDate={setDateRange}

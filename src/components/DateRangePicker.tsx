@@ -14,10 +14,12 @@ export function DatePickerWithRange({
   date,
   setDate,
   placeholder,
+  className,
 }: {
   date: DateRange | undefined
   setDate: (d: DateRange | undefined) => void
   placeholder?: string
+  className?: string
 }) {
   return (
     <div className="mx-auto w-full">
@@ -26,7 +28,7 @@ export function DatePickerWithRange({
           <Button
             variant="outline"
             id="date-picker-range"
-            className="justify-start px-2.5 font-normal"
+            className={`justify-start px-2.5 font-normal ${className}`}
           >
             <CalendarIcon data-icon="inline-start" />
             {date?.from ? (

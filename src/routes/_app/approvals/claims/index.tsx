@@ -4,9 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import {
-  useGetAdminAllClaimsQuery,
-} from '#/features/claims/queries/queries'
+import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 
 import { idNumberFormatter } from '#/lib/formatter'
@@ -36,6 +34,8 @@ import { PaginationSection } from '#/components/PaginationSection'
 import {
   ArrowRight,
   CheckCircle2,
+  Circle,
+  CircleSmall,
   Clock,
   Filter,
   Receipt,
@@ -285,11 +285,11 @@ function RouteComponent() {
   const claimTypeOptions = [
     { label: 'Benefit', optionValue: 'Benefit' },
     {
-      label: 'OperationalReimbursement',
+      label: 'Operational',
       optionValue: 'OperationalReimbursement',
     },
     {
-      label: 'BusinessTripReimbursement',
+      label: 'Business Trip',
       optionValue: 'BusinessTripReimbursement',
     },
   ]
@@ -364,7 +364,11 @@ function RouteComponent() {
   // =====================================================
 
   const hasActiveFilters = Boolean(
-    searchFilter || claimType || dateRange || statusFilter,
+    searchRoute.search ||
+    claimType ||
+    dateRange?.from ||
+    dateRange?.to ||
+    statusFilter,
   )
 
   const applyFilterClick = () => {
@@ -565,9 +569,16 @@ function RouteComponent() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button>
+                <Button className="relative">
                   <Filter />
                   Filter
+                  {hasActiveFilters && (
+                    <Circle
+                      fill="#ff0000"
+                      color="#00000000"
+                      className="absolute -right-1 -top-1"
+                    />
+                  )}
                 </Button>
               </PopoverTrigger>
 
@@ -593,7 +604,11 @@ function RouteComponent() {
                   nullLabel="All Claims"
                 />
 
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                <DatePickerWithRange
+                  className="w-full"
+                  date={dateRange}
+                  setDate={setDateRange}
+                />
 
                 {hasActiveFilters && (
                   <Button

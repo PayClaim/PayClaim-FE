@@ -23,6 +23,7 @@ import {
   ArrowRight,
   Calendar,
   CheckCircle2,
+  Circle,
   Clock,
   FileText,
   Filter,
@@ -254,7 +255,7 @@ function RouteComponent() {
   ]
 
   const hasActiveFilters = Boolean(
-    searchQuery || statusQuery || dateRange?.from || dateRange?.to,
+    routeQuery.search || statusQuery || dateRange?.from || dateRange?.to,
   )
 
   // =====================================================
@@ -458,9 +459,16 @@ function RouteComponent() {
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button>
+                  <Button className="relative">
                     <Filter />
                     Filter
+                    {hasActiveFilters && (
+                      <Circle
+                        fill="#ff0000"
+                        color="#00000000"
+                        className="absolute -right-1 -top-1"
+                      />
+                    )}
                   </Button>
                 </PopoverTrigger>
 
@@ -478,6 +486,7 @@ function RouteComponent() {
                   />
 
                   <DatePickerWithRange
+                    className="w-full"
                     placeholder="Trip start date range"
                     date={dateRange}
                     setDate={setDateRange}
