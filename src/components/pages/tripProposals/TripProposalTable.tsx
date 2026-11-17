@@ -1,5 +1,6 @@
 
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 
 import type { TripProposal } from '#/types/tripProposals.type'
 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import { api } from '#/lib/api-client'
 import {
   markRecordCardSource,
   viewTransitionNavOptions,
@@ -38,6 +40,7 @@ export function TripProposalTable({
   activeTab,
 }: Props) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const hasActiveFilters = Boolean(
     searchQuery.trim() || activeTab !== 'ALL',
@@ -63,6 +66,13 @@ export function TripProposalTable({
             {proposals.map((proposal) => (
               <tr
                 key={proposal.id}
+                onMouseEnter={() => {
+                  void queryClient.prefetchQuery({
+                    queryKey: ['trip-proposals', proposal.id],
+                    queryFn: () => api.get(`/trip-proposals/${proposal.id}`),
+                    staleTime: 30_000,
+                  })
+                }}
                 onClick={(event) => {
                   markRecordCardSource(event.currentTarget)
                   navigate({

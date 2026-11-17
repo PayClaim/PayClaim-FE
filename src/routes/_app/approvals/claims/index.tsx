@@ -1,14 +1,21 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-
-import { useGetAdminAllClaimsQuery } from '#/features/claims/queries/queries'
-import type { ClaimFilterParams } from '#/features/claims/queries/queries'
-import { idNumberFormatter } from '#/lib/formatter'
-
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
+import {
+  useGetAdminAllClaimsQuery,
+} from '#/features/claims/queries/queries'
+import type { ClaimFilterParams } from '#/features/claims/queries/queries'
+
+import { idNumberFormatter } from '#/lib/formatter'
+import { api } from '#/lib/api-client'
+import { toDateOnly } from '#/lib/utils'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   formatDate,
@@ -38,11 +45,6 @@ import {
 // =====================================================
 // ROUTE
 // =====================================================
-import { toDateOnly } from '#/lib/utils'
-import {
-  markRecordCardSource,
-  viewTransitionNavOptions,
-} from '#/lib/view-transition'
 
 export const Route = createFileRoute('/_app/approvals/claims/')({
   validateSearch: (s) => s as ClaimFilterParams,
@@ -181,6 +183,7 @@ function getClaimApprovalStatusConfig(
 function RouteComponent() {
   const searchRoute = Route.useSearch()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // =====================================================
   // LOGGED-IN USER
@@ -660,6 +663,13 @@ function RouteComponent() {
                   return (
                     <tr
                       key={claim.id}
+                      onMouseEnter={() => {
+                        void queryClient.prefetchQuery({
+                          queryKey: ['claims', claim.id],
+                          queryFn: () => api.get(`/claims/${claim.id}`),
+                          staleTime: 30_000,
+                        })
+                      }}
                       onClick={(event) => {
                         markRecordCardSource(event.currentTarget)
                         navigate({

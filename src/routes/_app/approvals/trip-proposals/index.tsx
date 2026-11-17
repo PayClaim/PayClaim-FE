@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DateRange } from 'react-day-picker'
 
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -14,6 +14,7 @@ import {
 } from '#/lib/view-transition'
 
 import { toDateOnly } from '#/lib/utils'
+import { api } from '#/lib/api-client'
 
 import {
   ArrowRight,
@@ -270,6 +271,7 @@ function ProposalRow({
   currentFullName?: string
 }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const ownProposal = isOwnProposal(
     proposal,
@@ -286,6 +288,13 @@ function ProposalRow({
   return (
     <tr
       className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
+      onMouseEnter={() => {
+        void queryClient.prefetchQuery({
+          queryKey: ['trip-proposals', proposal.id],
+          queryFn: () => api.get(`/trip-proposals/${proposal.id}`),
+          staleTime: 30_000,
+        })
+      }}
       onClick={(event) => {
         markRecordCardSource(event.currentTarget)
         navigate({
@@ -378,6 +387,7 @@ function ProposalRow({
 function RouteComponent() {
   const routeQuery = Route.useSearch()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const { data: user } = useQuery(getCurrentUser())
 
