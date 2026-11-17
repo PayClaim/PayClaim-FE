@@ -42,7 +42,7 @@ export function ClaimProcessTimeline({
     Boolean(claim.departmentName?.toLowerCase().includes('finance'))
 
   return (
-    <div className="relative pl-10 space-y-6">
+    <div className="relative pl-10 space-y-6 timeline-stagger">
       {showFinanceStage && (
         <FinanceStage
           claim={claim}

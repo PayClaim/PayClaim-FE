@@ -4,12 +4,20 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
+import { ErrorComponent } from '#/components/ErrorAndLoading'
+import { ListPageSkeleton } from '#/components/ui/page-skeleton'
+import { SkeletonSwap } from '#/components/ui/skeleton-swap'
+import { AnimatedNumber } from '#/components/ui/animated-number'
 import { Button } from '#/components/ui/button'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import {
   ArrowRight,
@@ -54,8 +62,7 @@ function RouteComponent() {
   const {
     data: claimResponse,
     isError,
-    error,
-    isFetching,
+    isPending,
   } = useGetAllClaimsQuery(search)
 
   const claims = claimResponse?.data ?? []
@@ -156,26 +163,30 @@ function RouteComponent() {
     )
   }
 
-  if (!claimResponse || isFetching) {
+  if (isError) return <ErrorComponent pageTitle="My Claims" />
+
+  if (isPending) {
     return (
-      <main className="py-20 text-center space-y-3">
-        <div className="inline-block w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">
-          Loading trip proposals...
-        </p>
-      </main>
+      <SkeletonSwap loading skeleton={<ListPageSkeleton />}>
+        {null}
+      </SkeletonSwap>
     )
   }
 
+  // Runtime safety: cache could be emptied even though the query type is
+  // non-nullable.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (!claimResponse) return <NotFoundPage />
   const { data, errors, message, statusCode, success, ...paginationProp } =
     claimResponse
 
   return (
+    <SkeletonSwap loading={isPending} skeleton={<ListPageSkeleton />}>
     <main className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-heading">
+          <h1 className="text-2xl font-bold tracking-tight text-heading text-balance">
             My Claims
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -202,12 +213,12 @@ function RouteComponent() {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Claims
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-heading">
-            {metrics.totalCount}
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
+            <AnimatedNumber value={metrics.totalCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">
@@ -227,8 +238,8 @@ function RouteComponent() {
               <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-amber-600 dark:text-amber-400">
-            {metrics.waitingCount}
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
+            <AnimatedNumber value={metrics.waitingCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">
@@ -248,8 +259,8 @@ function RouteComponent() {
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
-            {metrics.approvedPaidCount}
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
+            <AnimatedNumber value={metrics.approvedPaidCount} duration={400} />
           </div>
           <p className="text-xs text-muted-foreground">
             <span className="tabular-nums font-medium">
@@ -264,19 +275,16 @@ function RouteComponent() {
       <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
         {/* Table Header Toolbar: Title on left, Status Pills + Search on right */}
         <div className="flex justify-between min-w-0 gap-4 p-5 border-b border-border">
-          {' '}
           <div>
-            <h2 className="font-semibold text-foreground text-base">
-              Riwayat Klaim
+            <h2 className="font-semibold text-heading text-base">
+              Claim Submission History
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Klik pada baris klaim untuk melihat detail pengajuan dan progres
-              approval.
+              Select a claim row to inspect submission details and approval progress.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             {/* Segmented Status Tabs */}
-
             <div className="flex grow items-center gap-3">
               <ButtonGroup>
                 <div className="relative grow max-w-70 sm:w-64">
@@ -372,13 +380,15 @@ function RouteComponent() {
                 return (
                   <tr
                     key={claim.id}
-                    onClick={() =>
+                    onClick={(event) => {
+                      markRecordCardSource(event.currentTarget)
                       navigate({
                         to: '/claims/$claimId',
                         params: { claimId: claim.id },
+                        ...viewTransitionNavOptions(),
                       })
-                    }
-                    className="hover:bg-muted/40 transition-colors cursor-pointer group"
+                    }}
+                    className="row-enter hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
                     {/* Keterangan / Manfaat */}
                     <td className="py-3.5 px-5 min-w-60 max-w-75">
@@ -436,9 +446,9 @@ function RouteComponent() {
 
                     {/* Aksi */}
                     <td className="py-3.5 px-5 text-right whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
                         <span>Detail</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                       </span>
                     </td>
                   </tr>
@@ -453,7 +463,7 @@ function RouteComponent() {
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-muted-foreground/40" />
-                      <p className="font-medium">No claim found</p>
+                      <p className="font-medium">No claims found</p>
                       <p className="text-xs text-muted-foreground/80">
                         {searchQuery
                           ? 'Try changing your search keywords or status.'
@@ -475,7 +485,7 @@ function RouteComponent() {
             </span>
             {/* {activeTab !== 'ALL' && (
               <span className="font-medium text-foreground">
-                Filter aktif: {activeTab}
+                Active filter: {activeTab}
               </span>
             )} */}
           </div>
@@ -485,5 +495,6 @@ function RouteComponent() {
         </div>
       </section>
     </main>
+    </SkeletonSwap>
   )
 }

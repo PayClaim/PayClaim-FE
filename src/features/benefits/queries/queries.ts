@@ -11,6 +11,7 @@ export const useGetAllBenefitsQuery = () =>
     queryFn: () => {
       return api.get<BenefitResponse[]>('/benefits')
     },
+    staleTime: 10 * 60 * 1000,
   })
 
 export const useGetBenefitQuery = (id: string) =>

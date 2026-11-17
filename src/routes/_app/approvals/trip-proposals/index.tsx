@@ -13,6 +13,10 @@ import { getCurrentUser } from '#/features/auth/queries/queries'
 import { useGetAllProposalsQuery } from '#/features/trip-proposals/queries/queries'
 import type { TripProposalFilterParams } from '#/features/trip-proposals/queries/queries'
 import type { TripProposal } from '#/types/tripProposals.type'
+import {
+  markRecordCardSource,
+  viewTransitionNavOptions,
+} from '#/lib/view-transition'
 
 import { toDateOnly } from '#/lib/utils'
 
@@ -314,15 +318,15 @@ function ProposalRow({
 
   return (
     <tr
-      className="group cursor-pointer transition-colors hover:bg-muted/50"
-      onClick={() =>
+      className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
+      onClick={(event) => {
+        markRecordCardSource(event.currentTarget)
         navigate({
           to: '/approvals/trip-proposals/$id',
-          params: {
-            id: proposal.id,
-          },
+          params: { id: proposal.id },
+          ...viewTransitionNavOptions(),
         })
-      }
+      }}
     >
       {/* Destination */}
       <td className="px-5 py-4">
@@ -706,13 +710,11 @@ function RouteComponent() {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Proposals
             </span>
-
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
-              <Plane className="h-4 w-4" aria-hidden="true" />
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Plane className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
 
@@ -737,8 +739,7 @@ function RouteComponent() {
               <Clock className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
 
@@ -761,8 +762,7 @@ function RouteComponent() {
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedCount}
           </div>
 

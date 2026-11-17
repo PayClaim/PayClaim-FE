@@ -1,7 +1,14 @@
 import Header from '#/components/Header'
 import { Sidebar } from '#/components/Sidebar'
 import { getCurrentUser } from '#/features/auth/queries/queries'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useOverscrollBounce } from '#/hooks/use-overscroll-bounce'
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useMatches,
+} from '@tanstack/react-router'
+import { useRef } from 'react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_app')({
@@ -21,7 +28,7 @@ export const Route = createFileRoute('/_app')({
         isDirector,
       }
     } catch (err) {
-      toast.error('Sesi masuk telah berakhir, silakan login kembali')
+      toast.error('Your session has expired, please sign in again')
       throw redirect({
         to: '/login',
         search: {
@@ -33,13 +40,23 @@ export const Route = createFileRoute('/_app')({
 })
 
 function RouteComponent() {
+  const matches = useMatches()
+  const activePath = matches[matches.length - 1]?.pathname ?? 'root'
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  // Efek "mentok" saat scroll mencapai ujung halaman.
+  useOverscrollBounce(contentRef)
+
   return (
     <div className="bg-background">
       <Sidebar className="fixed" />
-      <div className="grow ms-75 min-h-screen pb-16">
+      <div className="grow ms-75 min-h-screen pb-16 [overflow-anchor:none]">
         <Header />
-        <div className="p-7.5">
-          <Outlet />
+        {/* Bounce hanya untuk area konten; header tetap diam. */}
+        <div ref={contentRef}>
+          <div key={activePath} className="p-7.5 page-flow-in">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

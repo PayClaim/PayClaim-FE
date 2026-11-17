@@ -68,7 +68,7 @@ export async function api<T>(
   } catch (netErr: unknown) {
     throw new ApiError(
       0,
-      'Gagal terhubung ke server. Pastikan koneksi jaringan aktif dan server backend sedang berjalan.',
+      'Failed to connect to the server. Make sure your network connection is active and the backend server is running.',
       netErr,
     )
   }
@@ -85,21 +85,21 @@ export async function api<T>(
 
   if (!res.ok) {
     let errorMessage: string =
-      res.statusText || 'Terjadi kesalahan pada permintaan data.'
+      res.statusText || 'An error occurred while processing the request.'
     if (Array.isArray(data?.errors) && data.errors.length > 0) {
       errorMessage = data.errors.join('\n')
     } else if (data?.message) {
       errorMessage = data.message
     } else if (res.status === 401) {
-      errorMessage = 'Sesi login Anda telah berakhir. Silakan login kembali.'
+      errorMessage = 'Your login session has expired. Please sign in again.'
     } else if (res.status === 403) {
       errorMessage =
-        'Akses ditolak: Anda tidak memiliki izin untuk melakukan tindakan ini.'
+        'Access denied: You do not have permission to perform this action.'
     } else if (res.status === 404) {
-      errorMessage = 'Data atau layanan yang diminta tidak ditemukan.'
+      errorMessage = 'The requested data or service was not found.'
     } else if (res.status >= 500) {
       errorMessage =
-        'Terjadi gangguan pada server internal. Silakan coba kembali beberapa saat lagi.'
+        'An internal server error occurred. Please try again later.'
     }
     throw new ApiError(res.status, errorMessage, data)
   }

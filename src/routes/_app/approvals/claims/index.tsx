@@ -32,7 +32,6 @@ import {
 import { FilterSelect } from '#/components/FilterSelect'
 import { DatePickerWithRange } from '#/components/DateRangePicker'
 import { PaginationSection } from '#/components/PaginationSection'
-
 import {
   ArrowRight,
   CheckCircle2,
@@ -215,7 +214,7 @@ function RouteComponent() {
 
   const {
     data: response,
-    isFetching,
+    isPending,
     isError,
     error,
   } = useGetAdminAllClaimsQuery(searchRoute)
@@ -445,11 +444,7 @@ function RouteComponent() {
     )
   }
 
-  // =====================================================
-  // LOADING
-  // =====================================================
-
-  if (isFetching || isLoadingUser || !response) {
+  if (isPending || isLoadingUser || !response) {
     return (
       <main className="space-y-3 py-20 text-center">
         <div className="p-10 text-center text-sm text-muted-foreground">
@@ -503,16 +498,11 @@ function RouteComponent() {
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Claims
             </span>
-
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300">
-              <Receipt
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Receipt className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-heading">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-heading">
             {metrics.totalCount}
           </div>
 
@@ -540,8 +530,7 @@ function RouteComponent() {
               />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-amber-600 dark:text-amber-400">
             {metrics.waitingCount}
           </div>
 
@@ -567,8 +556,7 @@ function RouteComponent() {
               />
             </div>
           </div>
-
-          <div className="font-mono text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
             {metrics.approvedPaidCount}
           </div>
 
@@ -586,7 +574,7 @@ function RouteComponent() {
         {/* TABLE HEADER & TOOLBAR */}
         <div className="flex flex-col justify-between gap-4 border-b border-border p-5 xl:flex-row xl:items-center">
           <div>
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="font-semibold text-heading text-base text-balance">
               Claim Requests
             </h2>
 
@@ -753,15 +741,17 @@ function RouteComponent() {
                   return (
                     <tr
                       key={claim.id}
-                      onClick={() =>
+                      onClick={(event) => {
+                        markRecordCardSource(event.currentTarget)
                         navigate({
                           to: '/approvals/claims/$claimId',
                           params: {
                             claimId: claim.id,
                           },
+                          ...viewTransitionNavOptions(),
                         })
-                      }
-                      className="group cursor-pointer transition-colors hover:bg-muted/50"
+                      }}
+                      className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
                     >
                       {/* EMPLOYEE */}
                       <td className="px-5 py-4">
@@ -846,8 +836,7 @@ function RouteComponent() {
             <div className="flex items-center justify-between border-t border-border bg-muted/10 px-5 py-3 text-xs text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>
-                  Menampilkan {claims.length} dari {response.totalCount} total
-                  claims
+                  Showing {claims.length} of {response.totalCount} total claims
                 </span>
               </div>
 

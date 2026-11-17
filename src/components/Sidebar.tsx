@@ -320,10 +320,10 @@ export function Sidebar({
                       key={item.label}
                       to={targetTo}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all group my-0.5',
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 group my-0.5',
                         active
                           ? 'bg-blue-50/90 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold shadow-2xs'
-                          : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground',
+                          : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground hover:translate-x-0.5',
                       )}
                     >
                       <div

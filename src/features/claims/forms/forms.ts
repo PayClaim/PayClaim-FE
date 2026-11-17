@@ -146,7 +146,7 @@ export const createClaimForm = (initialBenefitId?: string | null) => {
           })
         }
       } catch (err: unknown) {
-        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan klaim')
+        applyBackendErrorToForm(formApi, err, 'Failed to submit claim')
       }
     },
   })
@@ -203,7 +203,7 @@ export const editClaimForm = (
           params: { claimId },
         })
       } catch (err: unknown) {
-        applyBackendErrorToForm(formApi, err, 'Gagal mengajukan ulang klaim')
+        applyBackendErrorToForm(formApi, err, 'Failed to resubmit claim')
       }
     },
   })

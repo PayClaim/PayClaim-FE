@@ -35,7 +35,7 @@ function RouteComponent() {
           </Button>
         </Link>
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-sm font-semibold">
-          Kategori benefit tidak ditemukan atau telah dihapus.
+          Benefit category not found or has been deleted.
         </div>
       </main>
     )
@@ -74,10 +74,10 @@ function EditCategoryFormContent({
           </div>
           <div>
             <h1 className="text-xl font-bold text-heading tracking-tight">
-              Edit Kategori Benefit
+              Edit Benefit Category
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              ID Kategori: #{categoryId}
+              Category ID: #{categoryId}
             </p>
           </div>
         </div>
@@ -93,8 +93,8 @@ function EditCategoryFormContent({
           <form.AppField name="name">
             {(field) => (
               <field.TextField
-                label="Nama Kategori"
-                placeholder="Contoh: Kesehatan, Transportasi, Kebugaran"
+                label="Category Name"
+                placeholder="e.g. Health, Transportation, Wellness"
               />
             )}
           </form.AppField>
@@ -108,7 +108,7 @@ function EditCategoryFormContent({
             <form.AppForm>
               <form.FormButton
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                label="Perbarui Kategori"
+                label="Update Category"
               />
             </form.AppForm>
           </div>

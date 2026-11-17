@@ -8,6 +8,7 @@ export const useGetAllPositionsQuery = () =>
     queryFn: () => {
       return api.get<PositionResponse[]>('/positions')
     },
+    staleTime: 10 * 60 * 1000,
   })
 
 export const useGetPositionQuery = (id: string) =>

@@ -1,15 +1,10 @@
 import { Button } from '#/components/ui/button'
+import { DetailPageSkeleton } from '#/components/ui/page-skeleton'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 
 export function ClaimLoadingState() {
-  return (
-    <main className="w-full max-w-[1600px] mx-auto">
-      <div className="bg-card p-10 rounded-xl border border-border text-center text-muted-foreground">
-        Loading claim details and approval workflow...
-      </div>
-    </main>
-  )
+  return <DetailPageSkeleton />
 }
 
 interface ClaimErrorStateProps {
