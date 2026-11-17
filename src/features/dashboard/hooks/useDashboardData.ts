@@ -422,11 +422,9 @@ export function useDashboardData() {
         : isFinance
           ? 'UnderReview'
           : isFinanceManager
-            ? hasUnderReviewTrips && !hasFmReviewTrips
-              ? 'UnderReview'
-              : !hasUnderReviewTrips && hasFmReviewTrips
-                ? 'FinanceManagerReview'
-                : undefined
+            ? hasFmReviewTrips
+              ? 'FinanceManagerReview'
+              : 'UnderReview'
             : undefined
 
     addTodayAction({

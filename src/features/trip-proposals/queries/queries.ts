@@ -12,6 +12,7 @@ import type {
   TripProposalDetailResponse,
 } from '#/types/tripProposals.type'
 import type { PaginationGeneric } from '#/types/pagination.type'
+import type { ListKpiSummary } from '#/types/claims.type'
 
 export interface TripProposalFilterParams {
   employeeId?: string
@@ -29,6 +30,7 @@ type PagedResponse<T> = {
   statusCode: number
   message: string
   data: T[]
+  summary?: ListKpiSummary
   pageNumber: number
   pageSize: number
   totalCount: number

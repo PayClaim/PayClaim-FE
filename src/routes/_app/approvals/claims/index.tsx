@@ -299,7 +299,18 @@ function RouteComponent() {
   // =====================================================
 
   const metrics = useMemo(() => {
+    const summary = response?.summary
     const totalCount = response?.totalCount ?? claims.length
+    if (summary) {
+      return {
+        totalCount,
+        totalAmount: summary.totalAmount,
+        waitingCount: summary.waitingCount,
+        waitingAmount: summary.waitingAmount,
+        approvedPaidCount: summary.approvedCount,
+        approvedPaidAmount: summary.approvedAmount,
+      }
+    }
 
     const totalAmount = claims.reduce(
       (sum, claim) => sum + (claim.amount || 0),
@@ -346,7 +357,7 @@ function RouteComponent() {
       approvedPaidCount,
       approvedPaidAmount,
     }
-  }, [claims, response?.totalCount, user?.employeeId, roles])
+  }, [claims, response?.summary, response?.totalCount, user?.employeeId, roles])
 
   // =====================================================
   // FILTER ACTIONS

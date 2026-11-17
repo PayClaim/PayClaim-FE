@@ -37,6 +37,14 @@ export interface ClaimPayActionRequest {
   notes?: string
 }
 
+export interface ListKpiSummary {
+  totalAmount: number
+  waitingCount: number
+  waitingAmount: number
+  approvedCount: number
+  approvedAmount: number
+}
+
 export interface MyClaimResponse {
   pageNumber: number
   pageSize: number
@@ -48,6 +56,7 @@ export interface MyClaimResponse {
   statusCode: number
   message: string
   data: ClaimResponse[]
+  summary?: ListKpiSummary
   errors: null
 }
 

@@ -460,7 +460,18 @@ function RouteComponent() {
   // =====================================================
 
   const metrics = useMemo(() => {
+    const summary = proposalResponse?.summary
     const totalCount = proposalResponse?.totalCount ?? proposals.length
+    if (summary) {
+      return {
+        totalCount,
+        totalBudget: summary.totalAmount,
+        waitingCount: summary.waitingCount,
+        waitingBudget: summary.waitingAmount,
+        approvedCount: summary.approvedCount,
+        approvedBudget: summary.approvedAmount,
+      }
+    }
 
     const totalBudget = proposals.reduce(
       (total, proposal) => total + (proposal.totalAmount || 0),
@@ -507,6 +518,7 @@ function RouteComponent() {
       approvedBudget,
     }
   }, [
+    proposalResponse?.summary,
     proposalResponse?.totalCount,
     proposals,
     currentEmployeeId,

@@ -86,7 +86,19 @@ function RouteComponent() {
 
   // KPI Calculations
   const metrics = useMemo(() => {
+    const summary = claimResponse?.summary
     const totalCount = claimResponse?.totalCount ?? claims.length
+    if (summary) {
+      return {
+        totalCount,
+        totalAmount: summary.totalAmount,
+        waitingCount: summary.waitingCount,
+        waitingAmount: summary.waitingAmount,
+        approvedPaidCount: summary.approvedCount,
+        approvedPaidAmount: summary.approvedAmount,
+      }
+    }
+
     const totalAmount = claims.reduce((sum, c) => sum + (c.amount || 0), 0)
 
     const waitingClaims = claims.filter((c) =>
@@ -115,7 +127,7 @@ function RouteComponent() {
       approvedPaidCount,
       approvedPaidAmount,
     }
-  }, [claims, claimResponse?.totalCount])
+  }, [claims, claimResponse?.summary, claimResponse?.totalCount])
 
   const statusOptions = [
     { label: 'Submitted', optionValue: 'Submitted' },

@@ -526,21 +526,30 @@ function RouteComponent() {
                 <form.AppField
                   name="transactionDate"
                   validators={{
-                    onChange: ({ value }) => {
+                    onChangeListenTo: ['tripProposalId', 'claimType'],
+                    onChange: ({ value, fieldApi }) => {
+                      const activeClaimType =
+                        fieldApi.form.getFieldValue('claimType')
+                      const activeTripId =
+                        fieldApi.form.getFieldValue('tripProposalId')
+                      const activeTrip = approvedTrips.find(
+                        (trip) => trip.id === activeTripId,
+                      )
+
                       if (
-                        currentClaimType === 'BusinessTripReimbursement' &&
-                        selectedTrip
+                        activeClaimType === 'BusinessTripReimbursement' &&
+                        activeTrip
                       ) {
                         if (!value) {
                           return 'Invoice date is required'
                         }
 
-                        if (value < selectedTrip.startDate) {
-                          return `Invoice date cannot be earlier than the trip start date (${selectedTrip.startDate}).`
+                        if (value < activeTrip.startDate) {
+                          return `Invoice date cannot be earlier than the trip start date (${activeTrip.startDate}).`
                         }
 
-                        if (value > selectedTrip.endDate) {
-                          return `Invoice date cannot be later than the trip end date (${selectedTrip.endDate}).`
+                        if (value > activeTrip.endDate) {
+                          return `Invoice date cannot be later than the trip end date (${activeTrip.endDate}).`
                         }
                       }
 

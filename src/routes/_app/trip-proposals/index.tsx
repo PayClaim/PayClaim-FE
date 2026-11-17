@@ -182,7 +182,19 @@ function RouteComponent() {
 
   // KPI Calculations
   const metrics = useMemo(() => {
-    const totalCount = proposals.length
+    const summary = proposalResponse?.summary
+    const totalCount = proposalResponse?.totalCount ?? proposals.length
+    if (summary) {
+      return {
+        totalCount,
+        totalAmount: summary.totalAmount,
+        waitingCount: summary.waitingCount,
+        waitingAmount: summary.waitingAmount,
+        approvedCompletedCount: summary.approvedCount,
+        approvedCompletedAmount: summary.approvedAmount,
+      }
+    }
+
     const totalAmount = proposals.reduce(
       (sum, p) => sum + (p.totalAmount || 0),
       0,
@@ -221,7 +233,7 @@ function RouteComponent() {
       approvedCompletedCount,
       approvedCompletedAmount,
     }
-  }, [proposals])
+  }, [proposals, proposalResponse?.summary, proposalResponse?.totalCount])
 
   // =====================================================
   // FILTER OPTIONS
