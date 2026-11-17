@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '#/components/ui/badge'
+import { api } from '#/lib/api-client'
 import {
   markRecordCardSource,
   viewTransitionNavOptions,
@@ -65,15 +66,19 @@ export function TripProposalTable({
             {proposals.map((proposal) => (
               <tr
                 key={proposal.id}
+                onMouseEnter={() => {
+                  void queryClient.prefetchQuery({
+                    queryKey: ['trip-proposals', proposal.id],
+                    queryFn: () => api.get(`/trip-proposals/${proposal.id}`),
+                    staleTime: 30_000,
+                  })
+                }}
                 onClick={(event) => {
-                  const hasCachedDetail = Boolean(
-                    queryClient.getQueryData(['trip-proposals', proposal.id]),
-                  )
-                  markRecordCardSource(event.currentTarget, hasCachedDetail)
+                  markRecordCardSource(event.currentTarget)
                   navigate({
                     to: '/trip-proposals/$id',
                     params: { id: proposal.id },
-                    ...viewTransitionNavOptions(hasCachedDetail),
+                    ...viewTransitionNavOptions(),
                   })
                 }}
                 className="row-enter group cursor-pointer transition-colors hover:bg-muted/40"

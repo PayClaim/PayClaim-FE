@@ -1,5 +1,5 @@
 import { useGetClaimsQuery } from '#/features/claims/queries/queries'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { ClaimActionDialog } from './ClaimActionDialog'
 import { ClaimErrorState, ClaimLoadingState } from './ClaimDetailState'
 import { ClaimProcessHeader } from './ClaimProcessHeader'
@@ -36,12 +36,8 @@ export function ClaimDetailWorkspace({
   const permissions = useClaimPermissions(claim)
   const actions = useClaimActions(claimId)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const wasLoadingRef = useRef(false)
 
-  if (isPending || (!claim && isFetching)) {
-    wasLoadingRef.current = true
-    return <ClaimLoadingState />
-  }
+  if (isPending || (!claim && isFetching)) return <ClaimLoadingState />
 
   if (isError || !claim) {
     return (
@@ -57,9 +53,7 @@ export function ClaimDetailWorkspace({
   const openPreview = () => setPreviewOpen(true)
 
   return (
-    <main
-      className={`w-full max-w-[1600px] mx-auto space-y-4${wasLoadingRef.current ? ' page-flow-in' : ''}`}
-    >
+    <main className="w-full max-w-[1600px] mx-auto space-y-4">
       {claim.status === 'NeedsRevision' && permissions.canResubmitClaim && (
         <RevisionBanner />
       )}

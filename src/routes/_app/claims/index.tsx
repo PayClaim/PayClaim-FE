@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useGetAllClaimsQuery } from '#/features/claims/queries/queries'
 import type { ClaimFilterParams } from '#/features/claims/queries/queries'
 import { idNumberFormatter } from '#/lib/formatter'
+import { api } from '#/lib/api-client'
 import { ErrorComponent } from '#/components/ErrorAndLoading'
 import { ListPageSkeleton } from '#/components/ui/page-skeleton'
 import { SkeletonSwap } from '#/components/ui/skeleton-swap'
@@ -382,15 +383,19 @@ function RouteComponent() {
                 return (
                   <tr
                     key={claim.id}
+                    onMouseEnter={() => {
+                      void queryClient.prefetchQuery({
+                        queryKey: ['claims', claim.id],
+                        queryFn: () => api.get(`/claims/${claim.id}`),
+                        staleTime: 30_000,
+                      })
+                    }}
                     onClick={(event) => {
-                      const hasCachedDetail = Boolean(
-                        queryClient.getQueryData(['claims', claim.id]),
-                      )
-                      markRecordCardSource(event.currentTarget, hasCachedDetail)
+                      markRecordCardSource(event.currentTarget)
                       navigate({
                         to: '/claims/$claimId',
                         params: { claimId: claim.id },
-                        ...viewTransitionNavOptions(hasCachedDetail),
+                        ...viewTransitionNavOptions(),
                       })
                     }}
                     className="row-enter hover:bg-muted/40 transition-colors cursor-pointer group"

@@ -19,6 +19,7 @@ import {
 } from '#/lib/view-transition'
 
 import { toDateOnly } from '#/lib/utils'
+import { api } from '#/lib/api-client'
 
 import {
   ArrowRight,
@@ -320,15 +321,19 @@ function ProposalRow({
   return (
     <tr
       className="row-enter cursor-pointer transition-colors hover:bg-muted/50 group"
+      onMouseEnter={() => {
+        void queryClient.prefetchQuery({
+          queryKey: ['trip-proposals', proposal.id],
+          queryFn: () => api.get(`/trip-proposals/${proposal.id}`),
+          staleTime: 30_000,
+        })
+      }}
       onClick={(event) => {
-        const hasCachedDetail = Boolean(
-          queryClient.getQueryData(['trip-proposals', proposal.id]),
-        )
-        markRecordCardSource(event.currentTarget, hasCachedDetail)
+        markRecordCardSource(event.currentTarget)
         navigate({
           to: '/approvals/trip-proposals/$id',
           params: { id: proposal.id },
-          ...viewTransitionNavOptions(hasCachedDetail),
+          ...viewTransitionNavOptions(),
         })
       }}
     >
