@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { getCurrentUser } from '#/features/auth/queries/queries'
@@ -14,11 +15,17 @@ import {
   Users,
   KeyRound,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 
 import { useEffect, useState } from 'react'
 import type { ComponentType } from 'react'
 import { cn } from 'cn'
+
+// =====================================================
+// TYPES
+// =====================================================
 
 export interface TLink {
   to: string
@@ -36,21 +43,37 @@ interface MenuChild {
 interface MenuItem {
   label: string
   to: string
-  icon: ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: ComponentType<{
+    className?: string
+    strokeWidth?: number
+  }>
   adminOnly?: boolean
   employeeOnly?: boolean
   approverOnly?: boolean
   hideForAdminOrDirector?: boolean
-  resolveTo?: (isAdmin: boolean, isEmployee: boolean) => string
-  resolveLabel?: (isAdmin: boolean, isEmployee: boolean) => string
+  resolveTo?: (
+    isAdmin: boolean,
+    isEmployee: boolean,
+  ) => string
+  resolveLabel?: (
+    isAdmin: boolean,
+    isEmployee: boolean,
+  ) => string
   children?: MenuChild[]
 }
 
 interface MenuCategory {
   title: string
-  resolveTitle?: (isAdmin: boolean, isEmployee: boolean) => string
+  resolveTitle?: (
+    isAdmin: boolean,
+    isEmployee: boolean,
+  ) => string
   items: MenuItem[]
 }
+
+// =====================================================
+// MENU CONFIGURATION
+// =====================================================
 
 const MENU_CATEGORIES: MenuCategory[] = [
   {
@@ -154,12 +177,14 @@ const MENU_CATEGORIES: MenuCategory[] = [
   },
 ]
 
-// Membandingkan URL tanpa mempermasalahkan trailing slash.
+// =====================================================
+// ROUTE HELPERS
+// =====================================================
+
 function normalizePath(path: string) {
   return path.replace(/\/+$/, '') || '/'
 }
 
-// Mengecek apakah URL yang sedang dibuka berada di dalam suatu route.
 function matchesPath(pathname: string, targetPath: string) {
   const currentPath = normalizePath(pathname)
   const normalizedTarget = normalizePath(targetPath)
@@ -170,10 +195,18 @@ function matchesPath(pathname: string, targetPath: string) {
   )
 }
 
+// =====================================================
+// SIDEBAR
+// =====================================================
+
 export function Sidebar({
   className = '',
+  isCollapsed = false,
+  onToggle,
 }: {
   className?: string
+  isCollapsed?: boolean
+  onToggle?: () => void
 }) {
   const { pathname } = useLocation()
   const { data: user } = useQuery(getCurrentUser())
@@ -197,9 +230,10 @@ export function Sidebar({
   const isDirector =
     user?.positionTitle?.toLowerCase() === 'director' ||
     user?.positionId?.toLowerCase() === 'dir'
+
   const isRestricted = isAdmin || isDirector
 
-  // Mengumpulkan route menu yang memang boleh dilihat oleh user.
+  // Mengumpulkan route menu yang boleh dilihat user.
   const visibleMenuPaths = MENU_CATEGORIES.flatMap((category) =>
     category.items.flatMap((item) => {
       if (item.adminOnly && !isAdmin) return []
@@ -219,7 +253,7 @@ export function Sidebar({
     }),
   )
 
-  // Menentukan menu biasa yang sedang aktif.
+  // Menentukan menu yang sedang aktif.
   const isItemActive = (targetPath: string) => {
     if (!matchesPath(pathname, targetPath)) {
       return false
@@ -227,148 +261,391 @@ export function Sidebar({
 
     const normalizedTarget = normalizePath(targetPath)
 
-    // Jika ada route menu lain yang lebih spesifik, gunakan route tersebut.
-    const hasMoreSpecificMatch = visibleMenuPaths.some((menuPath) => {
-      const normalizedMenuPath = normalizePath(menuPath)
+    const hasMoreSpecificMatch = visibleMenuPaths.some(
+      (menuPath) => {
+        const normalizedMenuPath = normalizePath(menuPath)
 
-      if (normalizedMenuPath === normalizedTarget) {
-        return false
-      }
+        if (normalizedMenuPath === normalizedTarget) {
+          return false
+        }
 
-      return matchesPath(pathname, normalizedMenuPath)
-    })
+        return matchesPath(pathname, normalizedMenuPath)
+      },
+    )
 
     return !hasMoreSpecificMatch
   }
 
   return (
-    <aside
-      className={cn(
-        'w-75 h-screen bg-slate-50/80 dark:bg-sidebar border-r border-slate-200/80 dark:border-sidebar-border flex flex-col justify-between backdrop-blur-sm z-30 select-none',
-        className,
+    <>
+      {/* =====================================================
+          MOBILE BACKDROP
+      ===================================================== */}
+
+      {!isCollapsed && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={() => onToggle?.()}
+          className="
+            fixed inset-0 z-40
+            bg-slate-950/30
+            backdrop-blur-[1px]
+            md:hidden
+          "
+        />
       )}
-    >
-      {/* Brand Header */}
-      <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-200/80 dark:border-sidebar-border shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-white dark:bg-secondary p-1 border border-slate-200/70 dark:border-border flex items-center justify-center shadow-2xs shrink-0">
-          <img
-            src="/logo-mii.png"
-            alt="Mitra Integrasi Informatika"
-            className="w-full h-full object-contain"
-          />
-        </div>
 
-        <span className="font-bold text-slate-900 dark:text-foreground text-lg tracking-tight">
-          PayClaim
-        </span>
-      </div>
+      {/* =====================================================
+          SIDEBAR CONTAINER
+      ===================================================== */}
 
-      {/* Categorized Navigation Menu */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 scrollbar-thin">
-        {MENU_CATEGORIES.map((category, catIndex) => {
-          const visibleItems = category.items.filter((item) => {
-            if (item.adminOnly && !isAdmin) return false
-            if (item.employeeOnly && !isEmployee) return false
-            if (item.approverOnly && !isApprover) return false
-            if (item.hideForAdminOrDirector && isRestricted) return false
+      <aside
+        className={cn(
+          `
+            fixed left-0 top-0 z-50
+            h-screen
+            flex flex-col
+            overflow-hidden
+            border-r border-slate-200/80
+            bg-slate-50/95
+            backdrop-blur-sm
+            dark:bg-sidebar
+            dark:border-sidebar-border
+            select-none
+            shrink-0
+            transition-[width]
+            duration-300 ease-in-out
+          `,
+          isCollapsed ? 'w-16' : 'w-75',
+          className,
+        )}
+      >
+        {/* =====================================================
+            BRAND HEADER
+        ===================================================== */}
 
-            return true
-          })
-
-          // Sembunyikan kategori jika tidak ada menu yang dapat diakses oleh role saat ini
-          if (visibleItems.length === 0) {
-            return null
-          }
-
-          return (
-            <div key={category.title}>
-              {/* Category Header */}
+        {isCollapsed ? (
+          // COLLAPSED HEADER
+          <div
+            className="
+              flex shrink-0 flex-col items-center
+              border-b border-slate-200/80
+              dark:border-sidebar-border
+            "
+          >
+            {/* LOGO */}
+            <div className="flex h-16 w-full items-center justify-center">
               <div
-                className={cn(
-                  'text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-muted-foreground px-3 mb-2',
-                  catIndex === 0 ? 'mt-1' : 'mt-4',
-                )}
+                className="
+                  flex h-9 w-9 items-center justify-center
+                  rounded-lg
+                  border border-slate-200/70
+                  bg-white p-1 shadow-2xs
+                  dark:bg-secondary dark:border-border
+                "
               >
-                {category.resolveTitle
-                  ? category.resolveTitle(isAdmin, isEmployee)
-                  : category.title}
+                <img
+                  src="/logo-mii.png"
+                  alt="Mitra Integrasi Informatika"
+                  className="h-full w-full object-contain"
+                />
               </div>
+            </div>
 
-              {/* Menu Items */}
-              <nav className="space-y-1">
-                {visibleItems.map((item) => {
-                  // Jika menu memiliki children, tampilkan dropdown.
-                  if (item.children) {
+            {/* OPEN SIDEBAR BUTTON */}
+            <button
+              type="button"
+              onClick={() => onToggle?.()}
+              aria-label="Open sidebar"
+              title="Open sidebar"
+              className="
+                mb-3 flex h-9 w-9 items-center justify-center
+                rounded-lg
+                text-slate-500
+                transition-colors
+                hover:bg-slate-200/80
+                hover:text-slate-900
+                dark:text-muted-foreground
+                dark:hover:bg-secondary
+                dark:hover:text-foreground
+              "
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          // EXPANDED HEADER
+          <div
+            className="
+              flex h-16 shrink-0 items-center
+              gap-3 px-5
+              border-b border-slate-200/80
+              dark:border-sidebar-border
+            "
+          >
+            {/* LOGO */}
+            <div
+              className="
+                flex h-9 w-9 shrink-0 items-center justify-center
+                rounded-lg
+                border border-slate-200/70
+                bg-white p-1 shadow-2xs
+                dark:bg-secondary dark:border-border
+              "
+            >
+              <img
+                src="/logo-mii.png"
+                alt="Mitra Integrasi Informatika"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            {/* BRAND NAME */}
+            <span
+              className="
+                whitespace-nowrap
+                text-lg font-bold tracking-tight
+                text-slate-900 dark:text-foreground
+              "
+            >
+              PayClaim
+            </span>
+
+            {/* CLOSE SIDEBAR BUTTON */}
+            <button
+              type="button"
+              onClick={() => onToggle?.()}
+              aria-label="Close sidebar"
+              title="Close sidebar"
+              className="
+                ml-auto flex h-8 w-8 shrink-0
+                items-center justify-center
+                rounded-lg text-slate-500
+                transition-colors
+                hover:bg-slate-200/80
+                hover:text-slate-900
+                dark:text-muted-foreground
+                dark:hover:bg-secondary
+                dark:hover:text-foreground
+              "
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
+        {/* =====================================================
+            CATEGORIZED NAVIGATION MENU
+        ===================================================== */}
+
+        <div
+          className={cn(
+            `
+              flex-1 min-h-0
+              overflow-y-auto overflow-x-hidden
+              py-4 space-y-5
+              scrollbar-thin
+            `,
+            isCollapsed
+              ? 'hidden px-1 md:block'
+              : 'px-4',
+          )}
+        >
+          {MENU_CATEGORIES.map((category, catIndex) => {
+            const visibleItems = category.items.filter((item) => {
+              if (item.adminOnly && !isAdmin) return false
+              if (item.employeeOnly && !isEmployee) return false
+              if (item.approverOnly && !isApprover) return false
+
+              if (item.hideForAdminOrDirector && isRestricted) {
+                return false
+              }
+
+              return true
+            })
+
+            // Sembunyikan kategori jika tidak ada menu yang tersedia.
+            if (visibleItems.length === 0) {
+              return null
+            }
+
+            return (
+              <div key={category.title}>
+                {/* CATEGORY HEADER */}
+                {!isCollapsed && (
+                  <div
+                    className={cn(
+                      `
+                        px-3 mb-2
+                        whitespace-nowrap
+                        text-[11px] font-semibold uppercase
+                        tracking-wider
+                        text-slate-400
+                        dark:text-muted-foreground
+                      `,
+                      catIndex === 0 ? 'mt-1' : 'mt-4',
+                    )}
+                  >
+                    {category.resolveTitle
+                      ? category.resolveTitle(isAdmin, isEmployee)
+                      : category.title}
+                  </div>
+                )}
+
+                {/* MENU ITEMS */}
+                <nav className="space-y-1">
+                  {visibleItems.map((item) => {
+                    // APPROVAL DROPDOWN
+                    if (item.children) {
+                      return (
+                        <ApprovalDropdown
+                          key={item.label}
+                          pathname={pathname}
+                          items={item.children}
+                          isCollapsed={isCollapsed}
+                          onToggleSidebar={onToggle}
+                        />
+                      )
+                    }
+
+                    const targetTo = item.resolveTo
+                      ? item.resolveTo(isAdmin, isEmployee)
+                      : item.to
+
+                    const active = isItemActive(targetTo)
+                    const Icon = item.icon
+
+                    const itemLabel = item.resolveLabel
+                      ? item.resolveLabel(isAdmin, isEmployee)
+                      : item.label
+
                     return (
-                      <ApprovalDropdown
+                      <Link
                         key={item.label}
-                        pathname={pathname}
-                        items={item.children}
-                      />
-                    )
-                  }
-
-                  const targetTo = item.resolveTo
-                    ? item.resolveTo(isAdmin, isEmployee)
-                    : item.to
-
-                  const active = isItemActive(targetTo)
-                  const Icon = item.icon
-
-                  return (
-                    <Link
-                      key={item.label}
-                      to={targetTo}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 group my-0.5',
-                        active
-                          ? 'bg-blue-50/90 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold shadow-2xs'
-                          : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground hover:translate-x-0.5',
-                      )}
-                    >
-                      <div
+                        to={targetTo}
+                        title={isCollapsed ? itemLabel : undefined}
+                        aria-label={itemLabel}
                         className={cn(
-                          'w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors',
+                          `
+                            my-0.5
+                            flex items-center
+                            rounded-lg
+                            text-sm
+                            transition-all duration-200
+                            group
+                          `,
+                          isCollapsed
+                            ? 'justify-center px-0 py-2'
+                            : 'gap-3 px-3 py-2',
                           active
-                            ? 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                            : 'bg-slate-100 dark:bg-secondary text-slate-500 dark:text-muted-foreground group-hover:bg-slate-200/80 dark:group-hover:bg-muted group-hover:text-slate-700 dark:group-hover:text-foreground',
+                            ? `
+                              bg-blue-50/90
+                              text-blue-600
+                              font-semibold
+                              shadow-2xs
+                              dark:bg-secondary
+                              dark:text-blue-400
+                            `
+                            : `
+                              text-slate-600
+                              font-medium
+                              hover:bg-slate-100/80
+                              hover:text-slate-900
+                              dark:text-muted-foreground
+                              dark:hover:bg-secondary/70
+                              dark:hover:text-foreground
+                            `,
                         )}
                       >
-                        <Icon
-                          className="w-4 h-4"
-                          strokeWidth={1.75}
-                        />
-                      </div>
+                        {/* MENU ICON */}
+                        <div
+                          className={cn(
+                            `
+                              flex h-7 w-7 shrink-0
+                              items-center justify-center
+                              rounded-md
+                              transition-colors
+                            `,
+                            active
+                              ? `
+                                bg-blue-100/80
+                                text-blue-600
+                                dark:bg-blue-950/60
+                                dark:text-blue-400
+                              `
+                              : `
+                                bg-slate-100
+                                text-slate-500
+                                group-hover:bg-slate-200/80
+                                group-hover:text-slate-700
+                                dark:bg-secondary
+                                dark:text-muted-foreground
+                                dark:group-hover:bg-muted
+                                dark:group-hover:text-foreground
+                              `,
+                          )}
+                        >
+                          <Icon
+                            className="h-4 w-4"
+                            strokeWidth={1.75}
+                          />
+                        </div>
 
-                      <span className="truncate">
-                        {item.resolveLabel
-                          ? item.resolveLabel(isAdmin, isEmployee)
-                          : item.label}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </nav>
-            </div>
-          )
-        })}
-      </div>
+                        {/* MENU LABEL */}
+                        {!isCollapsed && (
+                          <span className="truncate whitespace-nowrap">
+                            {itemLabel}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </nav>
+              </div>
+            )
+          })}
+        </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-slate-200/80 dark:border-sidebar-border text-xs text-slate-400 dark:text-muted-foreground shrink-0 text-center">
-        &copy; {new Date().getFullYear()} PayClaim. All rights reserved.
-      </div>
-    </aside>
+        {/* =====================================================
+            FOOTER
+        ===================================================== */}
+
+        {!isCollapsed && (
+          <div
+            className="
+              shrink-0
+              border-t border-slate-200/80
+              p-4
+              text-center text-xs
+              text-slate-400
+              dark:border-sidebar-border
+              dark:text-muted-foreground
+            "
+          >
+            &copy; {new Date().getFullYear()} PayClaim.
+            All rights reserved.
+          </div>
+        )}
+      </aside>
+    </>
   )
 }
 
-// Dropdown Approvals
+// =====================================================
+// APPROVAL DROPDOWN
+// =====================================================
+
 function ApprovalDropdown({
   pathname,
   items,
+  isCollapsed,
+  onToggleSidebar,
 }: {
   pathname: string
   items: MenuChild[]
+  isCollapsed: boolean
+  onToggleSidebar?: () => void
 }) {
   const isActive = items.some((item) =>
     matchesPath(pathname, item.to),
@@ -387,44 +664,115 @@ function ApprovalDropdown({
     <div className="my-0.5">
       <button
         type="button"
-        onClick={() => setOpen((previous) => !previous)}
+        onClick={() => {
+          if (isCollapsed) {
+            setOpen(true)
+            onToggleSidebar?.()
+            return
+          }
+
+          setOpen((previous) => !previous)
+        }}
+        aria-label="Approvals"
+        title={isCollapsed ? 'Approvals' : undefined}
         aria-expanded={open}
         className={cn(
-          'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all group cursor-pointer',
+          `
+            w-full flex items-center
+            rounded-lg text-sm
+            transition-all group cursor-pointer
+          `,
+          isCollapsed
+            ? 'justify-center px-0 py-2'
+            : 'justify-between px-3 py-2',
           isActive
-            ? 'bg-blue-50/90 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold'
-            : 'text-slate-600 dark:text-muted-foreground font-medium hover:bg-slate-100/80 dark:hover:bg-secondary/70 hover:text-slate-900 dark:hover:text-foreground',
+            ? `
+              bg-blue-50/90
+              text-blue-600 font-semibold
+              dark:bg-secondary dark:text-blue-400
+            `
+            : `
+              text-slate-600 font-medium
+              hover:bg-slate-100/80
+              hover:text-slate-900
+              dark:text-muted-foreground
+              dark:hover:bg-secondary/70
+              dark:hover:text-foreground
+            `,
         )}
       >
-        <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            'flex items-center gap-3',
+            isCollapsed && 'justify-center',
+          )}
+        >
           <div
             className={cn(
-              'w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors',
+              `
+                flex h-7 w-7 shrink-0
+                items-center justify-center
+                rounded-md transition-colors
+              `,
               isActive
-                ? 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
-                : 'bg-slate-100 dark:bg-secondary text-slate-500 dark:text-muted-foreground group-hover:bg-slate-200/80 dark:group-hover:bg-muted group-hover:text-slate-700 dark:group-hover:text-foreground',
+                ? `
+                  bg-blue-100/80
+                  text-blue-600
+                  dark:bg-blue-950/60
+                  dark:text-blue-400
+                `
+                : `
+                  bg-slate-100
+                  text-slate-500
+                  group-hover:bg-slate-200/80
+                  group-hover:text-slate-700
+                  dark:bg-secondary
+                  dark:text-muted-foreground
+                  dark:group-hover:bg-muted
+                  dark:group-hover:text-foreground
+                `,
             )}
           >
             <CheckCircle2
-              className="w-4 h-4"
+              className="h-4 w-4"
               strokeWidth={1.75}
             />
           </div>
 
-          <span className="truncate">Approvals</span>
+          {!isCollapsed && (
+            <span className="truncate whitespace-nowrap">
+              Approvals
+            </span>
+          )}
         </div>
 
-        <ChevronDown
-          className={cn(
-            'w-4 h-4 text-slate-400 dark:text-muted-foreground transition-transform duration-200',
-            open && 'rotate-180',
-          )}
-          strokeWidth={1.75}
-        />
+        {!isCollapsed && (
+          <ChevronDown
+            className={cn(
+              `
+                h-4 w-4 shrink-0
+                text-slate-400
+                transition-transform duration-200
+                dark:text-muted-foreground
+              `,
+              open && 'rotate-180',
+            )}
+            strokeWidth={1.75}
+          />
+        )}
       </button>
 
-      {open && (
-        <div className="border-l-2 border-slate-200 dark:border-border ml-5 pl-3 py-1 space-y-1 mt-1">
+      {/* APPROVAL SUBMENU */}
+      {open && !isCollapsed && (
+        <div
+          className="
+            mt-1 ml-5
+            space-y-1
+            border-l-2 border-slate-200
+            py-1 pl-3
+            dark:border-border
+          "
+        >
           {items.map((item) => {
             const active = matchesPath(pathname, item.to)
 
@@ -433,10 +781,29 @@ function ApprovalDropdown({
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  'block px-2.5 py-1.5 text-xs rounded-md transition-colors',
+                  `
+                    block
+                    whitespace-nowrap
+                    rounded-md
+                    px-2.5 py-1.5
+                    text-xs
+                    transition-colors
+                  `,
                   active
-                    ? 'bg-blue-50/80 dark:bg-secondary text-blue-600 dark:text-blue-400 font-semibold'
-                    : 'text-slate-500 dark:text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-secondary/60',
+                    ? `
+                      bg-blue-50/80
+                      text-blue-600 font-semibold
+                      dark:bg-secondary
+                      dark:text-blue-400
+                    `
+                    : `
+                      text-slate-500
+                      hover:bg-blue-50/50
+                      hover:text-blue-600
+                      dark:text-muted-foreground
+                      dark:hover:bg-secondary/60
+                      dark:hover:text-blue-400
+                    `,
                 )}
               >
                 {item.label}
