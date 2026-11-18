@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '#/components/ui/dialog'
 import { Download, FileText } from 'lucide-react'
+import { downloadFile } from '#/lib/download'
 import type { ReceiptInfo } from '#/types/approval-action.type'
 
 interface ReceiptPreviewDialogProps {
@@ -57,29 +58,37 @@ export function ReceiptPreviewDialog({
               <p className="text-sm font-semibold text-heading">
                 {receipt.fileName}
               </p>
-              <a
-                href={receipt.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
+              <button
+                type="button"
+                onClick={() =>
+                  void downloadFile(
+                    receipt.url,
+                    receipt.fileName || 'receipt-attachment',
+                  )
+                }
+                className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline cursor-pointer"
               >
-                <Download className="h-4 w-4" aria-hidden="true" /> Open /
-                Download Document
-              </a>
+                <Download className="h-4 w-4" aria-hidden="true" /> Download
+                Document
+              </button>
             </div>
           )}
         </div>
         <DialogFooter>
           {receipt.hasFile && (
-            <a
-              href={receipt.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 gap-1.5"
+            <Button
+              type="button"
+              onClick={() =>
+                void downloadFile(
+                  receipt.url,
+                  receipt.fileName || 'receipt-attachment',
+                )
+              }
+              className="gap-1.5 cursor-pointer"
             >
               <Download className="h-4 w-4" aria-hidden="true" /> Download
               Original
-            </a>
+            </Button>
           )}
           <DialogClose asChild>
             <Button variant="outline">Close</Button>

@@ -84,10 +84,6 @@ export function TripProposalClaimCard({
           <span className="text-sm font-bold text-foreground">
             Reimbursement Claim Submission
           </span>
-
-          <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-            Budget Exhausted
-          </span>
         </div>
 
         <p className="mt-0.5 text-xs text-muted-foreground">

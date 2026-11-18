@@ -1,4 +1,5 @@
 import { Download, Eye, FileText } from 'lucide-react'
+import { downloadFile } from '#/lib/download'
 import type { Claim, ReceiptInfo } from '#/types/approval-action.type'
 
 interface ReceiptAttachmentCardProps {
@@ -26,15 +27,19 @@ export function ReceiptAttachmentCard({
         <span className="text-xs font-bold text-heading">
           Receipt Attachment
         </span>
-        <a
-          href={receipt.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+        <button
+          type="button"
+          onClick={() =>
+            void downloadFile(
+              receipt.url,
+              receipt.fileName || 'receipt-attachment',
+            )
+          }
+          className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline cursor-pointer"
         >
           <Download className="h-3.5 w-3.5" aria-hidden="true" />
           Download
-        </a>
+        </button>
       </div>
 
       {receipt.isImage ? (
@@ -100,15 +105,19 @@ export function ReceiptAttachmentCard({
               </p>
             </div>
           </div>
-          <a
-            href={receipt.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline shrink-0 ml-2"
+          <button
+            type="button"
+            onClick={() =>
+              void downloadFile(
+                receipt.url,
+                receipt.fileName || 'receipt-attachment',
+              )
+            }
+            className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline shrink-0 ml-2 cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            Open
-          </a>
+            Download
+          </button>
         </div>
       )}
     </div>

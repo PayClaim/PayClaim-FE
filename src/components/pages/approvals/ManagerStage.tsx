@@ -1,4 +1,5 @@
 import { CheckCircle2, Download, FileText } from 'lucide-react'
+import { downloadFile } from '#/lib/download'
 import {
   ChecklistRow,
   NotesBox,
@@ -116,15 +117,19 @@ export function ManagerStage({
         >
           {receipt.hasFile ? (
             <div className="flex items-center gap-2.5 shrink-0">
-              <a
-                href={receipt.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+              <button
+                type="button"
+                onClick={() =>
+                  void downloadFile(
+                    receipt.url,
+                    receipt.fileName || 'receipt-attachment',
+                  )
+                }
+                className="inline-flex items-center gap-1 text-primary font-semibold hover:underline cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 Download
-              </a>
+              </button>
               <CheckCircle2
                 className="h-4 w-4 text-emerald-600"
                 aria-hidden="true"
