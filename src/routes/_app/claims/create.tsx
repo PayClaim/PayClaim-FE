@@ -339,6 +339,11 @@ function RouteComponent() {
 
     await form.validateAllFields('submit')
 
+    if (!values.receiptFile || values.receiptFile.size === 0) {
+      toast.error('Receipt file (proof of payment) is required.')
+      return
+    }
+
     if (form.state.isValid) {
       setDialogOpen(true)
     }
@@ -717,7 +722,7 @@ function RouteComponent() {
           {/* SECTION 3: PROOF OF PAYMENT */}
           <form.AppField name="receiptFile">
             {(field) => (
-              <field.FileInput label="Receipt File (Proof of Payment)" />
+              <field.FileInput label="Receipt File (Proof of Payment, Required)" />
             )}
           </form.AppField>
 
