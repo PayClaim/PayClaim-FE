@@ -512,7 +512,6 @@ function RouteComponent() {
           {/* Table Content */}
           <div className="overflow-x-auto">
             <table className="w-full min-w-275 text-left border-collapse text-xs">
-              {' '}
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-5">Destination</th>

@@ -106,7 +106,7 @@ function RouteComponent() {
     searchFilter ||
     departmentFilter ||
     positionFilter ||
-    statusFilter !== 'active',
+    statusFilter !== 'inactive',
   )
 
   const applyFilterClick = () => {
@@ -116,7 +116,7 @@ function RouteComponent() {
         search: searchFilter,
         departmentId: departmentFilter,
         positionId: positionFilter,
-        isActive: statusFilter == 'active' ? true : undefined,
+        isActive: statusFilter == 'active' ? true : false,
       },
     })
   }
@@ -147,96 +147,148 @@ function RouteComponent() {
 
   return (
     <SkeletonSwap loading={isPending} skeleton={<ListPageSkeleton />}>
-    <main className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/60 flex items-center justify-center shrink-0">
-            <Users className="w-5 h-5" strokeWidth={1.75} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-extrabold text-heading tracking-tight">
-                Employees
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                {employeesResponse.totalCount}
-              </span>
+      <main className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/60 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" strokeWidth={1.75} />
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Manage master data of employees, positions, departments, and
-              direct manager for claims approver.
-            </p>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl font-extrabold text-heading tracking-tight">
+                  Employees
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {employeesResponse.totalCount}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Manage master data of employees, positions, departments, and
+                direct manager for claims approver.
+              </p>
+            </div>
           </div>
+
+          <Link to="/admin/employees/create">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
+              <Plus className="w-4 h-4" strokeWidth={2} />
+              <span>New Employee</span>
+            </Button>
+          </Link>
         </div>
 
-        <Link to="/admin/employees/create">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs gap-1.5 h-10 px-4 rounded-lg">
-            <Plus className="w-4 h-4" strokeWidth={2} />
-            <span>New Employee</span>
-          </Button>
-        </Link>
-      </div>
+        {/* Table Card Container */}
+        <div className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden">
+          {/* Filters Toolbar */}
+          <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
+            <div className="flex flex-wrap items-center gap-3">
+              <ButtonGroup>
+                <div className="relative grow max-w-70 sm:w-64">
+                  <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Search name, department, or position..."
+                    className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                  />
+                </div>
+                <Button onClick={applyFilterClick}>Search</Button>
+              </ButtonGroup>
+            </div>
 
-      {/* Table Card Container */}
-      <div className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden">
-        {/* Filters Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-border/70 flex flex-wrap items-center justify-between gap-4 bg-muted/15">
-          <div className="flex flex-wrap items-center gap-3">
-            <ButtonGroup>
-              <div className="relative grow max-w-70 sm:w-64">
-                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  placeholder="Search name, department, or position..."
-                  className="w-full pl-9 pr-4 py-2.25 bg-background border border-border rounded-lg rounded-br-none rounded-tr-none text-sm text-heading placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button>
+                  <Filter /> Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="grid grid-cols-1 gap-4 w-fit"
+              >
+                <FilterSelect
+                  val={positionFilter}
+                  setValue={setPositionFilter}
+                  options={positionOptions}
+                  filterLabel="Position"
+                  nullable
+                  nullLabel="All Positions"
                 />
-              </div>
-              <Button onClick={applyFilterClick}>Search</Button>
-            </ButtonGroup>
+
+                <FilterSelect
+                  val={departmentFilter}
+                  setValue={setDepartmentFilter}
+                  options={departmentOptions}
+                  filterLabel="Department"
+                  nullable
+                  nullLabel="All Departments"
+                />
+
+                <FilterSelect
+                  val={statusFilter}
+                  setValue={setStatusFilter}
+                  options={statusOptions}
+                  filterLabel="Status"
+                  nullable
+                  nullLabel="All Statuses"
+                />
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchFilter('')
+                      setDepartmentFilter(undefined)
+                      setPositionFilter(undefined)
+                      setStatusFilter(undefined)
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                  >
+                    Reset Filter
+                  </Button>
+                )}
+                <Button onClick={applyFilterClick}>Apply</Button>
+              </PopoverContent>
+            </Popover>
           </div>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button>
-                <Filter /> Filter
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="grid grid-cols-1 gap-4 w-fit"
-            >
-              <FilterSelect
-                val={positionFilter}
-                setValue={setPositionFilter}
-                options={positionOptions}
-                filterLabel="Position"
-                nullable
-                nullLabel="All Positions"
+          {/* Table Content */}
+          {employeeList.length > 0 ? (
+            <>
+              <EmployeeTable employees={employeeList} />
+              <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span>
+                    Showing {employeeList.length} of{' '}
+                    {employeesResponse.totalCount} employees total
+                  </span>
+                </div>
+                <div className="w-fit grow-0">
+                  <PaginationSection pagination={paginationProp} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="py-16 text-center space-y-3">
+              <SearchX
+                className="w-10 h-10 text-muted-foreground/50 mx-auto"
+                strokeWidth={1.5}
               />
-
-              <FilterSelect
-                val={departmentFilter}
-                setValue={setDepartmentFilter}
-                options={departmentOptions}
-                filterLabel="Department"
-                nullable
-                nullLabel="All Departments"
-              />
-
-              <FilterSelect
-                val={statusFilter}
-                setValue={setStatusFilter}
-                options={statusOptions}
-                filterLabel="Status"
-                nullable
-                nullLabel="All Statuses"
-              />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-heading">
+                  Employees not found
+                </p>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  {hasActiveFilters
+                    ? 'No employees data that match with the filters.'
+                    : 'No registered employees available yet.'}
+                </p>
+              </div>
               {hasActiveFilters && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setSearchFilter('')
@@ -244,67 +296,15 @@ function RouteComponent() {
                     setPositionFilter(undefined)
                     setStatusFilter(undefined)
                   }}
-                  className="text-xs text-muted-foreground hover:text-foreground h-9 border"
+                  className="text-xs font-semibold h-8"
                 >
                   Reset Filter
                 </Button>
               )}
-              <Button onClick={applyFilterClick}>Apply</Button>
-            </PopoverContent>
-          </Popover>
+            </div>
+          )}
         </div>
-
-        {/* Table Content */}
-        {employeeList.length > 0 ? (
-          <>
-            <EmployeeTable employees={employeeList} />
-            <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span>
-                  Showing {employeeList.length} of{' '}
-                  {employeesResponse.totalCount} employees total
-                </span>
-              </div>
-              <div className="w-fit grow-0">
-                <PaginationSection pagination={paginationProp} />
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="py-16 text-center space-y-3">
-            <SearchX
-              className="w-10 h-10 text-muted-foreground/50 mx-auto"
-              strokeWidth={1.5}
-            />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-heading">
-                Employees not found
-              </p>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                {hasActiveFilters
-                  ? 'No employees data that match with the filters.'
-                  : 'No registered employees available yet.'}
-              </p>
-            </div>
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchFilter('')
-                  setDepartmentFilter(undefined)
-                  setPositionFilter(undefined)
-                  setStatusFilter(undefined)
-                }}
-                className="text-xs font-semibold h-8"
-              >
-                Reset Filter
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+      </main>
     </SkeletonSwap>
   )
 }
