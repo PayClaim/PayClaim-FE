@@ -89,7 +89,7 @@ function RouteComponent() {
           </div>
           <div>
             <span className="text-3xl font-bold tracking-tight text-white block leading-none">
-              PayClaim
+              CAKRA
             </span>
             <span className="text-sm text-slate-400 font-medium">
               PT Mitra Integrasi Informatika
@@ -135,7 +135,7 @@ function RouteComponent() {
             </div>
             <div>
               <span className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 block leading-none">
-                PayClaim
+                CAKRA
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 PT Mitra Integrasi Informatika
@@ -304,7 +304,7 @@ function RouteComponent() {
                         <span>Signing in...</span>
                       </>
                     ) : (
-                      <span>Sign in to PayClaim</span>
+                      <span>Sign in to CAKRA</span>
                     )}
                   </button>
                 )}
@@ -345,7 +345,7 @@ function RouteComponent() {
 
           <div className="space-y-3.5 py-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             <p>
-              Your PayClaim account is linked directly to your corporate domain account. For security reasons, password resets are managed centrally:
+              Your CAKRA account is linked directly to your corporate domain account. For security reasons, password resets are managed centrally:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
               <li>

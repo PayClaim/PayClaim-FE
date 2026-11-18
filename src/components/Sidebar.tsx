@@ -409,7 +409,7 @@ export function Sidebar({
                 text-slate-900 dark:text-foreground
               "
             >
-              PayClaim
+              CAKRA
             </span>
 
             {/* CLOSE SIDEBAR BUTTON */}
@@ -623,7 +623,7 @@ export function Sidebar({
               dark:text-muted-foreground
             "
           >
-            &copy; {new Date().getFullYear()} PayClaim.
+            &copy; {new Date().getFullYear()} CAKRA.
             All rights reserved.
           </div>
         )}
