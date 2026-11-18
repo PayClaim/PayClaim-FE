@@ -299,7 +299,7 @@ export function useDashboardData() {
     }
 
     return (
-      (isManager && status === 'submitted') ||
+      ((isManager || isFinanceManager) && status === 'submitted') ||
       (
         (isFinance || isFinanceManager) &&
         status === 'underreview'
@@ -339,7 +339,7 @@ export function useDashboardData() {
     }
 
     return (
-      (isManager && status === 'submitted') ||
+      ((isManager || isFinanceManager) && status === 'submitted') ||
       (
         (isFinance || isFinanceManager) &&
         status === 'underreview'
@@ -400,19 +400,35 @@ export function useDashboardData() {
       to: '/trip-proposals',
     })
   } else {
+    const hasUnderReviewClaims = pendingClaimApprovals.some(
+      (claim) => normalizeStatus(claim.status) === 'underreview',
+    )
+    const hasSubmittedClaims = pendingClaimApprovals.some(
+      (claim) => normalizeStatus(claim.status) === 'submitted',
+    )
+
     const claimApprovalStatus = isAdmin
       ? undefined
       : isManager
         ? 'Submitted'
-        : isFinance || isFinanceManager
+        : isFinance
           ? 'UnderReview'
-          : undefined
+          : isFinanceManager
+            ? hasUnderReviewClaims
+              ? 'UnderReview'
+              : hasSubmittedClaims
+                ? 'Submitted'
+                : 'UnderReview'
+            : undefined
 
     const hasUnderReviewTrips = pendingTripApprovals.some(
       (proposal) => normalizeStatus(proposal.status) === 'underreview',
     )
     const hasFmReviewTrips = pendingTripApprovals.some(
       (proposal) => normalizeStatus(proposal.status) === 'financemanagerreview',
+    )
+    const hasSubmittedTrips = pendingTripApprovals.some(
+      (proposal) => normalizeStatus(proposal.status) === 'submitted',
     )
 
     const tripApprovalStatus = isAdmin
@@ -424,7 +440,11 @@ export function useDashboardData() {
           : isFinanceManager
             ? hasFmReviewTrips
               ? 'FinanceManagerReview'
-              : 'UnderReview'
+              : hasUnderReviewTrips
+                ? 'UnderReview'
+                : hasSubmittedTrips
+                  ? 'Submitted'
+                  : 'FinanceManagerReview'
             : undefined
 
     addTodayAction({
@@ -608,7 +628,7 @@ export function useDashboardData() {
       },
     )
   } else if (!isAdmin) {
-    if (isManager || isFinance) {
+    if (isManager || isFinance || isFinanceManager) {
       quickAccessItems.push({
         title: 'Claim Approvals',
         description: 'Review employee claims',

@@ -32,7 +32,6 @@ export function TripProposalHeader({
   }
 
   const isAccommodationPaid = [
-    'financemanagerreview',
     'approved',
     'completed',
   ].includes((proposal.status || '').replace(/[\s_-]/g, '').toLowerCase())
@@ -179,15 +178,16 @@ function formatDate(date: string) {
   })
 }
 
-function parseDateUtc(value: string): Date | null {
+function parseDateWib(value: string): Date | null {
   if (!value) return null
-  const hasTz = /[Zz]$|[+-]\d{2}(:\d{2})?$/.test(value)
-  const d = new Date(hasTz ? value : `${value}Z`)
+  // Backend mengirim timestamp dalam WIB tanpa offset zona waktu.
+  const normalized = value.replace(/(?:Z|[+-]\d{2}(?::?\d{2})?)$/i, '')
+  const d = new Date(`${normalized}+07:00`)
   return Number.isNaN(d.getTime()) ? null : d
 }
 
 function formatSubmittedAt(value: string) {
-  const date = parseDateUtc(value)
+  const date = parseDateWib(value)
   if (!date) return '-'
 
   const formattedDate = date.toLocaleDateString('id-ID', {
