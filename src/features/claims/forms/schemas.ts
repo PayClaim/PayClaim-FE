@@ -51,7 +51,7 @@ export const createClaimBlurSchema = z
     },
   )
 
-export const createClaimSchema = createClaimBlurSchema
+export const editClaimSchema = createClaimBlurSchema
   .refine((data) => data.description.trim().length >= 5, {
     message: 'Description must be at least 5 characters',
     path: ['description'],
@@ -60,6 +60,14 @@ export const createClaimSchema = createClaimBlurSchema
     message: 'Amount must be greater than 0',
     path: ['amount'],
   })
+
+export const createClaimSchema = editClaimSchema.refine(
+  (data) => data.receiptFile !== null && data.receiptFile.size > 0,
+  {
+    message: 'Receipt file (proof of payment) is required',
+    path: ['receiptFile'],
+  },
+)
 
 export const approvalClaimSchema = z
   .object({

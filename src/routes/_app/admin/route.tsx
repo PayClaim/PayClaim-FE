@@ -6,7 +6,6 @@ export const Route = createFileRoute('/_app/admin')({
 
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.ensureQueryData(getCurrentUser())
-    console.log(user)
 
     if (!user.roles.includes('Admin')) {
       throw redirect({
