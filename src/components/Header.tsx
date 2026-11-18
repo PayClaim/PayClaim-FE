@@ -1,6 +1,12 @@
+
 import { ChevronsUpDown, KeyRound, LogOut } from 'lucide-react'
-import ThemeToggle from './ThemeToggle'
 import type { ReactNode } from 'react'
+import { Link, useRouteContext } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+
+import Breadcrumb from './breadcrumb'
+import ThemeToggle from './ThemeToggle'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,13 +14,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { Link, useRouteContext } from '@tanstack/react-router'
-import { useQueryClient } from '@tanstack/react-query'
+
 import { storage } from '#/lib/storage'
 import type { UserProfile } from '#/types/auth.type'
 
 export default function Header() {
-  const { user } = useRouteContext({ from: '/_app' }) as { user: UserProfile }
+  const { user } = useRouteContext({ from: '/_app' }) as {
+    user: UserProfile
+  }
+
   const queryClient = useQueryClient()
 
   const onClickLogout = () => {
@@ -29,51 +37,41 @@ export default function Header() {
 
   const primaryRole = user.roles?.[0] || 'User'
   const displayName = user.fullName || user.username
-  const department = user.departmentName
   const position = user.positionTitle
   const initial = displayName ? displayName[0].toUpperCase() : 'U'
 
-  const greetingTitle = `Welcome back, ${[displayName, department, position]
-    .filter(Boolean)
-    .join(' ')}!`
-
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-card/10 dark:bg-[#0f0f0f]/10 backdrop-blur-md border-b border-border/10 sticky top-0 z-40">
-      <div className="flex items-center gap-3 min-w-0 mr-4">
-        <span
-          className="text-sm text-slate-500 dark:text-muted-foreground hidden sm:inline truncate"
-          title={greetingTitle}
-        >
-          Welcome back,{' '}
-          <strong className="font-semibold text-heading">
-            {displayName}
-          </strong>
-          {department ? ` ${department}` : ''}
-          {position ? ` ${position}` : ''}!
-        </span>
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border/10 bg-card/10 px-6 backdrop-blur-md dark:bg-[#0f0f0f]/10">
+      {/* BREADCRUMB */}
+      <div className="mr-4 flex min-w-0 flex-1 items-center">
+        <Breadcrumb />
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
+      {/* HEADER ACTIONS */}
+      <div className="flex shrink-0 items-center gap-3">
         <ThemeToggle />
 
         <UserDropDown user={user} logout={onClickLogout}>
           <button
             type="button"
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full hover:bg-slate-100/80 dark:hover:bg-secondary border border-border transition-all duration-150 active:scale-[0.97] cursor-pointer group bg-card"
+            className="group flex cursor-pointer items-center gap-2.5 rounded-full border border-border bg-card p-1.5 pr-3 transition-all duration-150 hover:bg-slate-100/80 active:scale-[0.97] dark:hover:bg-secondary"
           >
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-xs">
               {initial}
             </div>
-            <div className="text-left leading-tight hidden sm:block">
-              <div className="text-sm font-semibold text-slate-800 dark:text-foreground max-w-[150px] truncate">
+
+            <div className="hidden max-w-[150px] text-left leading-tight sm:block">
+              <div className="truncate text-sm font-semibold text-slate-800 dark:text-foreground">
                 {displayName}
               </div>
-              <div className="text-xs text-slate-500 dark:text-muted-foreground capitalize max-w-[150px] truncate">
+
+              <div className="max-w-[150px] truncate text-xs capitalize text-slate-500 dark:text-muted-foreground">
                 {position || primaryRole}
               </div>
             </div>
+
             <ChevronsUpDown
-              className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-foreground transition-colors shrink-0"
+              className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600 dark:group-hover:text-foreground"
               strokeWidth={1.75}
             />
           </button>
@@ -97,24 +95,29 @@ function UserDropDown({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
+        {children}
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64 p-1.5">
-        <div className="px-3 py-2 border-b border-border/60 mb-1">
-          <p className="text-sm font-bold text-heading truncate">
+        <div className="mb-1 border-b border-border/60 px-3 py-2">
+          <p className="truncate text-sm font-bold text-heading">
             {displayName}
           </p>
+
           {user.email && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {user.email}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60 capitalize">
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center rounded border border-blue-200/60 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold capitalize text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-300">
               {primaryRole}
             </span>
+
             {user.positionTitle && (
-              <span className="text-[11px] text-muted-foreground truncate">
+              <span className="truncate text-[11px] text-muted-foreground">
                 {user.positionTitle}
               </span>
             )}
@@ -124,9 +127,12 @@ function UserDropDown({
         <DropdownMenuItem asChild>
           <Link
             to="/change-password"
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            <KeyRound className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+            <KeyRound
+              className="h-4 w-4 text-slate-400"
+              strokeWidth={1.75}
+            />
             <span>Change Password</span>
           </Link>
         </DropdownMenuItem>
@@ -135,9 +141,9 @@ function UserDropDown({
 
         <DropdownMenuItem
           onClick={() => logout()}
-          className="text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40 gap-2 cursor-pointer font-medium text-xs px-3 py-2"
+          className="cursor-pointer gap-2 px-3 py-2 text-xs font-medium text-rose-600 focus:bg-rose-50 focus:text-rose-600 dark:text-rose-400 dark:focus:bg-rose-950/40"
         >
-          <LogOut className="w-4 h-4" strokeWidth={1.75} />
+          <LogOut className="h-4 w-4" strokeWidth={1.75} />
           <span>Sign Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
