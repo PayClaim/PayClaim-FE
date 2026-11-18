@@ -1,4 +1,3 @@
-
 import { Button } from '#/components/ui/button'
 import { cn } from 'cn'
 import { CircleAlert } from 'lucide-react'
@@ -7,6 +6,18 @@ import { buildEmployeeGroups } from '#/features/employees/utils/employee-options
 
 import type { EmployeeResponse } from '#/types/employee.type'
 import type { TripProposalParticipantInput } from '#/types/tripProposals.type'
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxSeparator,
+} from '#/components/ui/combobox'
 
 type Props = {
   currentEmployee: EmployeeResponse
@@ -31,8 +42,7 @@ export function TripProposalParticipants({
   )
 
   const isParticipantsInvalid =
-    hasAttemptedSubmit &&
-    (isParticipantCountInvalid || hasEmptyParticipant)
+    hasAttemptedSubmit && (isParticipantCountInvalid || hasEmptyParticipant)
 
   const handleAddParticipant = () => {
     onChange([
@@ -45,23 +55,16 @@ export function TripProposalParticipants({
     ])
   }
 
-  const handleEmployeeChange = (
-    index: number,
-    employeeId: string,
-  ) => {
+  const handleEmployeeChange = (index: number, employeeId: string) => {
     const updatedParticipants = participants.map((participant, i) =>
-      i === index
-        ? { ...participant, employeeId }
-        : participant,
+      i === index ? { ...participant, employeeId } : participant,
     )
 
     onChange(updatedParticipants)
   }
 
   const handleRemoveParticipant = (index: number) => {
-    const updatedParticipants = participants.filter(
-      (_, i) => i !== index,
-    )
+    const updatedParticipants = participants.filter((_, i) => i !== index)
 
     onChange(updatedParticipants)
   }
@@ -73,8 +76,7 @@ export function TripProposalParticipants({
           <h2
             className={cn(
               'text-lg font-semibold',
-              isParticipantsInvalid &&
-                'text-rose-600 dark:text-rose-400',
+              isParticipantsInvalid && 'text-rose-600 dark:text-rose-400',
             )}
           >
             Participants
@@ -86,11 +88,7 @@ export function TripProposalParticipants({
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleAddParticipant}
-        >
+        <Button type="button" variant="outline" onClick={handleAddParticipant}>
           Add Participant
         </Button>
       </div>
@@ -103,22 +101,24 @@ export function TripProposalParticipants({
         )}
       >
         {participants.map((participant, index) => {
+          // Filter employee yang sudah ada di participants
           const availableEmployees = employees.filter(
             (employee) =>
               !participants.some(
                 (other, otherIndex) =>
-                  otherIndex !== index &&
-                  other.employeeId === employee.id,
+                  otherIndex !== index && other.employeeId === employee.id,
               ),
           )
 
           const isEmployeeInvalid =
-            hasAttemptedSubmit &&
-            !participant.isPic &&
-            !participant.employeeId
+            hasAttemptedSubmit && !participant.isPic && !participant.employeeId
 
-          const employeeGroups =
-            buildEmployeeGroups(availableEmployees)
+          const employeeGroups = buildEmployeeGroups(availableEmployees)
+
+          // Dipasang pada combobox sebagai selected value
+          const allItems = employeeGroups.flatMap((g) => g.items)
+          const selectedItem =
+            allItems.find((i) => i.value === participant.employeeId) ?? null
 
           return (
             <div
@@ -143,36 +143,49 @@ export function TripProposalParticipants({
                   </div>
                 ) : (
                   <>
-                    <select
-                      aria-invalid={isEmployeeInvalid}
-                      className={cn(
-                        'h-10 w-full rounded-md border border-border bg-input px-3 text-sm transition-all',
-                        isEmployeeInvalid &&
-                          'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
-                      )}
-                      value={participant.employeeId}
-                      onChange={(event) =>
-                        handleEmployeeChange(index, event.target.value)
-                      }
+                    <Combobox
+                      onValueChange={(selected) => {
+                        console.log('selected:', selected)
+                        handleEmployeeChange(index, selected?.value ?? '')
+                      }}
+                      value={selectedItem}
+                      items={employeeGroups}
+                      itemToStringLabel={(item: any) => item.label}
+                      itemToStringValue={(item: any) => item.value}
                     >
-                      <option value="">Select employee</option>
-
-                      {employeeGroups.map((group) => (
-                        <optgroup
-                          key={group.groupLabel}
-                          label={group.groupLabel}
-                        >
-                          {group.items.map((item) => (
-                            <option
-                              key={item.value}
-                              value={item.value}
+                      <ComboboxInput
+                        placeholder="Select a participant"
+                        aria-invalid={isEmployeeInvalid}
+                        className={cn(
+                          'h-10 w-full rounded-md border border-border bg-input text-sm transition-all',
+                          isEmployeeInvalid &&
+                            'border-rose-500 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:bg-rose-950/20',
+                        )}
+                      />
+                      <ComboboxContent>
+                        <ComboboxEmpty>No timezones found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(group, idx) => (
+                            <ComboboxGroup
+                              key={group.groupLabel}
+                              items={group.items}
                             >
-                              {item.label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
+                              <ComboboxLabel>{group.groupLabel}</ComboboxLabel>
+                              <ComboboxCollection>
+                                {(item) => (
+                                  <ComboboxItem key={item.value} value={item}>
+                                    {item.label}
+                                  </ComboboxItem>
+                                )}
+                              </ComboboxCollection>
+                              {idx < employeeGroups.length - 1 && (
+                                <ComboboxSeparator />
+                              )}
+                            </ComboboxGroup>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
 
                     {isEmployeeInvalid && (
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
