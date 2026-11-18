@@ -95,9 +95,16 @@ export function TripProposalDetailWorkspace({
     TripProposalStatus.FinanceManagerReview,
   )
 
-  // Form limit hanya digunakan pada tahap Finance.
+  const needsBudgetAllocation = Boolean(
+    proposal?.participants?.some((participant) => (participant.amount ?? 0) <= 0),
+  )
+
+  // Form limit digunakan pada tahap Finance, atau Level 3 jika tahap Finance dilewati.
   const isFinanceApprovalStage =
-    isUnderReview && (isFinance || isFinanceManager || isAdmin)
+    (isUnderReview && (isFinance || isFinanceManager || isAdmin)) ||
+    (isFinanceManagerReview &&
+      needsBudgetAllocation &&
+      (isFinanceManager || isAdmin))
 
   // Semua state dan logic approval dikelola oleh custom hook.
   const {
@@ -151,6 +158,8 @@ export function TripProposalDetailWorkspace({
     proposal,
     isFinanceApprovalStage,
     isFinanceManager,
+    isAdmin,
+    isFinanceManagerReview,
   })
 
   // Mencari data peserta yang sesuai dengan pengguna login.
@@ -198,7 +207,7 @@ export function TripProposalDetailWorkspace({
           isFinanceManagerReview
         )
       ) ||
-      (isManager && isSubmitted) ||
+      ((isManager || isFinanceManager) && isSubmitted) ||
       (isFinance && isUnderReview) ||
       (
         isFinanceManager &&

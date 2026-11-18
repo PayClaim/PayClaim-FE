@@ -17,6 +17,8 @@ type Props = {
   proposal: TripProposalDetailResponse | undefined
   isFinanceApprovalStage: boolean
   isFinanceManager: boolean
+  isAdmin: boolean
+  isFinanceManagerReview: boolean
 }
 
 export function useTripProposalApproval({
@@ -24,6 +26,8 @@ export function useTripProposalApproval({
   proposal,
   isFinanceApprovalStage,
   isFinanceManager,
+  isAdmin,
+  isFinanceManagerReview,
 }: Props) {
   const approveMutation = useApproveTripProposalMutation(id)
   const rejectMutation = useRejectTripProposalMutation(id)
@@ -347,10 +351,12 @@ const handleParticipantAmountChange = (
   const projectedTotalAmount =
     accommodationAmountForTotal + totalParticipantLimit
 
-  // Finance Limit berlaku untuk total keseluruhan proposal.
+  // Finance Limit berlaku untuk total keseluruhan proposal (hanya memicu eskalasi di tahap Finance).
   const exceedsFinanceLimit =
     Boolean(proposal) &&
     !isFinanceManager &&
+    !isAdmin &&
+    !isFinanceManagerReview &&
     (
       isChangingAccommodationBudget
         ? hasValidAccommodationDraft
@@ -447,7 +453,13 @@ const handleParticipantAmountChange = (
             : {}),
         })
 
-        if (isFinanceApprovalStage && exceedsFinanceLimit) {
+        if (
+          isFinanceApprovalStage &&
+          !isFinanceManager &&
+          !isAdmin &&
+          !isFinanceManagerReview &&
+          exceedsFinanceLimit
+        ) {
           toast.success(
             'Proposal forwarded to Finance Manager for final review.',
           )

@@ -103,6 +103,9 @@ export function ClaimDetailWorkspace({
 
   const roles = user?.roles || []
   const isAdmin = roles.some((r) => r.toLowerCase() === 'admin')
+  const isFinanceManager = roles.some(
+    (r) => r.toLowerCase() === 'finance manager',
+  )
   const isFinance = roles.some((r) =>
     ['finance', 'finance manager'].includes(r.toLowerCase()),
   )
@@ -183,13 +186,15 @@ export function ClaimDetailWorkspace({
   }
 
   const canManagerApprove =
-    claim.status === 'Submitted' && (isManager || isAdmin) && !isOwnClaim
+    claim.status === 'Submitted' &&
+    (isManager || isFinanceManager || isAdmin) &&
+    !isOwnClaim
 
   const canFinanceApprove =
     claim.status === 'UnderReview' && (isFinance || isAdmin) && !isOwnClaim
 
   const canDisburseAndPay =
-    claim.status === 'Approved' && (isFinance || isAdmin)
+    claim.status === 'Approved' && (isFinance || isAdmin) && !isOwnClaim
 
   const showApprovalActions = canManagerApprove || canFinanceApprove
 
