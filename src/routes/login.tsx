@@ -92,7 +92,7 @@ function RouteComponent() {
               CAKRA
             </span>
             <span className="text-sm text-slate-400 font-medium">
-              PT Mitra Integrasi Informatika
+              Catatan Anggaran, Klaim, Rekap, dan Alokasi
             </span>
           </div>
         </header>
