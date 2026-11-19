@@ -16,26 +16,53 @@ import { formatNumber } from '#/features/dashboard/utils/dashboard.utils'
 // =====================================================
 // TODAY ACTION BUTTON
 // =====================================================
+function TodayActionButton({
+  action,
+}: {
+  action: TodaySummaryAction
+}) {
+  const isAttentionAction =
+    /(claim|claims|trip)-revision/.test(action.id)
 
-function TodayActionButton({ action }: { action: TodaySummaryAction }) {
   return (
     <Link
       to={action.to}
-      search={action.search}
-      className="group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100/80 dark:border-amber-500/35 dark:bg-amber-950/30 dark:hover:border-amber-400/60 dark:hover:bg-amber-950/45"
+      className={`group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100/80 ${
+        isAttentionAction
+          ? 'dark:border-amber-600/65 dark:bg-amber-900/40 dark:hover:border-amber-500/80 dark:hover:bg-amber-900/55'
+          : 'dark:border-amber-500/35 dark:bg-amber-950/30 dark:hover:border-amber-400/60 dark:hover:bg-amber-950/45'
+      }`}
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-amber-950/85 dark:text-amber-100">
+        <p
+          className={`text-sm font-bold text-amber-950/85 ${
+            isAttentionAction
+              ? 'dark:text-amber-100'
+              : 'dark:text-amber-100'
+          }`}
+        >
           {action.title}
         </p>
 
-        <p className="mt-1 text-[11px] leading-relaxed text-amber-800/80 dark:text-amber-200/70">
+        <p
+          className={`mt-1 text-[11px] leading-relaxed text-amber-800/80 ${
+            isAttentionAction
+              ? 'dark:text-amber-200/85'
+              : 'dark:text-amber-200/70'
+          }`}
+        >
           {action.description}
         </p>
       </div>
 
-      <div className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-amber-200/85 px-3 text-xl font-bold tabular-nums text-amber-900 transition-colors group-hover:bg-amber-300/90 dark:bg-amber-400/20 dark:text-amber-200 dark:group-hover:bg-amber-400/30">
-        <AnimatedNumber value={action.count} />
+      <div
+        className={`flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg bg-amber-200/85 px-3 text-xl font-bold tabular-nums text-amber-900 transition-colors group-hover:bg-amber-300/90 ${
+          isAttentionAction
+            ? 'dark:bg-amber-500/30 dark:text-amber-100 dark:group-hover:bg-amber-500/40'
+            : 'dark:bg-amber-400/20 dark:text-amber-200 dark:group-hover:bg-amber-400/30'
+        }`}
+      >
+        {formatNumber(action.count)}
       </div>
     </Link>
   )
