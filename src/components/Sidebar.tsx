@@ -304,14 +304,12 @@ export function Sidebar({
         className={cn(
           `
             fixed left-0 top-0 z-50
-            h-screen
-            flex flex-col
+            flex h-screen flex-col
             overflow-hidden
             border-r border-slate-200/80
             bg-slate-50/95
             backdrop-blur-sm
-            dark:bg-sidebar
-            dark:border-sidebar-border
+            dark:border-sidebar-border dark:bg-sidebar
             select-none
             shrink-0
             transition-[width]
@@ -342,7 +340,7 @@ export function Sidebar({
                   rounded-lg
                   border border-slate-200/70
                   bg-white p-1 shadow-2xs
-                  dark:bg-secondary dark:border-border
+                  dark:border-border dark:bg-secondary
                 "
               >
                 <img
@@ -360,7 +358,8 @@ export function Sidebar({
               aria-label="Open sidebar"
               title="Open sidebar"
               className="
-                mb-3 flex h-9 w-9 items-center justify-center
+                mb-3 flex h-9 w-9 shrink-0
+                items-center justify-center
                 rounded-lg
                 text-slate-500
                 transition-colors
@@ -371,7 +370,7 @@ export function Sidebar({
                 dark:hover:text-foreground
               "
             >
-              <PanelLeftClose className="h-4 w-4" />
+              <PanelLeftOpen className="h-4 w-4" />
             </button>
           </div>
         ) : (
@@ -391,7 +390,7 @@ export function Sidebar({
                 rounded-lg
                 border border-slate-200/70
                 bg-white p-1 shadow-2xs
-                dark:bg-secondary dark:border-border
+                dark:border-border dark:bg-secondary
               "
             >
               <img
@@ -441,15 +440,8 @@ export function Sidebar({
 
         <div
           className={cn(
-            `
-              flex-1 min-h-0
-              overflow-y-auto overflow-x-hidden
-              py-4 space-y-5
-              scrollbar-thin
-            `,
-            isCollapsed
-              ? 'hidden px-1 md:block'
-              : 'px-4',
+            'min-h-0 w-full flex-1 overflow-y-auto py-4 space-y-5 scrollbar-thin',
+            isCollapsed ? 'px-1' : 'px-4',
           )}
         >
           {MENU_CATEGORIES.map((category, catIndex) => {
@@ -471,13 +463,16 @@ export function Sidebar({
             }
 
             return (
-              <div key={category.title}>
+              <div
+                key={category.title}
+                className="w-full min-w-0"
+              >
                 {/* CATEGORY HEADER */}
                 {!isCollapsed && (
                   <div
                     className={cn(
                       `
-                        px-3 mb-2
+                        mb-2 px-3
                         whitespace-nowrap
                         text-[11px] font-semibold uppercase
                         tracking-wider
@@ -494,7 +489,7 @@ export function Sidebar({
                 )}
 
                 {/* MENU ITEMS */}
-                <nav className="space-y-1">
+                <nav className="w-full min-w-0 space-y-1">
                   {visibleItems.map((item) => {
                     // APPROVAL DROPDOWN
                     if (item.children) {
@@ -527,17 +522,13 @@ export function Sidebar({
                         title={isCollapsed ? itemLabel : undefined}
                         aria-label={itemLabel}
                         className={cn(
-                          `
-                            my-0.5
-                            flex items-center
-                            rounded-lg
-                            text-sm
-                            transition-all duration-200
-                            group
-                          `,
+                          // PENTING: class flex harus tanpa tanda petik tambahan.
+                          'group my-0.5 flex w-full min-w-0 flex-nowrap items-center rounded-lg text-sm transition-all duration-200',
+
                           isCollapsed
                             ? 'justify-center px-0 py-2'
                             : 'gap-3 px-3 py-2',
+
                           active
                             ? `
                               bg-blue-50/90
@@ -561,12 +552,7 @@ export function Sidebar({
                         {/* MENU ICON */}
                         <div
                           className={cn(
-                            `
-                              flex h-7 w-7 shrink-0
-                              items-center justify-center
-                              rounded-md
-                              transition-colors
-                            `,
+                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
                             active
                               ? `
                                 bg-blue-100/80
@@ -587,14 +573,14 @@ export function Sidebar({
                           )}
                         >
                           <Icon
-                            className="h-4 w-4"
+                            className="h-4 w-4 shrink-0"
                             strokeWidth={1.75}
                           />
                         </div>
 
                         {/* MENU LABEL */}
                         {!isCollapsed && (
-                          <span className="truncate whitespace-nowrap">
+                          <span className="min-w-0 flex-1 truncate whitespace-nowrap">
                             {itemLabel}
                           </span>
                         )}
@@ -661,7 +647,7 @@ function ApprovalDropdown({
   }, [isActive])
 
   return (
-    <div className="my-0.5">
+    <div className="my-0.5 w-full min-w-0">
       <button
         type="button"
         onClick={() => {
@@ -678,7 +664,7 @@ function ApprovalDropdown({
         aria-expanded={open}
         className={cn(
           `
-            w-full flex items-center
+            flex w-full min-w-0 items-center
             rounded-lg text-sm
             transition-all group cursor-pointer
           `,
@@ -703,8 +689,10 @@ function ApprovalDropdown({
       >
         <div
           className={cn(
-            'flex items-center gap-3',
-            isCollapsed && 'justify-center',
+            'flex min-w-0 items-center',
+            isCollapsed
+              ? 'justify-center'
+              : 'flex-1 gap-3',
           )}
         >
           <div
@@ -734,13 +722,13 @@ function ApprovalDropdown({
             )}
           >
             <CheckCircle2
-              className="h-4 w-4"
+              className="h-4 w-4 shrink-0"
               strokeWidth={1.75}
             />
           </div>
 
           {!isCollapsed && (
-            <span className="truncate whitespace-nowrap">
+            <span className="min-w-0 flex-1 truncate whitespace-nowrap">
               Approvals
             </span>
           )}
