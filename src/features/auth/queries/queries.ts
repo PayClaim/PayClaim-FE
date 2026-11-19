@@ -34,7 +34,7 @@ interface ChangePasswordBody {
 }
 
 interface ResetPasswordBody {
-  username: string
+  email: string
   newPassword: string
   confirmNewPassword: string
 }

@@ -11,6 +11,7 @@ import { FormSelect, FormSelectNumber } from '#/components/forms/FormSelect'
 import { FormButton } from '#/components/forms/FormButton'
 import { DatePicker } from '#/components/forms/DatePicker'
 import { TextArea } from '#/components/forms/TextArea'
+import { FormComboBox } from '#/components/forms/FormComboBox'
 
 export const { useAppForm } = createFormHook({
   fieldComponents: {
@@ -22,6 +23,7 @@ export const { useAppForm } = createFormHook({
     FormSelectNumber,
     TextArea,
     DatePicker,
+    FormComboBox,
   },
   formComponents: {
     FormButton,
