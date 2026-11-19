@@ -163,7 +163,7 @@ export function TripProposalParticipants({
                         )}
                       />
                       <ComboboxContent>
-                        <ComboboxEmpty>No timezones found.</ComboboxEmpty>
+                        <ComboboxEmpty>No employee found.</ComboboxEmpty>
                         <ComboboxList>
                           {(group, idx) => (
                             <ComboboxGroup
