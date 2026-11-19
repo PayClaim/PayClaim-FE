@@ -15,9 +15,8 @@ export const Route = createFileRoute('/')({ component: LandingPage })
 
 /* ====== Konfigurasi (ubah sesuai perusahaan) ====== */
 const APP = 'CAKRA'
-const COMPANY = 'PT Contoh Sejahtera'
 const LOGIN_URL = '/login'
-const HELP_EMAIL = 'helpdesk@contoh.co.id'
+const HELP_EMAIL = 'servicedesk@mii.co.id'
 
 interface Feature {
   title: string
@@ -31,88 +30,79 @@ interface Faq {
 
 const FEATURES: Feature[] = [
   {
-    title: 'Klaim benefit',
-    desc: 'Ajukan penggantian biaya kesehatan, kacamata, transportasi, dan benefit lain dengan lampiran kuitansi.',
+    title: 'Benefit claim',
+    desc: 'Request reimbursement for medical, eyeglass, transport, and other benefits with invoice attachment.',
     icon: Receipt,
   },
   {
-    title: 'Saldo benefit jelas',
-    desc: 'Lihat sisa saldo, batas, dan masa berlaku setiap benefit sebelum mengajukan.',
+    title: 'Clear benefit balance',
+    desc: 'View the remaining balance, limit, and expired period of every benefit before creating a request.',
     icon: Gift,
   },
   {
-    title: 'Proposal perjalanan dinas',
-    desc: 'Susun proposal berisi tujuan, tanggal, anggaran, peserta, dan PIC dalam satu form.',
+    title: 'Business trip proposals',
+    desc: 'Create trip proposals with destination, date, budget, and participants in one form.',
     icon: Plane,
   },
   {
-    title: 'Persetujuan berjenjang',
-    desc: 'Pengajuan melewati level persetujuan sesuai struktur atasan, lengkap dengan catatan dan waktu keputusan.',
+    title: 'Multi-level approval',
+    desc: 'Approve through multiple level according to company structure, with note and timestamp.',
     icon: CheckCircle2,
   },
   {
-    title: 'Status transparan',
-    desc: 'Pantau dari Submitted, Under Review, Approved atau Rejected, hingga Paid.',
+    title: 'Transparent status',
+    desc: 'View request status from Submitted, Under Review, Approved or Rejected, and Paid.',
     icon: FileText,
   },
   {
-    title: 'Akses sesuai peran',
-    desc: 'Karyawan, atasan, HR, dan Finance hanya melihat data yang menjadi tanggung jawabnya.',
+    title: 'Role-based access',
+    desc: 'Employee, Manager, and Finance can access according to its roles.',
     icon: ShieldCheck,
   },
 ]
 const STEPS: [string, string][] = [
+  ['Login', 'Use company account, and view your available benefit to claim.'],
+  ['Request', 'Fill the claim or trip proposal form, and upload the invoice.'],
   [
-    'Masuk',
-    'Gunakan akun perusahaan. Benefit untuk jabatan dan departemen Anda sudah tampil otomatis.',
+    'Approved by manager and finance',
+    'Manager approve or reject the request complete with note.',
   ],
   [
-    'Ajukan',
-    'Isi klaim atau proposal perjalanan, lalu unggah bukti. Klaim perjalanan dikaitkan ke proposal.',
-  ],
-  [
-    'Disetujui atasan',
-    'Atasan menyetujui atau menolak per level dan dapat menulis catatan.',
-  ],
-  [
-    'Dibayar',
-    'Setelah semua level menyetujui, Finance memproses pembayaran dan status berubah menjadi Paid.',
+    'Paid',
+    'After the request approved, finance will process the payment, and status will change to Paid.',
   ],
 ]
 const ROLES: [string, string][] = [
   [
-    'Karyawan',
-    'Mengajukan klaim dan proposal, memantau status, dan melihat sisa benefit.',
+    'Employee',
+    'Submit claims and proposals, track their status, and view remaining benefits.',
   ],
+  ['Manager', 'Approve or reject team requests at their level, with notes.'],
   [
-    'Atasan',
-    'Menyetujui atau menolak pengajuan tim pada levelnya, disertai catatan.',
-  ],
-  [
-    'HR dan Finance',
-    'Mengelola data karyawan dan benefit, memantau ringkasan klaim, dan memproses pembayaran.',
+    'HR and Finance',
+    'Manage employee and benefit data, monitor claim summaries, and process payments.',
   ],
 ]
 const FAQS: Faq[] = [
   {
-    q: 'Siapa yang bisa memakai aplikasi ini?',
-    a: `Seluruh karyawan aktif ${COMPANY}. Akses memakai akun perusahaan dan menu mengikuti peran Anda.`,
+    q: 'Who can use this application?',
+    a: `All active employees of company. Access uses your company account, and the menu follows your role.`,
   },
   {
-    q: 'Berapa lama klaim diproses?',
-    a: 'Bergantung pada jumlah level persetujuan dan kecepatan masing-masing approver. Status terbaru selalu terlihat di halaman klaim.',
+    q: 'How long does it take to process a claim?',
+    a: 'It depends on the number of approval levels and how quickly each approver responds. The latest status is always visible on the claims page.',
   },
   {
-    q: 'Apa yang terjadi jika klaim saya ditolak?',
-    a: 'Anda dapat melihat catatan dari approver yang menolak, lalu mengajukan kembali dengan perbaikan atau menghubungi HR.',
+    q: 'What happens if my claim is rejected?',
+    a: 'You can see the notes from the approver who rejected it, then resubmit with corrections or contact HR.',
   },
   {
-    q: 'Apakah proposal wajib dibuat sebelum berangkat dinas?',
-    a: 'Ya, proposal diajukan dan disetujui lebih dulu. Klaim biaya perjalanan kemudian dikaitkan ke proposal tersebut.',
+    q: 'Is a proposal required before a business trip?',
+    a: 'Yes, the proposal must be submitted and approved first. Trip expense claims are then linked to that proposal.',
   },
   {
-    q: 'File apa yang boleh dilampirkan?',
-    a: 'Foto atau PDF bukti pembayaran seperti kuitansi, nota, atau tiket. Format dan ukuran mengikuti kebijakan perusahaan.',
+    q: 'What files can I attach?',
+    a: 'Photos or PDFs of proof of payment, such as receipts, invoices, or tickets. Format and size follow company policy.',
   },
 ]
 
@@ -164,12 +154,14 @@ export function LandingHeader() {
           to="/"
           className="flex items-center gap-2.5 text-lg font-semibold"
         >
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-linear-to-br from-sky-400 to-blue-600 text-base font-bold text-white">
-            C
-          </span>
+          <img
+            src="/logo-mii.png"
+            alt="Logo aplikasi"
+            className="w-9 h-9 size-full object-contain"
+          />
           {APP}
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Navigasi utama">
+        <nav className="flex items-center gap-1" aria-label="Main navigation">
           <Link
             to="/"
             className={`rounded-xl px-3 py-2 text-sm font-medium transition ${muted} hover:text-slate-900 dark:hover:text-white`}
@@ -190,9 +182,13 @@ export function LandingHeader() {
           >
             About
           </Link>
-          <a href={LOGIN_URL} className={`${btnPrimary} ml-2`}>
-            Masuk
-          </a>
+          <Link
+            to="/login"
+            className={`${btnPrimary} ml-2`}
+            search={{ redirect: null }}
+          >
+            Login
+          </Link>
         </nav>
       </div>
     </header>
@@ -206,14 +202,13 @@ export function LandingFooter() {
         <div>
           <p className="font-semibold">{APP}</p>
           <p className={`mt-1 ${muted}`}>
-            Aplikasi internal {COMPANY} untuk reimbursement benefit dan proposal
-            perjalanan dinas.
+            Internal company app for benefit and business trip reimbursements
           </p>
         </div>
         <div>
-          <p className="font-semibold">Bantuan</p>
+          <p className="font-semibold">Help</p>
           <p className={`mt-1 ${muted}`}>
-            Kendala akses atau pertanyaan kebijakan:{' '}
+            Need help about access or policy related:
             <a
               className="text-blue-600 hover:underline dark:text-blue-300"
               href={`mailto:${HELP_EMAIL}`}
@@ -223,14 +218,14 @@ export function LandingFooter() {
           </p>
         </div>
         <div>
-          <p className="font-semibold">Halaman</p>
+          <p className="font-semibold">Pages</p>
           <p className={`mt-1 ${muted}`}>
             <Link to="/">
-              <button className="hover:underline">Beranda</button>
+              <button className="hover:underline">Home</button>
             </Link>{' '}
             ·{' '}
             <Link to="/about">
-              <button className="hover:underline">Tentang</button>
+              <button className="hover:underline">About</button>
             </Link>
           </p>
         </div>
@@ -279,43 +274,47 @@ export function LandingPage() {
             <section className="grid items-center gap-8 rounded-3xl border border-blue-200 bg-linear-to-br from-blue-100 via-sky-50 to-blue-200 p-7 sm:p-10 lg:grid-cols-2 dark:border-blue-900 dark:from-blue-950 dark:via-slate-900 dark:to-blue-900">
               <div>
                 <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-                  Klaim benefit dan perjalanan dinas, tanpa tumpukan kertas.
+                  Claims the benefits and business trips, without any stack of
+                  papers.
                 </h1>
                 <p className={`mt-4 max-w-md ${muted}`}>
-                  Ajukan penggantian biaya, susun proposal perjalanan, dan
-                  pantau persetujuan sampai pembayaran dalam satu tempat.
+                  Request for reimbursements, arrange trip proposals, and view
+                  the approval status, until payment in one place.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
                   <a href={LOGIN_URL} className={`${btnPrimary} min-h-12 px-6`}>
-                    Masuk dengan akun perusahaan
+                    Login with company account
                   </a>
-                  <a href="#cara-kerja" className={`${btnGhost} min-h-12 px-6`}>
-                    Lihat cara kerja
+                  <a
+                    href="#how-it-works"
+                    className={`${btnGhost} min-h-12 px-6`}
+                  >
+                    How it works
                   </a>
                 </div>
               </div>
-              <div aria-label="Contoh tampilan" className="space-y-3">
+              <div aria-label="Example display" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-blue-900/70 dark:text-blue-200/70">
                   Needs your approval{' '}
                   <span className="ml-2 font-normal normal-case tracking-normal">
-                    (contoh tampilan)
+                    (examples)
                   </span>
                 </p>
                 <ApprovalRow
                   title="Claims Need Your Approval"
-                  desc="Klaim karyawan yang menunggu peninjauan."
+                  desc="Employee's claims waiting for review."
                   count={4}
                 />
                 <ApprovalRow
                   title="Trip Proposals Need Your Approval"
-                  desc="Proposal perjalanan dinas yang menunggu keputusan."
+                  desc="Trip proposal waiating for your decision."
                   count={2}
                 />
               </div>
             </section>
           </div>
 
-          <Section id="fitur" title="Yang bisa Anda lakukan">
+          <Section id="features" title="What can You do">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((f) => (
                 <article
@@ -336,7 +335,7 @@ export function LandingPage() {
             </div>
           </Section>
 
-          <Section id="cara-kerja" title="Cara kerjanya" tint>
+          <Section id="how-it-works" title="How it works" tint>
             <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {STEPS.map(([t, d], i) => (
                 <li key={t} className="flex gap-3">
@@ -352,7 +351,7 @@ export function LandingPage() {
             </ol>
           </Section>
 
-          <Section title="Untuk siapa">
+          <Section title="Who is this for">
             <div className="grid gap-4 md:grid-cols-3">
               {ROLES.map(([t, d]) => (
                 <article key={t} className={`${card} p-5`}>
@@ -363,7 +362,7 @@ export function LandingPage() {
             </div>
           </Section>
 
-          <Section title="Pertanyaan umum" tint>
+          <Section title="FAQS" tint>
             <div className="max-w-3xl space-y-3">
               {FAQS.map((f) => (
                 <details key={f.q} className={`${card} group px-5`}>
@@ -384,8 +383,8 @@ export function LandingPage() {
 
           <div className={`${wrap} py-14`}>
             <CtaBand
-              title="Siap mengajukan?"
-              text="Masuk dan lihat benefit yang tersedia untuk Anda."
+              title="Ready to claims?"
+              text="Login and see all the benefits available for you."
             />
           </div>
         </main>
@@ -404,7 +403,7 @@ export function CtaBand({ title, text }: { title: string; text: string }) {
         href={LOGIN_URL}
         className={`${btn} mt-6 min-h-12 bg-white px-6 text-blue-700 hover:bg-blue-50`}
       >
-        Masuk sekarang
+        Login now
       </a>
     </section>
   )
