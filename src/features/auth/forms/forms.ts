@@ -32,7 +32,12 @@ export const loginForm = () => {
         await mutation.mutateAsync(value)
         window.location.href = search.redirect ?? '/dashboard'
       } catch (err: unknown) {
-        toast.error(getFriendlyErrorMessage(err, 'Sign in failed. Please check your username and password.'))
+        toast.error(
+          getFriendlyErrorMessage(
+            err,
+            'Sign in failed. Please check your username and password.',
+          ),
+        )
       }
     },
   })
@@ -67,7 +72,7 @@ export const resetPasswordForm = () => {
   const mutation = resetPasswordMutation()
   const form = useAppForm({
     defaultValues: {
-      username: '',
+      email: '',
       newPassword: '',
       confirmNewPassword: '',
     },

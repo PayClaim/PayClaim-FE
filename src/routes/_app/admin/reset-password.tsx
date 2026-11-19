@@ -35,13 +35,9 @@ function RouteComponent() {
           form.handleSubmit()
         }}
       >
-        <form.AppField name="username">
+        <form.AppField name="email">
           {(field) => (
-            <field.FormSelect
-              groups={accountGroups}
-              label="Account"
-              placeholder="Select account"
-            />
+            <field.FormComboBox label="Account" groups={accountGroups} />
           )}
         </form.AppField>
 

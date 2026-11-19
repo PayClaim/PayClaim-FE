@@ -24,7 +24,7 @@ export const changePasswordSchema = z
 
 export const resetPasswordSchema = z
   .object({
-    username: z.string().min(1, 'Please select an account'),
+    email: z.string().min(1, 'Please select an account'),
     newPassword: z
       .string()
       .min(6, 'New password must be at least 6 characters'),
