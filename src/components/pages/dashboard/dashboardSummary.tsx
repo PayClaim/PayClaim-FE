@@ -10,7 +10,6 @@ import type {
 } from '#/types/dashboard.type'
 
 import { DashboardPanel } from '#/components/pages/dashboard/dashboardPanel'
-import { AnimatedNumber } from '#/components/ui/animated-number'
 import { formatNumber } from '#/features/dashboard/utils/dashboard.utils'
 
 // =====================================================
@@ -27,6 +26,7 @@ function TodayActionButton({
   return (
     <Link
       to={action.to}
+      search={action.search}
       className={`group flex min-h-[68px] min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-400 hover:bg-amber-100/80 ${
         isAttentionAction
           ? 'dark:border-amber-600/65 dark:bg-amber-900/40 dark:hover:border-amber-500/80 dark:hover:bg-amber-900/55'
