@@ -37,7 +37,12 @@ export default function Header() {
 
   const primaryRole = user.roles?.[0] || 'User'
   const displayName = user.fullName || user.username
+  const department = user.departmentName || user.departmentId
   const position = user.positionTitle
+  const subtitle =
+    department && position
+      ? `${department} - ${position}`
+      : department || position || primaryRole
   const initial = displayName ? displayName[0].toUpperCase() : 'U'
 
   return (
@@ -60,13 +65,13 @@ export default function Header() {
               {initial}
             </div>
 
-            <div className="hidden max-w-[150px] text-left leading-tight sm:block">
-              <div className="truncate text-sm font-semibold text-slate-800 dark:text-foreground">
+            <div className="hidden min-w-[160px] max-w-[280px] text-left leading-tight sm:block">
+              <div className="truncate whitespace-nowrap text-sm font-semibold text-slate-800 dark:text-foreground">
                 {displayName}
               </div>
 
-              <div className="max-w-[150px] truncate text-xs capitalize text-slate-500 dark:text-muted-foreground">
-                {position || primaryRole}
+              <div className="truncate whitespace-nowrap text-xs capitalize text-slate-500 dark:text-muted-foreground">
+                {subtitle}
               </div>
             </div>
 

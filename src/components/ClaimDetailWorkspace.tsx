@@ -481,7 +481,7 @@ export function ClaimDetailWorkspace({
                     <button
                       type="button"
                       onClick={() => setPreviewOpen(true)}
-                      className="group relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/40 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary cursor-pointer"
+                      className="group relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-border bg-muted/40 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-primary cursor-pointer"
                       aria-label="Open full receipt image preview"
                     >
                       <img
@@ -501,7 +501,7 @@ export function ClaimDetailWorkspace({
                   </div>
                 ) : isPdfReceipt ? (
                   <div className="space-y-2">
-                    <div className="group relative w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
+                    <div className="group relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-border bg-muted/30">
                       <iframe
                         src={`${receiptUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                         title="PDF Receipt Attachment Thumbnail"
