@@ -87,12 +87,16 @@ export function ManagerStage({
     </span>
   )
 
+  if (isSkipped) { 
+  return null  
+  }
+
   return (
     <TimelineStage
       title="Document Collection & Manager Approval"
       statusBadge={statusBadge}
       tone={tone}
-      approverName={managerName}
+      approverName={isSkipped ? '' : managerName}
       showViewButton={receipt.hasFile}
       onView={onPreview}
     >

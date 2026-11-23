@@ -396,16 +396,18 @@ export function TripProposalDetailWorkspace({
     )
   }
 
-  timelineStages.push(
-    createApprovalStage(
-      1,
-      'Document Collection & Manager Approval',
-      proposal.managerName || 'Project Manager',
-      managerApproval,
-      isSubmitted,
-      isManagerSkipped,
-    ),
-  )
+  if (!isManagerSkipped) {
+    timelineStages.push(
+      createApprovalStage(
+        1,
+        'Document Collection & Manager Approval',
+        proposal.managerName || 'Project Manager',
+        managerApproval,
+        isSubmitted,
+        isManagerSkipped,
+      ),
+    )
+  }
 
   timelineStages.push({
     id: 'submission',
